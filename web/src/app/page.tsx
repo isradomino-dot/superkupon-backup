@@ -12,17 +12,14 @@ import { SearchBar } from "@/components/SearchBar";
 import { FilterBar, type SortKey } from "@/components/FilterBar";
 import { QuickFilters, type QuickFilterState } from "@/components/QuickFilters";
 import { ExpiringBanner } from "@/components/ExpiringBanner";
-import { RecommendationSection } from "@/components/RecommendationSection";
-import { NewCouponsSection } from "@/components/NewCouponsSection";
 import { SortPresets } from "@/components/SortPresets";
-import { PersonalizedSection, NearbySection } from "@/components/PersonalizedSection";
-import { StackingSection } from "@/components/StackingSection";
 import { useFilterPresets, type FilterPreset } from "@/lib/use-filter-presets";
 import { useAutoRefresh } from "@/lib/use-auto-refresh";
 import { AutoRefreshControl } from "@/components/AutoRefreshControl";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { FollowedMerchantsSection } from "@/components/FollowedMerchantsSection";
-import { HeroCardSection } from "@/components/HeroCardSection";
+import { TopPicksCarousel } from "@/components/TopPicksCarousel";
+import { RightSidebar } from "@/components/RightSidebar";
 import { DiscountSlider } from "@/components/DiscountSlider";
 import { SmartLink } from "@/components/SmartLink";
 import { StickyMerchantStrip } from "@/components/StickyMerchantStrip";
@@ -275,7 +272,8 @@ function Home() {
   const isSearching = q.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+    <div className="min-w-0 space-y-6">
       <ExpiringBanner />
 
       <section className="hero-mesh-bg relative overflow-hidden rounded-2xl p-6 text-white shadow-xl animate-slide-up">
@@ -311,9 +309,36 @@ function Home() {
         </div>
       </section>
 
+      {/* Quick Action Cards — 4 feature shortcuts */}
+      {!isSearching && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { href: "/alerts", emoji: "🔔", title: "Saved Alerts", desc: "Dapatkan notifikasi kupon terbaru sesuai minatmu." },
+            { href: "/bookmarklet", emoji: "🧩", title: "Bookmarklet", desc: "Temukan kupon saat checkout di toko manapun." },
+            { href: "/map", emoji: "📍", title: "Peta Toko", desc: "Cari toko terdekat yang punya promo menarik." },
+            { href: "/mockup", emoji: "🎨", title: "Design Lab", desc: "Buat dan bagikan kupon versi kamu sendiri." },
+          ].map((q) => (
+            <Link
+              key={q.href}
+              href={q.href}
+              className="group flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:-translate-y-0.5 hover:border-brand-400/40 hover:bg-white/10"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-lg">
+                {q.emoji}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white group-hover:text-brand-200">{q.title}</p>
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-gray-400">{q.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Top Picks horizontal carousel */}
       {!isSearching && (
         <ScrollReveal>
-          <HeroCardSection />
+          <TopPicksCarousel />
         </ScrollReveal>
       )}
 
@@ -363,33 +388,132 @@ function Home() {
         </section>
       )}
 
-      {!isSearching && !quick.category && !quick.merchant && (
+      {/* Fitur Tambahan — 4 functional features */}
+      {!isSearching && (
         <ScrollReveal>
-          <PersonalizedSection limit={6} />
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white">Fitur Tambahan</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  href: "/alerts",
+                  emoji: "🔔",
+                  title: "Notifikasi Personal",
+                  desc: "Dapatkan notifikasi real-time saat ada kupon baru sesuai kategori favoritmu.",
+                  cta: "Aktifkan",
+                },
+                {
+                  href: "/bookmarklet",
+                  emoji: "🤖",
+                  title: "Auto Apply",
+                  badge: "Beta",
+                  desc: "Kupon terbaik akan otomatis diterapkan saat checkout (jika tersedia).",
+                  cta: "Coba Sekarang",
+                },
+                {
+                  href: "/alerts",
+                  emoji: "📈",
+                  title: "Price Tracker",
+                  desc: "Pantau harga produk dan dapatkan notifikasi saat harganya turun.",
+                  cta: "Pantau",
+                },
+                {
+                  href: "/favorites",
+                  emoji: "❤️",
+                  title: "Wishlist",
+                  desc: "Simpan produk yang ingin kamu beli dan dapatkan kupon terbaik.",
+                  cta: "Lihat Wishlist",
+                },
+              ].map((f) => (
+                <div
+                  key={f.title}
+                  className="flex flex-col rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-brand-400/40 hover:bg-white/10"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-xl">
+                      {f.emoji}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-white">{f.title}</p>
+                        {f.badge && (
+                          <span className="rounded-full bg-brand-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-200">
+                            {f.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] leading-snug text-gray-400">{f.desc}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href={f.href}
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-brand-400 hover:bg-brand-500/20"
+                  >
+                    {f.cta} →
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
         </ScrollReveal>
       )}
 
-      {!isSearching && !quick.category && !quick.merchant && (
+      {/* Stats Row */}
+      {!isSearching && (
         <ScrollReveal>
-          <NearbySection limit={6} />
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white">Statistik SuperKupon</h2>
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-white/5 p-5 sm:grid-cols-3 lg:grid-cols-5">
+              {[
+                { emoji: "🎟️", num: "1.250.000+", label: "Kupon Terverifikasi" },
+                { emoji: "🏪", num: "200+", label: "Merchant" },
+                { emoji: "👥", num: "500.000+", label: "Pengguna Aktif" },
+                { emoji: "✅", num: "98%", label: "Kupon Berhasil" },
+                { emoji: "⏱️", num: "24/7", label: "Update Otomatis" },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/15 text-lg">
+                    {s.emoji}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-base font-bold text-white sm:text-lg">{s.num}</p>
+                    <p className="text-[11px] text-gray-400">{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </ScrollReveal>
       )}
 
-      {!isSearching && !quick.category && !quick.merchant && (
+      {/* Cara Menggunakan SuperKupon — 3 steps */}
+      {!isSearching && (
         <ScrollReveal>
-          <StackingSection />
-        </ScrollReveal>
-      )}
-
-      {!isSearching && !quick.category && !quick.merchant && (
-        <ScrollReveal>
-          <NewCouponsSection withinHours={24} limit={6} />
-        </ScrollReveal>
-      )}
-
-      {!isSearching && !quick.category && !quick.merchant && (
-        <ScrollReveal>
-          <RecommendationSection category="food" emoji="🍔" limit={6} />
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white">Cara Menggunakan SuperKupon</h2>
+            <div className="grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/5 p-5 sm:grid-cols-3">
+              {[
+                { n: 1, title: "Cari Kupon", desc: "Cari kupon favoritmu dari ribuan pilihan." },
+                { n: 2, title: "Salin Kode", desc: "Salin kode kupon dengan satu klik mudah." },
+                { n: 3, title: "Belanja & Hemat", desc: "Gunakan kode saat checkout dan nikmati hematnya!" },
+              ].map((step, i, arr) => (
+                <div key={step.n} className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 text-base font-black text-white shadow-lg shadow-brand-500/30">
+                    {step.n}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white">{step.title}</p>
+                    <p className="mt-0.5 text-[11px] text-gray-400">{step.desc}</p>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <span className="hidden text-gray-500 sm:inline" aria-hidden>
+                      →
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
         </ScrollReveal>
       )}
 
@@ -553,6 +677,14 @@ function Home() {
           </button>
         </div>
       )}
+    </div>
+
+    {/* Right Sidebar — Rekomendasi + Trending + Premium */}
+    <aside className="hidden lg:block">
+      <div className="sticky top-20 space-y-4">
+        <RightSidebar />
+      </div>
+    </aside>
     </div>
   );
 }

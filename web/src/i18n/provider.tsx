@@ -24,7 +24,7 @@ const STORAGE_KEY = "kh_lang";
 
 function readInitialLocale(): Locale {
   if (typeof window === "undefined") return DEFAULT_LOCALE;
-  const fromStorage = window.localStorage.getItem(STORAGE_KEY);
+  const fromStorage = window.localStorage.getItem(STORAGE_KEY) ?? undefined;
   if (isLocale(fromStorage)) return fromStorage;
   const fromCookie = document.cookie
     .split("; ")

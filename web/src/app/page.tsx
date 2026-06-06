@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import { isAbortError, listCoupons, listMerchants } from "@/lib/api";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
@@ -44,7 +44,17 @@ const FALLBACK_MERCHANTS = [
   { name: "Lazada", emoji: "💼", slug: "lazada" },
 ];
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-sm text-gray-400">Loading…</div>}>
+      <Home />
+    </Suspense>
+  );
+}
+
+function Home() {
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();

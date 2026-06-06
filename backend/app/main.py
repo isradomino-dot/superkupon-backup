@@ -19,11 +19,25 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
-    init_db()
-    _seed_taxonomy()
-    start_scheduler()
+    # Init DB — kalo gagal (network/auth issue), log tapi jangan crash supaya /health tetap respond
+    try:
+        init_db()
+    except Exception as e:
+        logger.error(f"init_db failed: {e}")
+    try:
+        _seed_taxonomy()
+    except Exception as e:
+        logger.error(f"seed_taxonomy failed: {e}")
+    # Scheduler optional di production — gagal nge-start gak boleh blok app startup
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.error(f"start_scheduler failed: {e}")
     yield
-    stop_scheduler()
+    try:
+        stop_scheduler()
+    except Exception:
+        pass
     logger.info("Shutdown complete")
 
 

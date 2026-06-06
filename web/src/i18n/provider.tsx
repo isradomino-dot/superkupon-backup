@@ -31,8 +31,8 @@ function readInitialLocale(): Locale {
     .find((c) => c.startsWith(`${COOKIE_KEY}=`))
     ?.split("=")[1];
   if (isLocale(fromCookie)) return fromCookie;
-  const navLang = navigator.language?.split("-")[0];
-  if (isLocale(navLang)) return navLang;
+  // Default ke Bahasa Indonesia untuk audience Indonesia-focused product.
+  // Skip navigator.language detection — user bisa manual switch via LanguageSwitcher.
   return DEFAULT_LOCALE;
 }
 

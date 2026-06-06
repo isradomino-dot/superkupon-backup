@@ -111,24 +111,23 @@ export function RightSidebar() {
         </Link>
       </div>
 
-      {/* Premium Teaser */}
-      <div className="relative overflow-hidden rounded-xl border border-brand-400/30 bg-gradient-to-br from-brand-700/40 via-purple-700/30 to-pink-700/20 p-4">
-        <div className="absolute right-2 top-2 text-3xl opacity-60" aria-hidden>
-          💎
-        </div>
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-100">
-          Akan Datang
-        </div>
-        <h3 className="text-sm font-bold text-white">Premium</h3>
-        <p className="mt-1.5 text-xs text-gray-200">
-          Fitur eksklusif, kupon spesial, dan pengalaman tanpa iklan. Segera hadir!
-        </p>
-        <button
-          type="button"
-          className="mt-3 w-full rounded-lg bg-white/15 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/25"
-        >
-          Gabung Waitlist
-        </button>
+      {/* Info: how aggregator works (honest, no fake stats) */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <h3 className="mb-2 text-sm font-bold text-white">Cara Kerja SuperKupon</h3>
+        <ul className="space-y-2 text-xs text-gray-300">
+          <li className="flex items-start gap-2">
+            <span className="text-brand-300">▸</span>
+            <span>Aggregate dari sumber publik resmi merchant.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-brand-300">▸</span>
+            <span>Update otomatis tiap jam via scheduler.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-brand-300">▸</span>
+            <span>Cek validitas kupon di merchant asli sebelum dipakai.</span>
+          </li>
+        </ul>
       </div>
     </div>
   );

@@ -378,11 +378,10 @@ function Home() {
                 },
                 {
                   href: "/bookmarklet",
-                  emoji: "🤖",
-                  title: "Auto Apply",
-                  badge: "Beta",
-                  desc: "Kupon terbaik otomatis diterapkan saat checkout di toko favorit.",
-                  cta: "Coba Sekarang",
+                  emoji: "🧩",
+                  title: "Bookmarklet Tool",
+                  desc: "Drag tombol ke bookmark bar — klik saat di halaman checkout untuk cek kupon.",
+                  cta: "Cara Pasang",
                 },
                 {
                   href: "/favorites",
@@ -408,14 +407,7 @@ function Home() {
                       {f.emoji}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-semibold text-white">{f.title}</p>
-                        {f.badge && (
-                          <span className="rounded-full bg-brand-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-200">
-                            {f.badge}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm font-semibold text-white">{f.title}</p>
                       <p className="mt-1 text-[11px] leading-snug text-gray-400">{f.desc}</p>
                     </div>
                   </div>
@@ -425,34 +417,6 @@ function Home() {
                   >
                     {f.cta} →
                   </Link>
-                </div>
-              ))}
-            </div>
-          </section>
-        </ScrollReveal>
-      )}
-
-      {/* Stats Row */}
-      {!isSearching && (
-        <ScrollReveal>
-          <section className="space-y-3">
-            <h2 className="text-lg font-bold text-white">Statistik SuperKupon</h2>
-            <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-white/5 p-5 sm:grid-cols-3 lg:grid-cols-5">
-              {[
-                { emoji: "🎟️", num: "1.250.000+", label: "Kupon Terverifikasi" },
-                { emoji: "🏪", num: "200+", label: "Merchant" },
-                { emoji: "👥", num: "500.000+", label: "Pengguna Aktif" },
-                { emoji: "✅", num: "98%", label: "Kupon Berhasil" },
-                { emoji: "⏱️", num: "24/7", label: "Update Otomatis" },
-              ].map((s) => (
-                <div key={s.label} className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/15 text-lg">
-                    {s.emoji}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-base font-bold text-white sm:text-lg">{s.num}</p>
-                    <p className="text-[11px] text-gray-400">{s.label}</p>
-                  </div>
                 </div>
               ))}
             </div>

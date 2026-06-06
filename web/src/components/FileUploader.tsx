@@ -8,6 +8,10 @@ import { formatBytes, previewKind } from "@/lib/file-preview";
 import { FilePreviewThumb } from "@/components/FilePreviewThumb";
 import { FilePreviewModal } from "@/components/FilePreviewModal";
 
+interface Props {
+  projectId: string;
+}
+
 export function FileUploader({ projectId }: Props) {
   const { files, loading, uploading, uploadProgress, error, uploadFile, deleteFile, getDownloadUrl } =
     useProjectFiles(projectId);

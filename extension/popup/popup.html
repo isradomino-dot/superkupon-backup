@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>SuperKupon</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <span class="logo">🎟️</span>
+    <h1 data-i18n="popupHeader">SuperKupon</h1>
+  </header>
+
+  <section class="status">
+    <div id="status-line" data-i18n="statusLoading">Memuat…</div>
+  </section>
+
+  <section class="settings">
+    <label>
+      <span data-i18n="settingsApiUrl">API Base URL</span>
+      <input type="url" id="api-base" placeholder="http://localhost:8000" />
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="auto-try" />
+      <span data-i18n="settingsAutoTry">Auto-try coupons di checkout (eksperimental)</span>
+    </label>
+    <button id="save-btn" type="button" data-i18n="settingsSave">Simpan</button>
+    <p id="save-feedback"></p>
+  </section>
+
+  <section class="info">
+    <p data-i18n="infoUsage">Buka tab checkout merchant yang didukung untuk lihat widget floating "KH".</p>
+    <p><small>v0.2.0 · <a href="https://github.com/superkupon" target="_blank">Source</a></small></p>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>

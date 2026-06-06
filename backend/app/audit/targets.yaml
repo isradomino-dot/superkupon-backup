@@ -1,0 +1,168 @@
+# =============================================================================
+# TARGET AUDIT FILE — Phase 1 Recon Output
+# =============================================================================
+# Setiap target dikategorikan berdasarkan:
+#   - tier      : public | semi-public | gray | red
+#                   public      = promo page yang sengaja dibuat publik (legal)
+#                   semi-public = affiliate API resmi (legal + monetizable)
+#                   gray        = web scrape area abu-abu (cek ToS)
+#                   red         = butuh login user / mobile-only (HINDARI)
+#   - anti_bot  : none | low | medium | high
+#   - render    : static | dynamic (perlu Playwright)
+#   - method    : http | playwright | api | telegram
+#   - status    : active | disabled | dev
+# =============================================================================
+
+targets:
+
+  # -------------------------------------------------------------------
+  # PUBLIC PROMO LANDING PAGES — Phase 2 priority
+  # -------------------------------------------------------------------
+  - id: shopee_promo_landing
+    name: "Shopee — Public Promo Landing"
+    merchant: shopee
+    url: "https://shopee.co.id/m/promo"
+    tier: public
+    anti_bot: high
+    render: dynamic
+    method: playwright
+    status: dev
+    notes: |
+      Shopee pakai Akamai Bot Manager + PerimeterX.
+      Untuk PoC pakai mock data; production butuh residential proxy.
+      Alternatif legal: Shopee Affiliate API (https://affiliate.shopee.co.id/).
+
+  - id: dana_promo_landing
+    name: "DANA — Public Promo Landing"
+    merchant: dana
+    url: "https://www.dana.id/promo"
+    tier: public
+    anti_bot: low
+    render: static
+    method: http
+    status: dev
+    notes: |
+      Sebagian besar promo DANA hanya di app. Web landing punya highlight.
+      Alternatif: Telegram channel resmi DANA (@danaindonesia).
+
+  - id: ovo_promo_landing
+    name: "OVO — Public Promo Landing"
+    merchant: ovo
+    url: "https://www.ovo.id/promo"
+    tier: public
+    anti_bot: low
+    render: dynamic
+    method: playwright
+    status: dev
+    notes: |
+      Landing page promo merchant partner. Detail kode hanya di app.
+
+  - id: tixid_promo_landing
+    name: "Tix ID — Public Promo Landing"
+    merchant: tixid
+    url: "https://www.tix.id/promo"
+    tier: public
+    anti_bot: low
+    render: static
+    method: http
+    status: dev
+    notes: |
+      Tix ID lebih ramah scrape. Promo banyak di IG/Twitter resmi.
+
+  # -------------------------------------------------------------------
+  # PUBLIC COUPON BLOGS (Indonesia) — legal & friendly to scrape
+  # -------------------------------------------------------------------
+  - id: kuponsegar_blog
+    name: "KuponSegar — Indonesian Coupon Blog (SAMPLE)"
+    merchant: multi
+    url: "https://example.com/coupons"
+    tier: public
+    anti_bot: none
+    render: static
+    method: http
+    status: dev
+    notes: |
+      Sample blog target (URL placeholder).
+      Cocok untuk validasi pipeline end-to-end tanpa risiko ToS.
+
+  # -------------------------------------------------------------------
+  # TELEGRAM PUBLIC CHANNELS — high signal, low risk
+  # -------------------------------------------------------------------
+  - id: telegram_dana_official
+    name: "DANA Official Telegram"
+    merchant: dana
+    url: "https://t.me/s/danaindonesia"
+    tier: public
+    anti_bot: none
+    render: static
+    method: telegram
+    status: dev
+    notes: |
+      Telegram channel resmi DANA. Pakai web preview (t.me/s/...) atau Telethon.
+
+  - id: telegram_promo_aggregator
+    name: "Promo Aggregator Channel (placeholder)"
+    merchant: multi
+    url: "https://t.me/s/example_channel"
+    tier: public
+    anti_bot: none
+    render: static
+    method: telegram
+    status: dev
+    notes: |
+      Placeholder — ganti dengan channel publik favorit user.
+
+  # -------------------------------------------------------------------
+  # AFFILIATE API (LEGAL PATH) — Phase 6 expansion
+  # -------------------------------------------------------------------
+  - id: involve_asia_api
+    name: "Involve Asia — Affiliate Network"
+    merchant: multi
+    url: "https://api.involve.asia/api/coupons/"
+    tier: semi-public
+    anti_bot: none
+    render: static
+    method: api
+    status: active
+    notes: |
+      Affiliate network resmi (cover Shopee, Tokopedia, Lazada, dll).
+      Butuh API key + partner agreement. INI PATH MONETIZABLE & LEGAL.
+      Implemented: app/scrapers/involve_asia.py
+      Config: INVOLVE_ASIA_API_KEY + INVOLVE_ASIA_API_SECRET di .env
+
+  - id: shopee_affiliate_api
+    name: "Shopee Affiliate Open API"
+    merchant: shopee
+    url: "https://open-api.affiliate.shopee.co.id/graphql"
+    tier: semi-public
+    anti_bot: none
+    render: static
+    method: api
+    status: active
+    notes: |
+      Resmi dari Shopee. GraphQL. Butuh App ID + Secret.
+      Path utama untuk Shopee coverage di production.
+      Implemented: app/scrapers/shopee_affiliate.py
+      Config: SHOPEE_AFFILIATE_APP_ID + SHOPEE_AFFILIATE_SECRET di .env
+
+# =============================================================================
+# SCHEMA UNIFIED (single source of truth)
+# =============================================================================
+schema:
+  coupon:
+    - code            # string: kode kupon (nullable, kadang auto-applied)
+    - merchant        # FK ke merchant
+    - title           # string: judul/headline kupon
+    - description     # text: detail & T&C ringkas
+    - discount_type   # enum: percent | fixed | cashback | bogo | free_shipping
+    - discount_value  # decimal: nilai diskon (10 untuk 10% atau 10000 untuk Rp10k)
+    - min_spend       # decimal: minimum belanja (nullable)
+    - max_discount    # decimal: cap diskon (nullable)
+    - category        # FK: food | transport | ecommerce | entertainment | bills
+    - expires_at      # datetime
+    - source_url      # string: link asli
+    - source_target   # FK ke target di file ini
+    - scraped_at      # datetime
+    - verified_at     # datetime (kapan terakhir divalidasi)
+    - status          # enum: active | expired | invalid | pending_review
+    - raw_html_hash   # string: untuk dedup

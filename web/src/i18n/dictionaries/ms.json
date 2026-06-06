@@ -1,0 +1,78 @@
+{
+  "site": {
+    "name": "SuperKupon",
+    "tagline": "Kupon Digital Indonesia — Satu Tempat",
+    "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — semua kupon awam diagregat secara automatik setiap jam."
+  },
+  "nav": {
+    "home": "Utama",
+    "category_ecommerce": "E-dagang",
+    "category_food": "Makanan",
+    "category_transport": "Pengangkutan",
+    "category_entertainment": "Hiburan",
+    "category_bills": "Bil"
+  },
+  "search": {
+    "placeholder": "Cari kupon, peniaga, atau kod...",
+    "button": "Cari",
+    "results_for": "Hasil carian \"{q}\"",
+    "no_results": "Tiada kupon ditemui"
+  },
+  "filter": {
+    "sort": "Susun",
+    "sort_newest": "Terbaru",
+    "sort_popular": "Paling popular",
+    "sort_discount": "Diskaun tertinggi",
+    "sort_expiring": "Hampir tamat",
+    "sort_quality": "Kualiti terbaik",
+    "quality": "Kualiti min.",
+    "all": "Semua",
+    "active_filters": "Penapis aktif",
+    "clear": "Buang penapis"
+  },
+  "coupon": {
+    "copy": "Salin",
+    "copied": "Disalin!",
+    "no_expiry": "Tiada had",
+    "expires_today": "Tamat hari ini",
+    "expired": "Telah tamat",
+    "expires_in_days": "{n} hari lagi",
+    "min_spend": "Min. perbelanjaan",
+    "max_discount": "Maks. diskaun",
+    "category": "Kategori",
+    "source": "Sumber",
+    "quality": "Kualiti",
+    "view_count": "{n} dilihat",
+    "open_at_merchant": "Buka di {merchant}",
+    "discount_free_shipping": "Penghantaran Percuma",
+    "discount_bogo": "Beli 1 Percuma 1",
+    "discount_cashback_pct": "Pulangan tunai {value}%",
+    "discount_cashback_amount": "Pulangan tunai Rp {value}",
+    "discount_percent": "{value}%",
+    "discount_fixed": "Rp {value}",
+    "discount_generic": "Promosi"
+  },
+  "section": {
+    "merchants": "Peniaga",
+    "latest": "Kupon terkini",
+    "categories": "Kategori"
+  },
+  "empty": {
+    "no_coupons_title": "Tiada kupon",
+    "no_coupons_hint": "Pastikan FastAPI backend berjalan di {url}."
+  },
+  "footer": {
+    "disclaimer": "Kupon dikumpulkan daripada halaman promosi awam & saluran rasmi peniaga. Kesahihan boleh berubah pada bila-bila masa."
+  },
+  "theme": {
+    "light": "Mod cerah",
+    "dark": "Mod gelap",
+    "system": "Ikut sistem"
+  },
+  "language": {
+    "label": "Bahasa",
+    "id": "Bahasa Indonesia",
+    "en": "English",
+    "ms": "Bahasa Melayu"
+  }
+}

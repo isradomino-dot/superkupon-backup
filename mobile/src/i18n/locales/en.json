@@ -1,0 +1,19 @@
+{
+  "site": { "name": "SuperKupon", "tagline": "Indonesian Digital Coupons", "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — aggregated hourly." },
+  "section": { "merchants": "MERCHANTS", "latest": "LATEST COUPONS" },
+  "search": { "placeholder": "Search coupons, merchants, codes...", "button": "Search", "results_for": "{n} results for \"{q}\"" },
+  "coupon": {
+    "copy": "Copy", "copied": "✓ Copied",
+    "no_expiry": "No expiry", "expired": "Expired", "expires_today": "Today", "expires_in_days": "{n} days left",
+    "discount_label": "DISCOUNT",
+    "tnc": "TERMS & CONDITIONS", "summary": "SUMMARY", "code_label": "COUPON CODE",
+    "min_spend": "Min. spend", "max_discount": "Max. discount", "category": "Category", "source": "Source",
+    "open_at": "Open at {merchant}",
+    "discount_free_shipping": "Free Shipping", "discount_bogo": "Buy 1 Get 1",
+    "discount_cashback_pct": "{value}% Cashback", "discount_cashback_amount": "Rp {value} Cashback",
+    "discount_percent": "{value}%", "discount_fixed": "Rp {value}", "discount_generic": "Promo"
+  },
+  "empty": { "title_no_coupons": "No coupons yet", "hint_backend": "Make sure FastAPI backend is running and apiBase is set in app.json.", "title_failed": "Failed to connect to backend" },
+  "filter": { "sort": "Sort", "sort_newest": "Newest", "sort_popular": "Most popular", "sort_expiring": "Expiring soon", "sort_quality": "Highest quality", "quality": "Min. quality" },
+  "language": { "label": "Language", "change": "Change Language" }
+}

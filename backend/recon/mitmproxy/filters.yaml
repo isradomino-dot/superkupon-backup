@@ -1,0 +1,102 @@
+# =============================================================================
+# mitmproxy capture filters per target app
+# =============================================================================
+# Hanya domain & path yang relevan untuk PROMO recon yang di-capture.
+# Endpoint sensitif (auth, transaction, user-profile) tetap ke-capture untuk
+# visibility tapi di-mark "out-of-scope" oleh addon_capture.py.
+
+targets:
+
+  dana:
+    package: "id.dana"
+    domains:
+      - "api.dana.id"
+      - "m.dana.id"
+      - "graph.dana.id"
+    in_scope_paths:
+      - "*/promo/*"
+      - "*/promotions*"
+      - "*/banner*"
+      - "*/marketing/*"
+      - "*/feed/*"
+      - "*/merchant*/promo*"
+      - "*/voucher*"
+      - "*/campaign*"
+    out_of_scope_paths:
+      - "*/auth/*"
+      - "*/login*"
+      - "*/otp*"
+      - "*/user/*"
+      - "*/balance*"
+      - "*/transaction*"
+      - "*/transfer*"
+      - "*/payment*"
+
+  ovo:
+    package: "id.ovo"
+    domains:
+      - "api.ovo.id"
+      - "graph.ovo.id"
+      - "promo.ovo.id"
+    in_scope_paths:
+      - "*/promo*"
+      - "*/deal*"
+      - "*/voucher*"
+      - "*/campaign*"
+      - "*/merchant*/active*"
+      - "*/banner*"
+    out_of_scope_paths:
+      - "*/auth/*"
+      - "*/login*"
+      - "*/user*"
+      - "*/wallet*"
+      - "*/transaction*"
+      - "*/payment*"
+      - "*/pin*"
+
+  tixid:
+    package: "com.tix.id"
+    domains:
+      - "api.tix.id"
+      - "graph.tix.id"
+    in_scope_paths:
+      - "*/promo*"
+      - "*/voucher*"
+      - "*/campaign*"
+      - "*/banner*"
+      - "*/cinema*/promo*"
+      - "*/movie*/discount*"
+    out_of_scope_paths:
+      - "*/auth/*"
+      - "*/user*"
+      - "*/booking*"
+      - "*/payment*"
+      - "*/order*"
+
+# =============================================================================
+# Drop list — field yang otomatis di-strip dari capture
+# =============================================================================
+pii_fields:
+  - "user_id"
+  - "userId"
+  - "phone"
+  - "phoneNumber"
+  - "msisdn"
+  - "email"
+  - "fullName"
+  - "ktp"
+  - "nik"
+  - "device_id"
+  - "deviceId"
+  - "fingerprint"
+  - "imei"
+  - "androidId"
+  - "advertisingId"
+  - "fcmToken"
+  - "pushToken"
+  - "balance"
+  - "saldo"
+  - "transaction_id"
+  - "trxId"
+  - "session_id"
+  - "sessionId"

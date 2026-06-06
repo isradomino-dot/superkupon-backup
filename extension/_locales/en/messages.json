@@ -1,0 +1,30 @@
+{
+  "extensionName": {
+    "message": "SuperKupon — Auto Coupon Finder",
+    "description": "Extension display name"
+  },
+  "extensionShortName": {
+    "message": "SuperKupon"
+  },
+  "extensionDescription": {
+    "message": "Automatically find & try coupon codes at checkout on Shopee, Tokopedia, Blibli, Lazada — Honey-style for Indonesia."
+  },
+  "popupHeader": { "message": "SuperKupon" },
+  "statusLoading": { "message": "Loading…" },
+  "statusOk": { "message": "Backend OK" },
+  "statusUnreachable": { "message": "Backend unreachable" },
+  "settingsApiUrl": { "message": "API Base URL" },
+  "settingsAutoTry": { "message": "Auto-try coupons at checkout (experimental)" },
+  "settingsSave": { "message": "Save" },
+  "settingsSaved": { "message": "✓ Saved" },
+  "settingsLanguage": { "message": "Language" },
+  "widgetTitle": { "message": "Coupons for $merchant$", "placeholders": { "merchant": { "content": "$1" } } },
+  "widgetLoading": { "message": "Loading coupons…" },
+  "widgetEmpty": { "message": "No active coupons for this merchant yet." },
+  "btnCopy": { "message": "Copy" },
+  "btnCopied": { "message": "✓" },
+  "btnTry": { "message": "Try" },
+  "btnSuccess": { "message": "✓ Success" },
+  "btnFailed": { "message": "✗ Failed" },
+  "infoUsage": { "message": "Open a checkout tab on supported merchants (Shopee, Tokopedia, Blibli, Lazada, Bukalapak) to see the floating \"KH\" widget." }
+}

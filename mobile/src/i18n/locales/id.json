@@ -1,0 +1,19 @@
+{
+  "site": { "name": "SuperKupon", "tagline": "Kupon Digital Indonesia", "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — aggregated tiap jam." },
+  "section": { "merchants": "MERCHANT", "latest": "KUPON TERBARU" },
+  "search": { "placeholder": "Cari kupon, merchant, atau kode...", "button": "Cari", "results_for": "{n} hasil untuk \"{q}\"" },
+  "coupon": {
+    "copy": "Salin", "copied": "✓ Tersalin",
+    "no_expiry": "Tanpa batas", "expired": "Berakhir", "expires_today": "Hari ini", "expires_in_days": "{n} hari lagi",
+    "discount_label": "DISKON",
+    "tnc": "SYARAT & KETENTUAN", "summary": "RINGKASAN", "code_label": "KODE KUPON",
+    "min_spend": "Min. belanja", "max_discount": "Maks. diskon", "category": "Kategori", "source": "Sumber",
+    "open_at": "Buka di {merchant}",
+    "discount_free_shipping": "Gratis Ongkir", "discount_bogo": "Buy 1 Get 1",
+    "discount_cashback_pct": "Cashback {value}%", "discount_cashback_amount": "Cashback Rp {value}",
+    "discount_percent": "{value}%", "discount_fixed": "Rp {value}", "discount_generic": "Promo"
+  },
+  "empty": { "title_no_coupons": "Belum ada kupon", "hint_backend": "Pastikan backend FastAPI jalan & set apiBase di app.json.", "title_failed": "Gagal terhubung ke backend" },
+  "filter": { "sort": "Urutkan", "sort_newest": "Terbaru", "sort_popular": "Terpopuler", "sort_expiring": "Hampir berakhir", "sort_quality": "Kualitas terbaik", "quality": "Min. kualitas" },
+  "language": { "label": "Bahasa", "change": "Ganti Bahasa" }
+}

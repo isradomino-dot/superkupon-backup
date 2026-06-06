@@ -1,0 +1,30 @@
+{
+  "extensionName": {
+    "message": "SuperKupon — Auto Coupon Finder",
+    "description": "Extension display name"
+  },
+  "extensionShortName": {
+    "message": "SuperKupon"
+  },
+  "extensionDescription": {
+    "message": "Otomatis cari & coba kode kupon di checkout Shopee, Tokopedia, Blibli, Lazada — Honey-style untuk Indonesia."
+  },
+  "popupHeader": { "message": "SuperKupon" },
+  "statusLoading": { "message": "Memuat…" },
+  "statusOk": { "message": "Backend OK" },
+  "statusUnreachable": { "message": "Backend tidak terjangkau" },
+  "settingsApiUrl": { "message": "API Base URL" },
+  "settingsAutoTry": { "message": "Auto-try coupons di checkout (eksperimental)" },
+  "settingsSave": { "message": "Simpan" },
+  "settingsSaved": { "message": "✓ Tersimpan" },
+  "settingsLanguage": { "message": "Bahasa" },
+  "widgetTitle": { "message": "Kupon untuk $merchant$", "placeholders": { "merchant": { "content": "$1" } } },
+  "widgetLoading": { "message": "Memuat kupon…" },
+  "widgetEmpty": { "message": "Belum ada kupon aktif untuk merchant ini." },
+  "btnCopy": { "message": "Salin" },
+  "btnCopied": { "message": "✓" },
+  "btnTry": { "message": "Coba" },
+  "btnSuccess": { "message": "✓ Berhasil" },
+  "btnFailed": { "message": "✗ Gagal" },
+  "infoUsage": { "message": "Buka tab checkout merchant yang didukung (Shopee, Tokopedia, Blibli, Lazada, Bukalapak) untuk lihat widget floating \"KH\"." }
+}

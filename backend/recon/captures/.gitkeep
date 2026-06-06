@@ -1,0 +1,7 @@
+# This folder stores recon capture output:
+#   - audit.jsonl (always)
+#   - session_<id>.jsonl (per session)
+#   - *.endpoints.json (parsed catalogs)
+#   - *.har (mitmproxy exports)
+#
+# Contents are git-ignored (lihat root .gitignore — sudah cover captures/).

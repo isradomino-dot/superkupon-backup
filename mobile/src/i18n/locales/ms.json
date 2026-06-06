@@ -1,0 +1,19 @@
+{
+  "site": { "name": "SuperKupon", "tagline": "Kupon Digital Indonesia", "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — diagregat setiap jam." },
+  "section": { "merchants": "PENIAGA", "latest": "KUPON TERKINI" },
+  "search": { "placeholder": "Cari kupon, peniaga, kod...", "button": "Cari", "results_for": "{n} hasil untuk \"{q}\"" },
+  "coupon": {
+    "copy": "Salin", "copied": "✓ Disalin",
+    "no_expiry": "Tiada had", "expired": "Tamat", "expires_today": "Hari ini", "expires_in_days": "{n} hari lagi",
+    "discount_label": "DISKAUN",
+    "tnc": "TERMA & SYARAT", "summary": "RINGKASAN", "code_label": "KOD KUPON",
+    "min_spend": "Min. perbelanjaan", "max_discount": "Maks. diskaun", "category": "Kategori", "source": "Sumber",
+    "open_at": "Buka di {merchant}",
+    "discount_free_shipping": "Penghantaran Percuma", "discount_bogo": "Beli 1 Percuma 1",
+    "discount_cashback_pct": "Pulangan tunai {value}%", "discount_cashback_amount": "Pulangan tunai Rp {value}",
+    "discount_percent": "{value}%", "discount_fixed": "Rp {value}", "discount_generic": "Promosi"
+  },
+  "empty": { "title_no_coupons": "Tiada kupon", "hint_backend": "Pastikan FastAPI backend berjalan.", "title_failed": "Gagal menyambung ke backend" },
+  "filter": { "sort": "Susun", "sort_newest": "Terbaru", "sort_popular": "Paling popular", "sort_expiring": "Hampir tamat", "sort_quality": "Kualiti terbaik", "quality": "Kualiti min." },
+  "language": { "label": "Bahasa", "change": "Tukar Bahasa" }
+}

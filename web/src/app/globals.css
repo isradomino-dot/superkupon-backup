@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: dark;
+  }
+  body {
+    @apply text-gray-100 antialiased;
+    background-color: #0f0e1a;
+    background-image:
+      radial-gradient(ellipse at top, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom, rgba(91, 33, 182, 0.08) 0%, transparent 60%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .container-app {
+    @apply mx-auto max-w-5xl px-4;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* =========================================================
+   GOFIT-INSPIRED DARK THEME OVERRIDES
+   Force dark surface colors over existing component classes
+   so we don't need to rewrite every component.
+   ========================================================= */
+
+/* Body & root surfaces */
+body,
+.dark body {
+  background-color: #0f0e1a !important;
+}
+
+/* All white card backgrounds become dark card */
+.bg-white,
+.dark\:bg-gray-800 {
+  background-color: #1e1b2e !important;
+  color: #e5e7eb;
+}
+
+/* Slightly elevated card (search results, panels) */
+.bg-white\/90,
+.bg-white\/85 {
+  background-color: rgba(30, 27, 46, 0.85) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Page background hard overrides */
+.bg-gray-50,
+.dark\:bg-gray-950 {
+  background-color: #0f0e1a !important;
+}
+
+/* Borders — soft violet-tinted instead of gray */
+.border-gray-200,
+.border-gray-300,
+.dark\:border-gray-700,
+.dark\:border-gray-800 {
+  border-color: #2d2a3f !important;
+}
+
+.border-dashed {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Text — primary white, secondary muted */
+.text-gray-900,
+.dark\:text-gray-100,
+.dark\:text-gray-50 {
+  color: #f8fafc !important;
+}
+
+.text-gray-700,
+.text-gray-600,
+.dark\:text-gray-300 {
+  color: #cbd5e1 !important;
+}
+
+.text-gray-500,
+.text-gray-400,
+.dark\:text-gray-400,
+.dark\:text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Generic gray backgrounds (pills, tags) → subtle violet-tinted */
+.bg-gray-100,
+.dark\:bg-gray-700 {
+  background-color: #2a2640 !important;
+  color: #e2e8f0 !important;
+}
+
+.bg-gray-100:hover,
+.dark\:bg-gray-700:hover {
+  background-color: #353052 !important;
+}
+
+/* Footer should also follow theme */
+footer {
+  background-color: #0a0915 !important;
+  color: #94a3b8;
+}
+
+/* Subtle elevated card hover */
+article.group:hover {
+  background-color: #252339 !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.25);
+}
+
+/* =========================================================
+   FORCE BRAND VIOLET — handle any stale orange from build cache
+   ========================================================= */
+.bg-brand-500 {
+  background-color: #8b5cf6 !important;
+}
+.bg-brand-600 {
+  background-color: #7c3aed !important;
+}
+.bg-brand-700 {
+  background-color: #6d28d9 !important;
+}
+.bg-brand-50,
+.bg-brand-50\/50 {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+.bg-brand-800\/30,
+.bg-brand-900\/20 {
+  background-color: rgba(124, 58, 237, 0.15) !important;
+}
+
+.text-brand-500 { color: #8b5cf6 !important; }
+.text-brand-600 { color: #a78bfa !important; }
+.text-brand-700 { color: #c4b5fd !important; }
+.text-brand-400 { color: #a78bfa !important; }
+.text-brand-300 { color: #c4b5fd !important; }
+
+.border-brand-400,
+.border-brand-500 {
+  border-color: #8b5cf6 !important;
+}
+
+.hover\:bg-brand-600:hover {
+  background-color: #7c3aed !important;
+}
+.hover\:bg-brand-50:hover {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+.hover\:border-brand-400:hover,
+.hover\:border-brand-500:hover {
+  border-color: #8b5cf6 !important;
+}
+
+/* Hero gradient — force violet (in case from-brand-500/to-brand-700 cached as orange) */
+[class*="from-brand-500"][class*="to-brand-700"] {
+  background-image: linear-gradient(to bottom right, #7c3aed, #4c1d95) !important;
+}
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, #7c3aed, #4c1d95) !important;
+}
+
+/* Search input + select inputs — dark styled */
+input[type="search"],
+input[type="text"],
+input[type="url"],
+select {
+  background-color: #1e1b2e !important;
+  color: #f1f5f9 !important;
+  border-color: #2d2a3f !important;
+}
+
+input[type="search"]::placeholder,
+input[type="text"]::placeholder,
+input[type="url"]::placeholder {
+  color: #64748b !important;
+}
+
+input[type="search"]:focus,
+input[type="text"]:focus,
+select:focus {
+  border-color: #8b5cf6 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+/* Highlighted search match — keep yellow but tune for dark */
+mark {
+  background-color: rgba(252, 211, 77, 0.25) !important;
+  color: #fde68a !important;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* =========================================================
+   VISUAL UPGRADE PACK
+   ========================================================= */
+
+/* Hero mesh gradient — animated multi-radial */
+@keyframes heroMeshShift {
+  0%, 100% {
+    background-position:
+      0% 0%,
+      100% 100%,
+      50% 50%;
+  }
+  50% {
+    background-position:
+      100% 50%,
+      0% 30%,
+      80% 20%;
+  }
+}
+
+.hero-mesh-bg {
+  background-color: #5b21b6;
+  background-image:
+    radial-gradient(ellipse 70% 60% at 0% 0%, rgba(236, 72, 153, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 60% at 100% 100%, rgba(59, 130, 246, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 70% at 50% 50%, rgba(168, 85, 247, 0.35) 0%, transparent 65%);
+  background-size:
+    200% 200%,
+    200% 200%,
+    220% 220%;
+  animation: heroMeshShift 18s ease-in-out infinite;
+}
+
+/* Decorative floating blobs (positioned absolute in hero) */
+@keyframes floatBlobA {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.1) rotate(8deg);
+  }
+  66% {
+    transform: translate(-20px, 25px) scale(0.92) rotate(-5deg);
+  }
+}
+
+@keyframes floatBlobB {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-35px, 28px) scale(1.18) rotate(-10deg);
+  }
+}
+
+.float-blob-a {
+  animation: floatBlobA 22s ease-in-out infinite;
+  will-change: transform;
+}
+.float-blob-b {
+  animation: floatBlobB 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Scroll reveal — section fades + slides into view */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: opacity, transform;
+}
+.scroll-reveal.is-revealed {
+  animation: fadeSlideUp 0.6s ease-out forwards;
+}
+
+/* Subtle grain texture overlay — adds premium "film" feel */
+.grain-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+
+/* Sidebar — "CENTRAL SUPER KUPON" violet glow header (selaras dgn brand) */
+.sidebar-glow {
+  text-shadow:
+    0 0 8px rgba(167, 139, 250, 0.7),
+    0 0 24px rgba(139, 92, 246, 0.45),
+    0 0 48px rgba(139, 92, 246, 0.2);
+}
+
+
+/* Reduced motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  .hero-mesh-bg,
+  .float-blob-a,
+  .float-blob-b {
+    animation: none !important;
+  }
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .scroll-reveal.is-revealed {
+    animation: none !important;
+  }
+}

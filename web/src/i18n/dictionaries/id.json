@@ -1,0 +1,78 @@
+{
+  "site": {
+    "name": "SuperKupon",
+    "tagline": "Kupon Digital Indonesia — Satu Tempat",
+    "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — semua kupon publik di-aggregate otomatis tiap jam."
+  },
+  "nav": {
+    "home": "Beranda",
+    "category_ecommerce": "E-commerce",
+    "category_food": "F&B",
+    "category_transport": "Transport",
+    "category_entertainment": "Hiburan",
+    "category_bills": "Tagihan"
+  },
+  "search": {
+    "placeholder": "Cari kupon, merchant, atau kode...",
+    "button": "Cari",
+    "results_for": "Hasil pencarian \"{q}\"",
+    "no_results": "Tidak ada kupon ditemukan"
+  },
+  "filter": {
+    "sort": "Urutkan",
+    "sort_newest": "Terbaru",
+    "sort_popular": "Terpopuler",
+    "sort_discount": "Diskon Tertinggi",
+    "sort_expiring": "Hampir berakhir",
+    "sort_quality": "Kualitas terbaik",
+    "quality": "Kualitas min.",
+    "all": "Semua",
+    "active_filters": "Filter aktif",
+    "clear": "Hapus filter"
+  },
+  "coupon": {
+    "copy": "Salin",
+    "copied": "Tersalin!",
+    "no_expiry": "Tanpa batas",
+    "expires_today": "Berakhir hari ini",
+    "expired": "Berakhir",
+    "expires_in_days": "{n} hari lagi",
+    "min_spend": "Min. belanja",
+    "max_discount": "Maks. diskon",
+    "category": "Kategori",
+    "source": "Sumber",
+    "quality": "Kualitas",
+    "view_count": "{n} dilihat",
+    "open_at_merchant": "Buka di {merchant}",
+    "discount_free_shipping": "Gratis Ongkir",
+    "discount_bogo": "Buy 1 Get 1",
+    "discount_cashback_pct": "Cashback {value}%",
+    "discount_cashback_amount": "Cashback Rp {value}",
+    "discount_percent": "{value}%",
+    "discount_fixed": "Rp {value}",
+    "discount_generic": "Promo"
+  },
+  "section": {
+    "merchants": "Merchant",
+    "latest": "Kupon terbaru",
+    "categories": "Kategori"
+  },
+  "empty": {
+    "no_coupons_title": "Belum ada kupon",
+    "no_coupons_hint": "Pastikan backend FastAPI jalan di {url} dan trigger scrape."
+  },
+  "footer": {
+    "disclaimer": "Kupon di-aggregate dari halaman promo publik & channel resmi merchant. Validitas kupon dapat berubah sewaktu-waktu — cek di merchant asli sebelum digunakan."
+  },
+  "theme": {
+    "light": "Mode terang",
+    "dark": "Mode gelap",
+    "system": "Ikuti sistem"
+  },
+  "language": {
+    "label": "Bahasa",
+    "id": "Bahasa Indonesia",
+    "en": "English",
+    "ms": "Bahasa Melayu"
+  }
+}

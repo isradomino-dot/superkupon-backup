@@ -1,0 +1,30 @@
+{
+  "extensionName": {
+    "message": "SuperKupon — Pencari Kupon Auto",
+    "description": "Extension display name"
+  },
+  "extensionShortName": {
+    "message": "SuperKupon"
+  },
+  "extensionDescription": {
+    "message": "Cari & guna kod kupon secara automatik di Shopee, Tokopedia, Blibli, Lazada — Honey-style untuk Indonesia."
+  },
+  "popupHeader": { "message": "SuperKupon" },
+  "statusLoading": { "message": "Memuatkan…" },
+  "statusOk": { "message": "Backend OK" },
+  "statusUnreachable": { "message": "Backend tidak dapat dicapai" },
+  "settingsApiUrl": { "message": "URL Asas API" },
+  "settingsAutoTry": { "message": "Auto-cuba kupon di checkout (eksperimen)" },
+  "settingsSave": { "message": "Simpan" },
+  "settingsSaved": { "message": "✓ Disimpan" },
+  "settingsLanguage": { "message": "Bahasa" },
+  "widgetTitle": { "message": "Kupon untuk $merchant$", "placeholders": { "merchant": { "content": "$1" } } },
+  "widgetLoading": { "message": "Memuatkan kupon…" },
+  "widgetEmpty": { "message": "Tiada kupon aktif untuk peniaga ini." },
+  "btnCopy": { "message": "Salin" },
+  "btnCopied": { "message": "✓" },
+  "btnTry": { "message": "Cuba" },
+  "btnSuccess": { "message": "✓ Berjaya" },
+  "btnFailed": { "message": "✗ Gagal" },
+  "infoUsage": { "message": "Buka halaman checkout peniaga yang disokong untuk melihat widget \"KH\"." }
+}

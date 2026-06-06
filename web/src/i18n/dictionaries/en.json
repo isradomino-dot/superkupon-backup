@@ -1,0 +1,78 @@
+{
+  "site": {
+    "name": "SuperKupon",
+    "tagline": "Indonesian Digital Coupons — One Place",
+    "description": "Shopee · DANA · OVO · Tix ID · Tokopedia — all public coupons aggregated automatically every hour."
+  },
+  "nav": {
+    "home": "Home",
+    "category_ecommerce": "E-commerce",
+    "category_food": "F&B",
+    "category_transport": "Transport",
+    "category_entertainment": "Entertainment",
+    "category_bills": "Bills"
+  },
+  "search": {
+    "placeholder": "Search coupons, merchants, or codes...",
+    "button": "Search",
+    "results_for": "Results for \"{q}\"",
+    "no_results": "No coupons found"
+  },
+  "filter": {
+    "sort": "Sort",
+    "sort_newest": "Newest",
+    "sort_popular": "Most popular",
+    "sort_discount": "Biggest discount",
+    "sort_expiring": "Expiring soon",
+    "sort_quality": "Highest quality",
+    "quality": "Min. quality",
+    "all": "All",
+    "active_filters": "Active filters",
+    "clear": "Clear filters"
+  },
+  "coupon": {
+    "copy": "Copy",
+    "copied": "Copied!",
+    "no_expiry": "No expiry",
+    "expires_today": "Ends today",
+    "expired": "Expired",
+    "expires_in_days": "{n} days left",
+    "min_spend": "Min. spend",
+    "max_discount": "Max. discount",
+    "category": "Category",
+    "source": "Source",
+    "quality": "Quality",
+    "view_count": "{n} views",
+    "open_at_merchant": "Open at {merchant}",
+    "discount_free_shipping": "Free Shipping",
+    "discount_bogo": "Buy 1 Get 1",
+    "discount_cashback_pct": "{value}% Cashback",
+    "discount_cashback_amount": "Rp {value} Cashback",
+    "discount_percent": "{value}%",
+    "discount_fixed": "Rp {value}",
+    "discount_generic": "Promo"
+  },
+  "section": {
+    "merchants": "Merchants",
+    "latest": "Latest coupons",
+    "categories": "Categories"
+  },
+  "empty": {
+    "no_coupons_title": "No coupons yet",
+    "no_coupons_hint": "Make sure FastAPI backend is running at {url} and trigger a scrape."
+  },
+  "footer": {
+    "disclaimer": "Coupons are aggregated from public promo pages & official merchant channels. Validity may change anytime — verify at the merchant before use."
+  },
+  "theme": {
+    "light": "Light mode",
+    "dark": "Dark mode",
+    "system": "Follow system"
+  },
+  "language": {
+    "label": "Language",
+    "id": "Bahasa Indonesia",
+    "en": "English",
+    "ms": "Bahasa Melayu"
+  }
+}

@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Pakai $PORT env var kalau di-set (Railway/Render), fallback 8000 untuk dev lokal
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

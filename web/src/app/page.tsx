@@ -309,32 +309,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Quick Action Cards — 4 feature shortcuts */}
-      {!isSearching && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { href: "/alerts", emoji: "🔔", title: "Saved Alerts", desc: "Dapatkan notifikasi kupon terbaru sesuai minatmu." },
-            { href: "/bookmarklet", emoji: "🧩", title: "Bookmarklet", desc: "Temukan kupon saat checkout di toko manapun." },
-            { href: "/map", emoji: "📍", title: "Peta Toko", desc: "Cari toko terdekat yang punya promo menarik." },
-            { href: "/mockup", emoji: "🎨", title: "Design Lab", desc: "Buat dan bagikan kupon versi kamu sendiri." },
-          ].map((q) => (
-            <Link
-              key={q.href}
-              href={q.href}
-              className="group flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:-translate-y-0.5 hover:border-brand-400/40 hover:bg-white/10"
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500/20 text-lg">
-                {q.emoji}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white group-hover:text-brand-200">{q.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-gray-400">{q.desc}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
-
       {/* Top Picks horizontal carousel */}
       {!isSearching && (
         <ScrollReveal>
@@ -388,7 +362,7 @@ function Home() {
         </section>
       )}
 
-      {/* Fitur Tambahan — 4 functional features */}
+      {/* Fitur Tambahan — 4 unique features (no duplicates) */}
       {!isSearching && (
         <ScrollReveal>
           <section className="space-y-3">
@@ -398,8 +372,8 @@ function Home() {
                 {
                   href: "/alerts",
                   emoji: "🔔",
-                  title: "Notifikasi Personal",
-                  desc: "Dapatkan notifikasi real-time saat ada kupon baru sesuai kategori favoritmu.",
+                  title: "Alerts & Notifikasi",
+                  desc: "Notifikasi real-time saat ada kupon baru atau harga produk turun.",
                   cta: "Aktifkan",
                 },
                 {
@@ -407,22 +381,22 @@ function Home() {
                   emoji: "🤖",
                   title: "Auto Apply",
                   badge: "Beta",
-                  desc: "Kupon terbaik akan otomatis diterapkan saat checkout (jika tersedia).",
+                  desc: "Kupon terbaik otomatis diterapkan saat checkout di toko favorit.",
                   cta: "Coba Sekarang",
-                },
-                {
-                  href: "/alerts",
-                  emoji: "📈",
-                  title: "Price Tracker",
-                  desc: "Pantau harga produk dan dapatkan notifikasi saat harganya turun.",
-                  cta: "Pantau",
                 },
                 {
                   href: "/favorites",
                   emoji: "❤️",
-                  title: "Wishlist",
-                  desc: "Simpan produk yang ingin kamu beli dan dapatkan kupon terbaik.",
+                  title: "Wishlist & Favorit",
+                  desc: "Simpan kupon favoritmu untuk diakses cepat saat butuh nanti.",
                   cta: "Lihat Wishlist",
+                },
+                {
+                  href: "/map",
+                  emoji: "🗺️",
+                  title: "Peta Toko Terdekat",
+                  desc: "Cari merchant terdekat yang punya promo aktif di sekitarmu.",
+                  cta: "Buka Peta",
                 },
               ].map((f) => (
                 <div

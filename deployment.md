@@ -1,257 +1,115 @@
-# Deploy SuperKupon ke Vercel
+# SuperKupon — Deployment Info
 
-Step-by-step deploy frontend (Next.js) ke Vercel + backend FastAPI ke hosting separate.
+> Last updated: 2026-06-06 (commit `2ca67e1`)
 
-## Prerequisites
+## 🚀 Live URLs
 
-- ✅ Supabase project udah running (lihat `supabase_setup.md`)
-- ✅ GitHub account
-- ✅ Vercel account (free tier OK, daftar pakai GitHub)
-- ⚠️ Backend FastAPI butuh hosting separate — opsi: Railway, Render, Fly.io, Hetzner
+### Frontend (Vercel)
+| URL | Use case |
+|---|---|
+| **https://superkupon.vercel.app** | **🎯 Production URL — share ini ke atasan** |
+| https://superkupon-git-main-isradomino-dots-projects.vercel.app | Branch URL (auto-update tiap push ke `main`) |
+
+**Status:** 🟢 Live (Hobby plan — gratis)
+**Vercel Project:** https://vercel.com/isradomino-dots-projects/superkupon
+**Region:** sin1 (Singapore)
+**Auto-deploy:** ✅ Enabled (push ke `main` → auto rebuild)
+
+### Backend (FastAPI) — belum di-deploy
+| Option | Script | Region |
+|---|---|---|
+| Railway ⭐ | [deploy-backend-railway.bat](deploy-backend-railway.bat) | ap-southeast-1 |
+| Render | Manual via [render.yaml](render.yaml) | Singapore |
+
+Setelah backend deploy:
+- Update Vercel env var: `NEXT_PUBLIC_API_BASE=https://your-backend-url`
+- Vercel rebuild → data muncul di frontend
 
 ---
 
-## Part 1: Push ke GitHub
+## 📦 GitHub Repository
 
-Vercel deploy via GitHub repo. Kalau project belum di GitHub:
+**Repo:** https://github.com/isradomino-dot/superkupon
+**Branch:** `main`
+**Visibility:** Private
 
-```bash
-cd D:/Users/user27/coupon-aggregator
-git init
+### Latest commits
+- `2ca67e1` — chore(deps): upgrade Next.js to 16.2.7 (security fix)
+- `865d839` — fix(web): clean orphan components + fix build errors (-22 files)
+- `8f30a03` — fix(web): add missing Props interface in FileUploader
+- `da2d131` — init: SuperKupon coupon aggregator MVP
+
+---
+
+## 🛠️ Workflow Deploy
+
+### Update website (frontend)
+```powershell
+cd D:\Users\user27\coupon-aggregator
+# Edit code di web/...
 git add .
-git commit -m "Initial commit"
-
-# Buat repo baru di github.com (private OK), terus:
-git remote add origin https://github.com/USERNAME/superkupon.git
-git branch -M main
-git push -u origin main
+git commit -m "feat: deskripsi perubahan"
+git push
+# Vercel auto-rebuild ~2-3 menit
 ```
 
-⚠️ **PENTING**: pastikan `.env.local` ke-gitignore (jangan commit secret keys). Cek `.gitignore` di `web/` udah include `.env*.local`.
-
----
-
-## Part 2: Deploy Frontend ke Vercel
-
-### Via Dashboard (Easiest)
-
-1. Buka https://vercel.com → Sign in dengan GitHub
-2. Klik **Add New** → **Project**
-3. Import repo `superkupon`
-4. Konfigurasi:
-   - **Framework Preset**: Next.js (auto-detect)
-   - **Root Directory**: `web` (karena monorepo, frontend ada di subdirectory)
-   - **Build Command**: `next build` (default)
-   - **Output Directory**: `.next` (default)
-5. **Environment Variables** — tambahin 3 variable:
-   ```
-   NEXT_PUBLIC_API_BASE=https://YOUR-BACKEND-URL.com
-   NEXT_PUBLIC_SUPABASE_URL=https://xxxxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-   ```
-6. Klik **Deploy** — tunggu 2-3 menit
-7. Setelah sukses, akan dapat URL seperti `https://superkupon.vercel.app`
-
-### Via CLI (Faster for re-deploys)
-
-```bash
-npm i -g vercel
-cd web
-vercel login        # one-time
-vercel              # interactive, ikuti prompts
-vercel --prod       # deploy ke production
+### Update backend (kalau udah di-deploy)
+```powershell
+cd D:\Users\user27\coupon-aggregator
+# Edit code di backend/...
+git add .
+git commit -m "fix: deskripsi perubahan"
+git push
+# Railway/Render auto-rebuild ~2-3 menit
 ```
 
-### Add Custom Domain (Opsional)
-
-1. Vercel dashboard → project → **Settings** → **Domains**
-2. Tambahin domain lo (e.g. `superkupon.id`)
-3. Set DNS record sesuai instruksi (CNAME / A record)
+### Manual rollback
+1. Buka https://vercel.com/isradomino-dots-projects/superkupon/deployments
+2. Klik deployment lama yang masih working → klik **"..."** → **"Promote to Production"**
 
 ---
 
-## Part 3: Deploy Backend FastAPI
+## ⚙️ Build Settings (Vercel)
 
-Backend gak bisa di Vercel — Vercel cocok untuk Next.js serverless. Pilih hosting:
+| Setting | Value |
+|---|---|
+| Framework | Next.js |
+| Root Directory | `web` |
+| Build Command | `next build` (default) |
+| Output Directory | `.next` (default) |
+| Install Command | `npm install` |
+| Node Version | 22.x (Vercel default) |
+| Next.js Version | 16.2.7 |
 
-### Opsi A: Railway (Recommended — easiest)
+## 🔐 Environment Variables (Vercel)
 
-1. Buka https://railway.app → Sign in dengan GitHub
-2. **New Project** → **Deploy from GitHub repo** → pilih `superkupon`
-3. Settings:
-   - **Root Directory**: `backend`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. **Variables** tab — tambahin env (kalau ada secret):
-   - Misalnya `DATABASE_URL` kalau pakai Postgres external
-5. Deploy → akan dapat URL `https://xxx.railway.app`
+Saat ini belum ada env vars di-set. Yang perlu ditambah setelah backend deploy:
 
-### Opsi B: Render
+| Key | Value | Where |
+|---|---|---|
+| `NEXT_PUBLIC_API_BASE` | `https://YOUR-backend-url` | Production, Preview, Development |
 
-1. https://render.com → New → **Web Service**
-2. Connect repo, root `backend`
-3. Build: `pip install -r requirements.txt`
-4. Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-5. Plan: Free (cold-start lag) atau Starter $7/month
-
-### Opsi C: Fly.io (Lebih advanced, cheap)
-
-```bash
-curl -L https://fly.io/install.sh | sh
-fly auth login
-cd backend
-fly launch    # interactive setup
-fly deploy
-```
+Set via:
+- Dashboard: vercel.com → Project → Settings → Environment Variables
+- CLI: `vercel env add NEXT_PUBLIC_API_BASE production`
 
 ---
 
-## Part 4: Update Frontend Env
+## 📊 Monitoring
 
-Setelah backend deployed, update env di Vercel:
-
-1. Vercel dashboard → project → **Settings** → **Environment Variables**
-2. Edit `NEXT_PUBLIC_API_BASE` ke URL backend production:
-   ```
-   NEXT_PUBLIC_API_BASE=https://your-backend.railway.app
-   ```
-3. **Redeploy** project (Deployments → ⋯ → Redeploy)
+- **Deployments:** https://vercel.com/isradomino-dots-projects/superkupon/deployments
+- **Build logs:** klik deployment → "Logs" tab
+- **Runtime logs:** Project → "Logs" sidebar (real-time function errors)
+- **Analytics:** Project → "Analytics" sidebar (Hobby = basic)
 
 ---
 
-## Part 5: Update Supabase Allowed URLs
+## 🚨 Troubleshooting
 
-Supabase butuh tau URL frontend buat OAuth callback:
-
-1. Supabase dashboard → **Authentication** → **URL Configuration**
-2. **Site URL**: `https://superkupon.vercel.app` (atau custom domain lo)
-3. **Redirect URLs** (allowed): tambahin:
-   - `https://superkupon.vercel.app/**`
-   - `http://localhost:3010/**` (untuk dev lokal)
-
----
-
-## Part 6: Setup OAuth Providers (Google + GitHub)
-
-### Google OAuth
-
-1. Buka https://console.cloud.google.com
-2. Create project baru → **APIs & Services** → **Credentials**
-3. **Create Credentials** → **OAuth client ID** → Web application
-4. **Authorized redirect URIs**: copy URL dari Supabase dashboard:
-   - Supabase → Authentication → Providers → Google → "Redirect URL" (biasanya `https://xxx.supabase.co/auth/v1/callback`)
-5. Copy **Client ID** & **Client Secret**
-6. Balik ke Supabase → Authentication → Providers → Google:
-   - Enable toggle
-   - Paste Client ID + Secret
-   - Save
-
-### GitHub OAuth
-
-1. https://github.com/settings/developers → **New OAuth App**
-2. Fields:
-   - **Homepage URL**: `https://superkupon.vercel.app`
-   - **Authorization callback URL**: copy dari Supabase (sama kayak Google)
-3. **Register application**
-4. Generate Client Secret
-5. Supabase → Authentication → Providers → GitHub:
-   - Enable + paste Client ID + Secret
-
----
-
-## Part 6.5: Enable Realtime Subscription
-
-Realtime untuk `projects` table sudah otomatis enabled via `supabase_schema.sql` (`alter publication supabase_realtime add table public.projects`).
-
-Verify di Supabase dashboard:
-
-1. **Database** → **Publications** → **supabase_realtime**
-2. Pastikan `public.projects` ada di "Tables in publication"
-3. Kalau belum, klik **Source: public** → toggle checkbox `projects` → Save
-
-Cara test realtime jalan:
-1. Sign in dengan akun yang sama di **2 browser tab** (atau 1 tab + 1 device)
-2. Tab A: buka `/dashboard/projects` → buat project baru
-3. Tab B: project bakal **otomatis muncul** dalam <2 detik tanpa refresh
-4. Sidebar: indicator "● Live" + counter event muncul
-5. Toast notification "✨ Project dibuat: ..." pop-up bottom-right
-
-### Quotas Realtime (Free Tier)
-
-- 2 concurrent connections per user
-- 200 concurrent connections per project total
-- Cukup untuk dev + small production
-
-Upgrade ke Pro tier ($25/mo) buat 500 concurrent + tambahan throughput.
-
-### Troubleshooting Realtime
-
-**Indicator stuck di "Connecting…"**
-- Realtime gak enabled — re-run SQL `alter publication supabase_realtime add table public.projects`
-- Atau Database → Publications → enable via UI
-
-**Indicator "Error"**
-- Cek browser console — ada WebSocket connection error?
-- Cek RLS policy — user gak bisa subscribe kalau policy block
-
-**Event muncul lambat (>5 detik)**
-- Free tier ada throttling — upgrade plan kalau butuh sub-second
-
-**Echo: edit di tab sendiri muncul sebagai realtime event**
-- Sudah ditangani via `localOpRef` di useProjects — skip echo 2 detik
-
----
-
-## Part 7: Verify Production
-
-1. Buka URL Vercel (e.g. https://superkupon.vercel.app)
-2. Test:
-   - Browse kupon (harusnya data dari backend production muncul)
-   - Sign in via Google/GitHub button
-   - Buka `/dashboard/projects` → buat project test
-   - Buka Supabase dashboard → Table Editor → `projects` → cek row baru
-3. Cek browser console — gak ada error CORS atau 404
-
----
-
-## Troubleshooting
-
-**CORS error saat fetch backend dari Vercel domain**
-- Backend FastAPI: pastiin `allow_origins` include Vercel domain di `CORSMiddleware`
-- File `backend/app/main.py` punya `allow_origin_regex=r"http(s)?://.*"` cukup permissive
-
-**OAuth callback gagal redirect**
-- Cek Supabase Site URL & Redirect URLs include domain Vercel
-- Cek OAuth provider (Google/GitHub) callback URL match dengan Supabase
-
-**Build failed di Vercel**
-- Cek `web/package.json` script `build` valid
-- Cek deps: `npm install` di lokal jalan tanpa error
-- Cek Node version: Vercel default Node 20
-
-**Backend cold start lambat (Railway/Render free tier)**
-- Free tier auto-sleep — first request after idle slow (~5-10s)
-- Upgrade ke paid tier atau pakai uptime ping service (Uptimerobot)
-
----
-
-## Production Checklist
-
-- [ ] `.env.local` NOT in git (cek `.gitignore`)
-- [ ] Vercel env vars set (3 variables)
-- [ ] Backend deployed + healthy
-- [ ] Supabase Site URL configured
-- [ ] OAuth providers active (Google + GitHub)
-- [ ] Custom domain (opsional)
-- [ ] Analytics setup (Vercel Analytics free tier)
-- [ ] Error monitoring (Sentry/LogRocket opsional)
-
----
-
-## Continuous Deployment
-
-Vercel auto-deploy tiap push ke `main`. Untuk preview deployments:
-- Push ke branch lain → Vercel auto-create preview URL
-- Berguna buat test fitur sebelum merge
-
-Setup branch protection di GitHub → require Vercel checks pass sebelum merge.
+| Problem | Fix |
+|---|---|
+| Build fail di Vercel tapi local pass | Cek Node version (Vercel 22 vs local 24+), case-sensitive imports |
+| Frontend "Failed to fetch" | Backend belum deploy / `NEXT_PUBLIC_API_BASE` salah |
+| CORS error | Backend CORS_ORIGIN_REGEX harus include `vercel.app` (sudah di config.py) |
+| Security CVE block | Update package: `npm install next@latest` di `web/` |
+| Vercel quota habis | Hobby = 100GB/bln bandwidth, monitor via Usage tab |

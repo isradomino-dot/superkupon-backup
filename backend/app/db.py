@@ -1,8 +1,12 @@
+import logging
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 from typing import Generator
 
-from app.config import settings
+from app.config import settings, BASE_DIR
+
+logger = logging.getLogger(__name__)
 
 
 def _normalize_url(url: str) -> str:
@@ -14,7 +18,19 @@ def _normalize_url(url: str) -> str:
 
     SQLAlchemy default driver = psycopg2 (gak ke-install).
     Project pakai psycopg3, jadi paksa pake driver `postgresql+psycopg://`.
+
+    Fallback: kalo DATABASE_URL kosong/invalid (misal Postgres belum
+    di-link di Railway), pakai SQLite di tmp folder supaya app tetap nyala.
     """
+    # Fallback ke SQLite kalo URL kosong / whitespace doang / format aneh
+    if not url or not url.strip() or "://" not in url:
+        fallback = f"sqlite:////tmp/coupon_fallback.db"
+        logger.warning(
+            "DATABASE_URL empty/invalid (%r), falling back to SQLite: %s. "
+            "Data akan reset tiap restart — link Postgres service untuk persist.",
+            url, fallback,
+        )
+        return fallback
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg://", 1)
     if url.startswith("postgresql://") and "+" not in url.split("://", 1)[0]:

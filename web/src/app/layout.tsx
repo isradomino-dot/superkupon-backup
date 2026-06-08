@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 
 import { I18nProvider } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -26,14 +27,46 @@ import { Sidebar } from "@/components/Sidebar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SuperKupon — Aggregator Kupon Digital Indonesia",
+  metadataBase: new URL("https://superkupon.vercel.app"),
+  title: {
+    default: "SuperKupon — Aggregator Kupon Digital Indonesia",
+    template: "%s | SuperKupon",
+  },
   description:
-    "Kupon digital terbaru dari Shopee, DANA, OVO, Tix ID, Tokopedia, Traveloka, dll dalam satu aplikasi.",
+    "Kupon digital terbaru dari Shopee, DANA, OVO, Tix ID, Tokopedia, Traveloka, dll dalam satu aplikasi. Update otomatis tiap jam.",
+  keywords: [
+    "kupon", "promo", "diskon", "voucher", "kupon digital", "shopee", "tokopedia",
+    "ovo", "dana", "gojek", "grab", "traveloka", "klook", "blibli", "lazada", "indonesia",
+  ],
+  authors: [{ name: "SuperKupon" }],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: "SuperKupon",
     statusBarStyle: "default",
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "https://superkupon.vercel.app",
+    title: "SuperKupon — Aggregator Kupon Digital Indonesia",
+    description:
+      "159+ kupon aktif dari 22 merchant Indonesia. Update otomatis. 100% gratis.",
+    siteName: "SuperKupon",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SuperKupon — Aggregator Kupon Digital",
+    description: "159+ kupon aktif dari 22 merchant Indonesia. Update otomatis.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+    },
   },
 };
 
@@ -106,6 +139,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SavedSearchWatcher />
             <PWAInstallBanner />
             <ScrollToTopButton />
+            <Analytics />
           </NotificationProvider>
           </FavoritesProvider>
           </StreakProvider>

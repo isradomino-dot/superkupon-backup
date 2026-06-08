@@ -1,12 +1,17 @@
 import logging
 from pathlib import Path
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 from typing import Generator
 
 from app.config import settings, BASE_DIR
 
 logger = logging.getLogger(__name__)
+
+
+def is_postgres() -> bool:
+    """Detect kalau engine pakai Postgres (vs SQLite fallback). Dipake buat fitur Postgres-only spt pg_trgm."""
+    return engine.dialect.name == "postgresql"
 
 
 def _normalize_url(url: str) -> str:
@@ -74,3 +79,22 @@ def init_db() -> None:
     """
     from app import models  # noqa: F401 — register models
     Base.metadata.create_all(bind=engine)
+
+    # pg_trgm: fuzzy search extension untuk toleransi typo (Postgres-only).
+    # Bikin GIN index di merchant.name + slug supaya similarity() query cepat.
+    if is_postgres():
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+                conn.execute(text(
+                    "CREATE INDEX IF NOT EXISTS idx_merchants_name_trgm "
+                    "ON merchants USING gin (lower(name) gin_trgm_ops)"
+                ))
+                conn.execute(text(
+                    "CREATE INDEX IF NOT EXISTS idx_merchants_slug_trgm "
+                    "ON merchants USING gin (lower(slug) gin_trgm_ops)"
+                ))
+                conn.commit()
+                logger.info("pg_trgm + GIN trigram indexes ready")
+            except Exception as e:
+                logger.warning(f"pg_trgm setup skipped: {e}")

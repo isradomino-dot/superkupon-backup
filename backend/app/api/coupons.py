@@ -4,9 +4,37 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, func
 from sqlalchemy.orm import Session, joinedload
 
-from app.db import get_db
+from app.db import get_db, is_postgres
 from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
+
+
+def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.4) -> Optional[str]:
+    """Toleransi typo via pg_trgm similarity. Return slug merchant terdekat (atau None).
+
+    "shoope" → "shopee" (sim ~0.83), "tokpedia" → "tokopedia" (~0.88), "lazda" → "lazada".
+    Postgres-only; fallback None di SQLite.
+    """
+    if not is_postgres() or len(token) < 4:
+        return None
+    sim = func.similarity(func.lower(Merchant.name), token)
+    row = (
+        db.query(Merchant.slug, sim.label("score"))
+        .filter(sim >= threshold)
+        .order_by(sim.desc())
+        .first()
+    )
+    if row:
+        return row[0]
+    # Coba juga match terhadap slug langsung
+    sim_slug = func.similarity(func.lower(Merchant.slug), token)
+    row = (
+        db.query(Merchant.slug, sim_slug.label("score"))
+        .filter(sim_slug >= threshold)
+        .order_by(sim_slug.desc())
+        .first()
+    )
+    return row[0] if row else None
 
 router = APIRouter(prefix="/coupons", tags=["coupons"])
 
@@ -57,6 +85,14 @@ def list_coupons(
                     merchant = row[0]
                     q_tokens.remove(t)
                     break
+            # Tier 2: fuzzy fallback kalau exact slug ga match — handle typo spt "shoope" → "shopee"
+            if not merchant:
+                for t in list(q_tokens):
+                    fuzzy_slug = _fuzzy_merchant_match(db, t)
+                    if fuzzy_slug:
+                        merchant = fuzzy_slug
+                        q_tokens.remove(t)
+                        break
         if q_tokens and not category:
             for t in list(q_tokens):
                 row = db.query(Category.slug).filter(func.lower(Category.slug) == t).first()

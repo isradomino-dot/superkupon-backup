@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.db import get_db
+from app.db import get_db, is_postgres
 from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
 
@@ -42,6 +42,20 @@ def autocomplete(
         .limit(limit_per_type)
         .all()
     )
+
+    # Fuzzy fallback (pg_trgm) kalau substring ga nemu apa-apa — handle typo spt "shoope".
+    # Threshold 0.4: cukup ketat supaya "abc" ga match semua merchant.
+    if not merchants and is_postgres() and len(query) >= 4:
+        sim = func.similarity(func.lower(Merchant.name), query.lower())
+        merchants = (
+            db.query(Merchant.slug, Merchant.name, func.count(Coupon.id).label("count"))
+            .outerjoin(Coupon, (Coupon.merchant_id == Merchant.id) & (Coupon.status == "active"))
+            .filter(sim >= 0.4)
+            .group_by(Merchant.id, Merchant.slug, Merchant.name)
+            .order_by(sim.desc())
+            .limit(limit_per_type)
+            .all()
+        )
 
     categories = (
         db.query(Category.slug, Category.name, func.count(Coupon.id).label("count"))

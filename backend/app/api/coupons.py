@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.db import get_db
@@ -9,6 +9,15 @@ from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
 
 router = APIRouter(prefix="/coupons", tags=["coupons"])
+
+# Kata umum yg muncul di banyak title/desc kupon → bukan signal pencarian.
+# Kalau user ngetik "kupon shopee", "shopee" itu yg penting; "kupon" buang.
+INDONESIAN_STOPWORDS = {
+    "kupon", "promo", "diskon", "voucher", "kode",
+    "cashback", "gratis", "ongkir", "untuk", "dengan",
+    "yang", "dan", "atau", "dari", "ada", "aja",
+    "pakai", "buat", "rp",
+}
 
 
 @router.get("", response_model=List[CouponOut])
@@ -31,6 +40,31 @@ def list_coupons(
         .options(joinedload(Coupon.merchant), joinedload(Coupon.category))
     )
 
+    # Parse q: buang stopwords + auto-detect kalau token cocok dengan merchant/category slug.
+    # Tujuannya: "shopee" → filter merchant=shopee (bukan substring match yg ngembaliin BCA-cashback-di-shopee duluan).
+    q_tokens: list[str] = []
+    if q:
+        tokens_raw = [t for t in q.lower().split() if len(t) >= 2]
+        q_tokens = [t for t in tokens_raw if t not in INDONESIAN_STOPWORDS]
+        # Kalau semuanya stopword, fallback ke raw (mendingan ada hasil drpd 0)
+        if not q_tokens:
+            q_tokens = tokens_raw
+
+        if q_tokens and not merchant:
+            for t in list(q_tokens):
+                row = db.query(Merchant.slug).filter(func.lower(Merchant.slug) == t).first()
+                if row:
+                    merchant = row[0]
+                    q_tokens.remove(t)
+                    break
+        if q_tokens and not category:
+            for t in list(q_tokens):
+                row = db.query(Category.slug).filter(func.lower(Category.slug) == t).first()
+                if row:
+                    category = row[0]
+                    q_tokens.remove(t)
+                    break
+
     if status:
         query = query.filter(Coupon.status == status)
     else:
@@ -44,24 +78,21 @@ def list_coupons(
         query = query.join(Merchant).filter(Merchant.slug == merchant)
     if category:
         query = query.join(Category).filter(Category.slug == category)
-    if q:
-        # Normalize: lowercase, collapse whitespace, drop tokens < 2 chars
-        tokens = [t for t in q.lower().split() if len(t) >= 2]
-        for token in tokens:
-            pattern = f"%{token}%"
-            query = query.filter(
-                or_(
-                    Coupon.title.ilike(pattern),
-                    Coupon.description.ilike(pattern),
-                    Coupon.code.ilike(pattern),
-                    Coupon.merchant.has(
-                        or_(
-                            Merchant.name.ilike(pattern),
-                            Merchant.slug.ilike(pattern),
-                        )
-                    ),
-                )
+    for token in q_tokens:
+        pattern = f"%{token}%"
+        query = query.filter(
+            or_(
+                Coupon.title.ilike(pattern),
+                Coupon.description.ilike(pattern),
+                Coupon.code.ilike(pattern),
+                Coupon.merchant.has(
+                    or_(
+                        Merchant.name.ilike(pattern),
+                        Merchant.slug.ilike(pattern),
+                    )
+                ),
             )
+        )
     if min_quality > 0:
         query = query.filter(Coupon.quality_score >= min_quality)
     if discount_type:

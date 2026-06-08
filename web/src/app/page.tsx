@@ -304,9 +304,6 @@ function Home() {
         <p className="relative mt-2 max-w-2xl text-sm text-white/90 sm:text-base">
           {t("site.description")}
         </p>
-        <div className="relative mt-4 max-w-xl">
-          <SearchBar />
-        </div>
       </section>
 
       {/* Top Picks horizontal carousel */}

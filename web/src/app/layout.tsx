@@ -20,8 +20,6 @@ import { FavoriteExpiryWatcher } from "@/components/FavoriteExpiryWatcher";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { SavedSearchWatcher } from "@/components/SavedSearchWatcher";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
-import { AuthProvider } from "@/lib/use-auth";
-import { AuthButton } from "@/components/AuthButton";
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
@@ -101,7 +99,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <I18nProvider>
-          <AuthProvider>
           <HistoryProvider>
           <StreakProvider>
           <FavoritesProvider>
@@ -116,7 +113,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   SuperKupon
                 </Link>
                 <div className="flex items-center gap-2">
-                  <AuthButton />
                   <StreakIndicator />
                   <HistoryLink />
                   <FavoritesLink />
@@ -144,7 +140,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </FavoritesProvider>
           </StreakProvider>
           </HistoryProvider>
-          </AuthProvider>
         </I18nProvider>
       </body>
     </html>
@@ -166,10 +161,6 @@ function Footer() {
         <span className="opacity-40"> · </span>
         <Link href="/map" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
           🗺️ Map View
-        </Link>
-        <span className="opacity-40"> · </span>
-        <Link href="/dashboard" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🏠 Dashboard
         </Link>
         <span className="opacity-40"> · </span>
         <Link href="/alerts" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">

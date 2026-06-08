@@ -25,13 +25,6 @@ const SECTIONS: Section[] = [
       { href: "/mockup", icon: "🎨", label: "Design Lab" },
     ],
   },
-  {
-    label: "Account",
-    items: [
-      { href: "/dashboard", icon: "📊", label: "Dashboard" },
-      { href: "/dashboard/projects", icon: "📁", label: "Projects" },
-    ],
-  },
 ];
 
 export function Sidebar() {

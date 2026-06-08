@@ -364,7 +364,7 @@ function Home() {
         <ScrollReveal>
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white">Fitur Tambahan</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
                 {
                   href: "/alerts",
@@ -386,13 +386,6 @@ function Home() {
                   title: "Wishlist & Favorit",
                   desc: "Simpan kupon favoritmu untuk diakses cepat saat butuh nanti.",
                   cta: "Lihat Wishlist",
-                },
-                {
-                  href: "/map",
-                  emoji: "🗺️",
-                  title: "Peta Toko Terdekat",
-                  desc: "Cari merchant terdekat yang punya promo aktif di sekitarmu.",
-                  cta: "Buka Peta",
                 },
               ].map((f) => (
                 <div

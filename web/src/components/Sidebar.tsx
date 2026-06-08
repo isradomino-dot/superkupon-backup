@@ -12,7 +12,6 @@ const SECTIONS: Section[] = [
     label: "Browse",
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
-      { href: "/map", icon: "🗺️", label: "Peta Toko" },
       { href: "/history", icon: "🕒", label: "Riwayat" },
     ],
   },

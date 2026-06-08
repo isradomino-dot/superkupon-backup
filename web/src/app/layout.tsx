@@ -159,10 +159,6 @@ function Footer() {
           🎨 Design Lab
         </Link>
         <span className="opacity-40"> · </span>
-        <Link href="/map" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🗺️ Map View
-        </Link>
-        <span className="opacity-40"> · </span>
         <Link href="/alerts" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
           🔔 Alerts
         </Link>

@@ -9,22 +9,27 @@ from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
 
 
-def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.4) -> Optional[str]:
+def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.5) -> Optional[str]:
     """Toleransi typo via pg_trgm similarity. Return slug merchant terdekat (atau None).
 
     "shoope" → "shopee" (sim ~0.83), "tokpedia" → "tokopedia" (~0.88), "lazda" → "lazada".
+
+    Reject overreach: kalau panjang token >2 karakter beda dari merchant name,
+    anggap user lagi gabungin kata (mis. "shopeeovo") — bukan typo.
+    Tanpa check ini, "shopeeovo" salah cocokin Shopee dgn similarity 0.6.
+
     Postgres-only; fallback None di SQLite.
     """
     if not is_postgres() or len(token) < 4:
         return None
     sim = func.similarity(func.lower(Merchant.name), token)
     row = (
-        db.query(Merchant.slug, sim.label("score"))
+        db.query(Merchant.slug, Merchant.name, sim.label("score"))
         .filter(sim >= threshold)
         .order_by(sim.desc())
         .first()
     )
-    if row:
+    if row and abs(len(row[1]) - len(token)) <= 2:
         return row[0]
     # Coba juga match terhadap slug langsung
     sim_slug = func.similarity(func.lower(Merchant.slug), token)
@@ -34,7 +39,9 @@ def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.4) -> Op
         .order_by(sim_slug.desc())
         .first()
     )
-    return row[0] if row else None
+    if row and abs(len(row[0]) - len(token)) <= 2:
+        return row[0]
+    return None
 
 router = APIRouter(prefix="/coupons", tags=["coupons"])
 

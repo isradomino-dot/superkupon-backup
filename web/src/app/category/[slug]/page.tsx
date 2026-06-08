@@ -6,6 +6,8 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
   const [categories, coupons] = await Promise.all([

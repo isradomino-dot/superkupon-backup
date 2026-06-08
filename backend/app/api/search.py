@@ -44,18 +44,20 @@ def autocomplete(
     )
 
     # Fuzzy fallback (pg_trgm) kalau substring ga nemu apa-apa — handle typo spt "shoope".
-    # Threshold 0.4: cukup ketat supaya "abc" ga match semua merchant.
+    # Threshold 0.5 + length check supaya "shopeeovo" gak salah cocokin Shopee.
     if not merchants and is_postgres() and len(query) >= 4:
         sim = func.similarity(func.lower(Merchant.name), query.lower())
-        merchants = (
-            db.query(Merchant.slug, Merchant.name, func.count(Coupon.id).label("count"))
+        candidates = (
+            db.query(Merchant.slug, Merchant.name, func.count(Coupon.id).label("count"), sim.label("score"))
             .outerjoin(Coupon, (Coupon.merchant_id == Merchant.id) & (Coupon.status == "active"))
-            .filter(sim >= 0.4)
+            .filter(sim >= 0.5)
             .group_by(Merchant.id, Merchant.slug, Merchant.name)
             .order_by(sim.desc())
-            .limit(limit_per_type)
+            .limit(limit_per_type * 2)
             .all()
         )
+        # Reject panjang yg terlalu beda — anti-overreach (mis. "shopeeovo" jangan match Shopee)
+        merchants = [c for c in candidates if abs(len(c[1]) - len(query)) <= 2][:limit_per_type]
 
     categories = (
         db.query(Category.slug, Category.name, func.count(Coupon.id).label("count"))

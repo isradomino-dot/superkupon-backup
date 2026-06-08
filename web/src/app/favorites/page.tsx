@@ -9,6 +9,7 @@ import { CouponCard } from "@/components/CouponCard";
 import { CouponSkeletonGrid } from "@/components/CouponSkeleton";
 import { ExportImportControl } from "@/components/ExportImportControl";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
+import { SavingsTracker } from "@/components/SavingsTracker";
 import { useFavorites } from "@/lib/use-favorites";
 
 export default function FavoritesPage() {
@@ -137,6 +138,8 @@ export default function FavoritesPage() {
           )}
         </div>
       </header>
+
+      <SavingsTracker />
 
       <ExportImportControl />
 

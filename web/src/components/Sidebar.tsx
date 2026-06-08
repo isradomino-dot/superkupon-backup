@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { SurpriseMeButton } from "@/components/SurpriseMeButton";
+
 type Item = { href: string; icon: string; label: string; badge?: string };
 type Section = { label: string; items: Item[] };
 
@@ -19,6 +21,7 @@ const SECTIONS: Section[] = [
     label: "Tools",
     items: [
       { href: "/favorites", icon: "⭐", label: "Favorit" },
+      { href: "/compare", icon: "📊", label: "Compare Kupon" },
       { href: "/alerts", icon: "🔔", label: "Saved Alerts" },
       { href: "/bookmarklet", icon: "🔖", label: "Bookmarklet" },
       { href: "/mockup", icon: "🎨", label: "Design Lab" },
@@ -127,10 +130,8 @@ export function Sidebar() {
             ))}
           </nav>
 
-          <div className="mt-5 space-y-2 border-t border-brand-500/15 pt-4">
-            <p className="px-1 text-[10px] uppercase tracking-widest text-brand-500/40">
-              Quick Tip
-            </p>
+          <div className="mt-5 space-y-3 border-t border-brand-500/15 pt-4">
+            <SurpriseMeButton />
             <p className="px-1 text-[11px] leading-relaxed text-gray-400">
               Press <kbd className="rounded border border-brand-500/30 bg-brand-500/10 px-1 py-0.5 text-[10px] text-brand-300">/</kbd> untuk fokus ke search.
             </p>

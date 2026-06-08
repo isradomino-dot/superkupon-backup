@@ -19,6 +19,7 @@ import { AutoRefreshControl } from "@/components/AutoRefreshControl";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { FollowedMerchantsSection } from "@/components/FollowedMerchantsSection";
 import { TopPicksCarousel } from "@/components/TopPicksCarousel";
+import { TrendingNowSection } from "@/components/TrendingNowSection";
 import { RightSidebar } from "@/components/RightSidebar";
 import { DiscountSlider } from "@/components/DiscountSlider";
 import { SmartLink } from "@/components/SmartLink";
@@ -305,6 +306,13 @@ function Home() {
           {t("site.description")}
         </p>
       </section>
+
+      {/* Live Trending — kupon paling rame saat ini */}
+      {!isSearching && (
+        <ScrollReveal>
+          <TrendingNowSection />
+        </ScrollReveal>
+      )}
 
       {/* Top Picks horizontal carousel */}
       {!isSearching && (

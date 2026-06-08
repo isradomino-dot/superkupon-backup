@@ -117,6 +117,13 @@ export async function getAutocomplete(
   );
 }
 
+export async function getTrendingNow(
+  limit = 8,
+  opts: FetchOptions = {},
+): Promise<Coupon[]> {
+  return get<Coupon[]>(`/coupons/trending/now?limit=${limit}`, opts);
+}
+
 export async function getRecommendations(
   filters: {
     category?: string;

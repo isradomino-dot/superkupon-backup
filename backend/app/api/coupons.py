@@ -181,6 +181,30 @@ def get_coupons_by_ids(
     )
 
 
+@router.get("/trending/now", response_model=List[CouponOut])
+def trending_now(
+    limit: int = Query(8, ge=1, le=20),
+    db: Session = Depends(get_db),
+):
+    """Top kupon yang paling rame di-engage (view + redeem dgn bobot redeem 5x).
+
+    Engagement score = view_count + (redeem_count * 5). Tie-break by quality_score.
+    Hanya kupon active + belum expired.
+    """
+    from sqlalchemy import case
+    score = func.coalesce(Coupon.view_count, 0) + func.coalesce(Coupon.redeem_count, 0) * 5
+    return (
+        db.query(Coupon)
+        .options(joinedload(Coupon.merchant), joinedload(Coupon.category))
+        .filter(Coupon.status.in_(["active", "expiring_soon"]))
+        .filter(or_(Coupon.expires_at.is_(None), Coupon.expires_at >= datetime.utcnow()))
+        .filter(score > 0)
+        .order_by(score.desc(), Coupon.quality_score.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 @router.post("/{coupon_id}/view")
 def track_view(coupon_id: int, db: Session = Depends(get_db)):
     coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()

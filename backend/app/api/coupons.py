@@ -9,7 +9,7 @@ from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
 
 
-def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.5) -> Optional[str]:
+def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.35) -> Optional[str]:
     """Toleransi typo via pg_trgm similarity. Return slug merchant terdekat (atau None).
 
     "shoope" → "shopee" (sim ~0.83), "tokpedia" → "tokopedia" (~0.88), "lazda" → "lazada".

@@ -50,7 +50,7 @@ def autocomplete(
         candidates = (
             db.query(Merchant.slug, Merchant.name, func.count(Coupon.id).label("count"), sim.label("score"))
             .outerjoin(Coupon, (Coupon.merchant_id == Merchant.id) & (Coupon.status == "active"))
-            .filter(sim >= 0.5)
+            .filter(sim >= 0.35)
             .group_by(Merchant.id, Merchant.slug, Merchant.name)
             .order_by(sim.desc())
             .limit(limit_per_type * 2)

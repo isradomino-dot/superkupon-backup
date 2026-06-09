@@ -15,7 +15,7 @@ const SECTIONS: Section[] = [
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
       { href: "/decide", icon: "🧭", label: "Decision Helper", badge: "NEW" },
-      { href: "/calendar", icon: "📅", label: "Calendar Kupon" },
+      { href: "/kalkulator", icon: "🧮", label: "Kalkulator Hemat", badge: "BARU" },
       { href: "/stats", icon: "📊", label: "Statistik" },
       { href: "/history", icon: "🕒", label: "Riwayat" },
     ],

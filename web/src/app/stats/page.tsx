@@ -142,7 +142,7 @@ export default function StatsPage() {
                       {i + 1}
                     </span>
                     <MerchantLogo
-                      merchant={{ slug: m.slug, name: m.name, id: 0 }}
+                      merchant={{ slug: m.slug, name: m.name }}
                       size={32}
                       rounded="md"
                     />

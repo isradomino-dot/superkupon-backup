@@ -20,6 +20,7 @@ import { MerchantLogo } from "@/components/MerchantLogo";
 import { FollowedMerchantsSection } from "@/components/FollowedMerchantsSection";
 import { TopPicksCarousel } from "@/components/TopPicksCarousel";
 import { TrendingNowSection } from "@/components/TrendingNowSection";
+import { SmartPick } from "@/components/SmartPick";
 import { RightSidebar } from "@/components/RightSidebar";
 import { DiscountSlider } from "@/components/DiscountSlider";
 import { SmartLink } from "@/components/SmartLink";
@@ -307,9 +308,16 @@ function Home() {
         </p>
       </section>
 
-      {/* Live Trending — kupon paling rame saat ini */}
+      {/* Smart Pick — pilih goal */}
       {!isSearching && (
         <ScrollReveal>
+          <SmartPick />
+        </ScrollReveal>
+      )}
+
+      {/* Live Trending — kupon paling rame saat ini */}
+      {!isSearching && (
+        <ScrollReveal delay={50}>
           <TrendingNowSection />
         </ScrollReveal>
       )}

@@ -14,6 +14,8 @@ const SECTIONS: Section[] = [
     label: "Browse",
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
+      { href: "/calendar", icon: "📅", label: "Calendar Kupon" },
+      { href: "/stats", icon: "📊", label: "Statistik" },
       { href: "/history", icon: "🕒", label: "Riwayat" },
     ],
   },
@@ -21,7 +23,7 @@ const SECTIONS: Section[] = [
     label: "Tools",
     items: [
       { href: "/favorites", icon: "⭐", label: "Favorit" },
-      { href: "/compare", icon: "📊", label: "Compare Kupon" },
+      { href: "/compare", icon: "⚖️", label: "Compare Kupon" },
       { href: "/alerts", icon: "🔔", label: "Saved Alerts" },
       { href: "/bookmarklet", icon: "🔖", label: "Bookmarklet" },
       { href: "/mockup", icon: "🎨", label: "Design Lab" },

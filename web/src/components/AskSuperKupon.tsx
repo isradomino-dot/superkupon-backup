@@ -66,12 +66,42 @@ interface ParseResult {
   region?: string;
   min_discount?: number;
   q?: string;
+  sort: "quality" | "discount" | "newest" | "expiring" | "popular";
   matched: string[];
+  intent: "greeting" | "thanks" | "about" | "search";
+}
+
+// Conversational intent detection (greetings, etc)
+function detectConversational(text: string): "greeting" | "thanks" | "about" | null {
+  const lower = text.toLowerCase().trim();
+  if (/^(halo|hai|hi|hello|p|test|tes|coba)$/i.test(lower)) return "greeting";
+  if (/(makasih|terima kasih|thank|thx|tq)/i.test(lower)) return "thanks";
+  if (/(siapa kamu|kamu siapa|apa kamu|tentang|about)/i.test(lower)) return "about";
+  return null;
+}
+
+// Sort intent from keywords
+function detectSort(lower: string): { sort: ParseResult["sort"]; matched?: string } {
+  if (/(diskon\s*(paling\s*)?(besar|gede|tinggi)|tertinggi|termahal|gede)/i.test(lower))
+    return { sort: "discount", matched: "diskon terbesar" };
+  if (/(terbaru|baru|fresh|update)/i.test(lower)) return { sort: "newest", matched: "terbaru" };
+  if (/(expire|expiring|habis|berakhir|hampir)/i.test(lower))
+    return { sort: "expiring", matched: "hampir expire" };
+  if (/(populer|popular|rame|hot|trending|viral)/i.test(lower))
+    return { sort: "popular", matched: "populer" };
+  return { sort: "quality" };
 }
 
 function parseQuery(text: string): ParseResult {
   const lower = text.toLowerCase();
-  const result: ParseResult = { matched: [] };
+  const result: ParseResult = { matched: [], sort: "quality", intent: "search" };
+
+  // Conversational first
+  const conv = detectConversational(text);
+  if (conv) {
+    result.intent = conv;
+    return result;
+  }
 
   // Detect merchant (priority — most specific)
   for (const [kw, slug] of Object.entries(MERCHANT_KEYWORDS)) {
@@ -109,6 +139,11 @@ function parseQuery(text: string): ParseResult {
     }
   }
 
+  // Detect sort intent
+  const sortDetected = detectSort(lower);
+  result.sort = sortDetected.sort;
+  if (sortDetected.matched) result.matched.push(`urut: ${sortDetected.matched}`);
+
   // Detect number for min_discount (e.g. "50 ribu", "100rb", "50%")
   const numMatch = lower.match(/(\d+)\s*(ribu|rb|k|%|persen)?/);
   if (numMatch) {
@@ -126,16 +161,136 @@ function parseQuery(text: string): ParseResult {
   return result;
 }
 
-function buildBotResponse(parsed: ParseResult, count: number): string {
-  if (count === 0) {
-    return "Hmm, aku belum nemu kupon yang cocok. Coba kata kunci lain ya — misal 'shopee diskon' atau 'kupon makan'.";
+interface SearchResponse {
+  text: string;
+  results: Coupon[];
+}
+
+/**
+ * Smart fallback chain — always returns coupons. Never empty.
+ * Strategy: try specific filter → relax one at a time → fallback to top quality.
+ */
+async function smartSearch(parsed: ParseResult): Promise<SearchResponse> {
+  // Conversational responses
+  if (parsed.intent === "greeting") {
+    return {
+      text: "Halo juga! 👋 Aku siap bantu cari kupon. Coba tanya 'kupon makan murah' atau 'shopee cashback'.",
+      results: [],
+    };
   }
+  if (parsed.intent === "thanks") {
+    return {
+      text: "Sama-sama! 🤗 Kalau butuh kupon lagi, langsung tanya aja yaa.",
+      results: [],
+    };
+  }
+  if (parsed.intent === "about") {
+    return {
+      text: "Aku SuperKupon Bot 🤖 — bantu cari kupon dari 22+ merchant Indonesia. Aku ngerti bahasa sehari-hari, jadi tanya aja bebas!",
+      results: [],
+    };
+  }
+
+  // Try with full filter
+  let results = await listCoupons({
+    merchant: parsed.merchant,
+    category: parsed.category,
+    discount_type: parsed.discount_type,
+    region: parsed.region,
+    min_discount: parsed.min_discount,
+    q: parsed.q,
+    sort: parsed.sort,
+    limit: 5,
+  }).catch(() => [] as Coupon[]);
+
+  let relaxedFilters: string[] = [];
+
+  // Relax 1: drop min_discount if too strict
+  if (results.length === 0 && parsed.min_discount) {
+    results = await listCoupons({
+      merchant: parsed.merchant,
+      category: parsed.category,
+      discount_type: parsed.discount_type,
+      region: parsed.region,
+      q: parsed.q,
+      sort: parsed.sort,
+      limit: 5,
+    }).catch(() => [] as Coupon[]);
+    if (results.length > 0) relaxedFilters.push("min diskon");
+  }
+
+  // Relax 2: drop region (less common to have data)
+  if (results.length === 0 && parsed.region) {
+    results = await listCoupons({
+      merchant: parsed.merchant,
+      category: parsed.category,
+      discount_type: parsed.discount_type,
+      sort: parsed.sort,
+      limit: 5,
+    }).catch(() => [] as Coupon[]);
+    if (results.length > 0) relaxedFilters.push("region");
+  }
+
+  // Relax 3: drop discount_type
+  if (results.length === 0 && parsed.discount_type) {
+    results = await listCoupons({
+      merchant: parsed.merchant,
+      category: parsed.category,
+      sort: parsed.sort,
+      limit: 5,
+    }).catch(() => [] as Coupon[]);
+    if (results.length > 0) relaxedFilters.push("tipe diskon");
+  }
+
+  // Relax 4: keep only merchant
+  if (results.length === 0 && parsed.merchant) {
+    results = await listCoupons({
+      merchant: parsed.merchant,
+      sort: "quality",
+      limit: 5,
+    }).catch(() => [] as Coupon[]);
+    if (results.length > 0) relaxedFilters.push("kategori");
+  }
+
+  // Relax 5: keep only category
+  if (results.length === 0 && parsed.category) {
+    results = await listCoupons({
+      category: parsed.category,
+      sort: "quality",
+      limit: 5,
+    }).catch(() => [] as Coupon[]);
+    if (results.length > 0) relaxedFilters.push("merchant");
+  }
+
+  // Last resort: top quality coupons across all
+  let usedFallback = false;
+  if (results.length === 0) {
+    results = await listCoupons({ sort: "quality", limit: 5 }).catch(
+      () => [] as Coupon[],
+    );
+    usedFallback = true;
+  }
+
+  // Build smart response
   const parts: string[] = [];
+
   if (parsed.matched.length > 0) {
-    parts.push(`Aku ngerti kamu mau: ${parsed.matched.join(", ")}.`);
+    parts.push(`Oke, aku ngerti kamu mau ${parsed.matched.join(" + ")}.`);
   }
-  parts.push(`Ini ${count} kupon yang cocok:`);
-  return parts.join(" ");
+
+  if (usedFallback) {
+    parts.push(
+      `Maaf, kriteria spesifikmu belum ada kupon yang match. Tapi aku tetap kasih ${results.length} kupon kualitas terbaik buat kamu cek 👇`,
+    );
+  } else if (relaxedFilters.length > 0) {
+    parts.push(
+      `Aku longgarin filter ${relaxedFilters.join(" + ")} biar dapat hasil terbaik. Ini ${results.length} kupon pilihan 👇`,
+    );
+  } else {
+    parts.push(`Ini ${results.length} kupon paling cocok 🎯`);
+  }
+
+  return { text: parts.join(" "), results };
 }
 
 export function AskSuperKupon() {
@@ -169,34 +324,31 @@ export function AskSuperKupon() {
     try {
       const parsed = parseQuery(text);
       // If no specific intent detected, fall back to q (substring search)
-      if (!parsed.merchant && !parsed.category && !parsed.discount_type && !parsed.region) {
+      if (
+        parsed.intent === "search" &&
+        !parsed.merchant &&
+        !parsed.category &&
+        !parsed.discount_type &&
+        !parsed.region
+      ) {
         parsed.q = text;
       }
 
-      const results = await listCoupons({
-        merchant: parsed.merchant,
-        category: parsed.category,
-        discount_type: parsed.discount_type,
-        region: parsed.region,
-        min_discount: parsed.min_discount,
-        q: parsed.q,
-        sort: "quality",
-        limit: 5,
-      }).catch(() => [] as Coupon[]);
+      const { text: botText, results } = await smartSearch(parsed);
 
       setMessages((prev) => [
         ...prev,
-        {
-          role: "bot",
-          text: buildBotResponse(parsed, results.length),
-          results: results.slice(0, 5),
-        },
+        { role: "bot", text: botText, results: results.slice(0, 5) },
       ]);
     } catch (e) {
       if (!isAbortError(e)) {
         setMessages((prev) => [
           ...prev,
-          { role: "bot", text: "Maaf, ada error. Coba lagi yaa." },
+          {
+            role: "bot",
+            text:
+              "Maaf, ada masalah teknis. Coba lagi atau buka halaman utama untuk browse manual ya.",
+          },
         ]);
       }
     } finally {

@@ -95,26 +95,46 @@ export default function DecidePage() {
 
       const cats = purpose?.categories ?? [];
 
-      // Fetch top coupons matching all criteria
-      const fetchOne = (cat?: string) =>
-        listCoupons({
-          category: cat,
-          discount_type: discount?.apiVal ?? undefined,
-          sort: "quality",
-          limit: 10,
-        }).catch(() => []);
+      // ⭐ Smart fallback chain — selalu kasih hasil, gak pernah kosong
+      const fetchByCats = async (
+        useDiscountType: boolean,
+      ): Promise<Coupon[]> => {
+        const fetchOne = (cat?: string) =>
+          listCoupons({
+            category: cat,
+            discount_type: useDiscountType ? discount?.apiVal ?? undefined : undefined,
+            sort: "quality",
+            limit: 10,
+          }).catch(() => [] as Coupon[]);
+        const all =
+          cats.length === 0
+            ? [await fetchOne(undefined)]
+            : await Promise.all(cats.map((c) => fetchOne(c)));
+        const merged: Coupon[] = [];
+        const seen = new Set<number>();
+        all.flat().forEach((c) => {
+          if (!seen.has(c.id)) {
+            seen.add(c.id);
+            merged.push(c);
+          }
+        });
+        return merged;
+      };
 
-      const allResults = cats.length === 0 ? [await fetchOne(undefined)] : await Promise.all(cats.map((c) => fetchOne(c)));
+      // Step 1: kategori + discount_type
+      let merged = await fetchByCats(true);
 
-      // Merge + dedupe
-      const merged: Coupon[] = [];
-      const seen = new Set<number>();
-      allResults.flat().forEach((c) => {
-        if (!seen.has(c.id)) {
-          seen.add(c.id);
-          merged.push(c);
-        }
-      });
+      // Step 2: relax discount_type — keep category
+      if (merged.length === 0 && discount?.apiVal) {
+        merged = await fetchByCats(false);
+      }
+
+      // Step 3: last resort — top quality across all (no category filter)
+      if (merged.length === 0) {
+        merged = await listCoupons({ sort: "quality", limit: 15 }).catch(
+          () => [] as Coupon[],
+        );
+      }
 
       // Score each: quality + budget fit + urgency fit
       const scored = merged.map((c) => {

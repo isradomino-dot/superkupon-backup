@@ -86,7 +86,14 @@ export function SmartPick() {
         }
       });
       merged.sort((a, b) => b.quality_score - a.quality_score);
-      setResults(merged.slice(0, 5));
+
+      // Fallback: kalau kategori kosong, kasih top quality coupons (selalu ada hasil)
+      if (merged.length === 0) {
+        const fallback = await listCoupons({ limit: 5, sort: "quality" }).catch(() => []);
+        setResults(fallback);
+      } else {
+        setResults(merged.slice(0, 5));
+      }
     } catch (e) {
       if (!isAbortError(e)) setResults([]);
     } finally {

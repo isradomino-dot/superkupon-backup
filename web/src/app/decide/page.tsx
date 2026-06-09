@@ -18,6 +18,13 @@ interface Answers {
   discountType: string | null;
 }
 
+interface DebugInfo {
+  baselineCount: number;
+  safetyCount: number;
+  errorMsg?: string;
+  apiBase: string;
+}
+
 interface PurposeOption {
   id: string;
   emoji: string;
@@ -67,6 +74,7 @@ export default function DecidePage() {
   });
   const [results, setResults] = useState<Coupon[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState<DebugInfo | null>(null);
 
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
@@ -87,7 +95,11 @@ export default function DecidePage() {
   const fetchRecommendation = async (e: React.MouseEvent<HTMLButtonElement>) => {
     setLoading(true);
     setStep(5);
-    console.log("[Decide v4] Start fetch:", answers);
+    setDebug(null);
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE || "(undefined!)";
+    console.log("[Decide v5] Start fetch:", answers, "API_BASE:", apiBase);
+
+    let dbg: DebugInfo = { baselineCount: 0, safetyCount: 0, apiBase };
 
     try {
       const purpose = PURPOSES.find((p) => p.id === answers.purpose);
@@ -97,29 +109,30 @@ export default function DecidePage() {
 
       const cats = purpose?.categories ?? [];
 
-      // ⭐ SIMPLE STRATEGY: Single baseline fetch (always works) + scoring
-      // Backend has 45+ active coupons, sort=quality limit=15 ALWAYS returns data.
       let merged: Coupon[] = [];
       try {
         merged = await listCoupons({ sort: "quality", limit: 20 });
-        console.log("[Decide v4] Baseline fetched:", merged.length, "coupons");
+        dbg.baselineCount = merged.length;
+        console.log("[Decide v5] Baseline:", merged.length);
       } catch (err) {
-        console.error("[Decide v4] Baseline FAILED:", err);
+        dbg.errorMsg = `Baseline: ${err instanceof Error ? err.message : String(err)}`;
+        console.error("[Decide v5] Baseline FAILED:", err);
       }
 
-      // Safety net jika baseline somehow fail
       if (merged.length === 0) {
         try {
           merged = await listCoupons({ limit: 10 });
-          console.log("[Decide v4] Safety net:", merged.length, "coupons");
+          dbg.safetyCount = merged.length;
+          console.log("[Decide v5] Safety:", merged.length);
         } catch (err) {
-          console.error("[Decide v4] Safety net FAILED:", err);
+          dbg.errorMsg = `${dbg.errorMsg ?? ""} | Safety: ${err instanceof Error ? err.message : String(err)}`;
+          console.error("[Decide v5] Safety FAILED:", err);
         }
       }
 
-      // Last resort — kalau backend bener-bener mati, kasih placeholder error
       if (merged.length === 0) {
-        console.error("[Decide v4] ALL fetches failed. Backend connection issue.");
+        console.error("[Decide v5] ALL FAILED. Debug:", dbg);
+        setDebug(dbg);
         setResults([]);
         return;
       }
@@ -389,15 +402,22 @@ export default function DecidePage() {
             <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 p-8 text-center">
               <div className="text-5xl">⚠️</div>
               <h2 className="mt-2 text-xl font-bold text-white">
-                Backend lagi bermasalah
+                Gagal connect ke backend
               </h2>
-              <p className="mt-2 max-w-md text-sm text-rose-200">
-                Sistem mestinya selalu kasih hasil. Kalau ini muncul, backend mungkin
-                lagi error. Buka <code className="rounded bg-white/10 px-1">F12 → Console</code> untuk lihat detail.
-              </p>
-              <p className="mt-2 text-xs text-rose-300">
-                [Decide v4 — buka F12 Console untuk lihat detail]
-              </p>
+              {debug && (
+                <div className="mx-auto mt-4 max-w-lg rounded-lg border border-rose-300/30 bg-black/40 p-3 text-left font-mono text-[11px] text-rose-100">
+                  <div className="mb-1 font-bold text-rose-300">🔍 Debug Info:</div>
+                  <div>API_BASE: <span className="text-amber-200">{debug.apiBase}</span></div>
+                  <div>Baseline fetch: <span className="text-amber-200">{debug.baselineCount} kupon</span></div>
+                  <div>Safety fetch: <span className="text-amber-200">{debug.safetyCount} kupon</span></div>
+                  {debug.errorMsg && (
+                    <div className="mt-1 break-all border-t border-rose-300/20 pt-1">
+                      Error: <span className="text-amber-300">{debug.errorMsg}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="mt-3 text-xs text-rose-300">[Decide v5]</p>
               <button
                 type="button"
                 onClick={restart}

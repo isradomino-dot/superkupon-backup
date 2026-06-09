@@ -14,6 +14,7 @@ const SECTIONS: Section[] = [
     label: "Browse",
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
+      { href: "/decide", icon: "🧭", label: "Decision Helper", badge: "NEW" },
       { href: "/calendar", icon: "📅", label: "Calendar Kupon" },
       { href: "/stats", icon: "📊", label: "Statistik" },
       { href: "/history", icon: "🕒", label: "Riwayat" },

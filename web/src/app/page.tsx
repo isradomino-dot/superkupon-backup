@@ -306,6 +306,14 @@ function Home() {
         <p className="relative mt-2 max-w-2xl text-sm text-white/90 sm:text-base">
           {t("site.description")}
         </p>
+        <Link
+          href="/decide"
+          className="relative mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand-700 shadow-lg transition hover:scale-105 hover:bg-amber-50 hover:shadow-xl"
+        >
+          <span className="text-lg">🧭</span>
+          <span>Bingung pilih? Pakai Decision Helper</span>
+          <span className="text-brand-500">→</span>
+        </Link>
       </section>
 
       {/* Smart Pick — pilih goal */}

@@ -145,9 +145,9 @@ export default function DecidePage() {
         }
       });
 
-      // SAFETY NET: kalo somehow still empty, fetch broader
+      // SAFETY NET v3: kalo somehow still empty, fetch broader 3x
       if (merged.length === 0) {
-        const safetyNet = await listCoupons({ limit: 10 }).catch(
+        const safetyNet = await listCoupons({ limit: 20 }).catch(
           () => [] as Coupon[],
         );
         safetyNet.forEach((c) => {
@@ -155,6 +155,16 @@ export default function DecidePage() {
             seen.add(c.id);
             merged.push(c);
           }
+        });
+      }
+
+      // ULTIMATE FALLBACK v3: kalo backend bener-bener mati, log error
+      if (merged.length === 0) {
+        console.error("[Decide v3] ALL fetches returned empty:", {
+          baseline: baselineCoupons.length,
+          strict: strictResults.flat().length,
+          purpose: answers.purpose,
+          discount: answers.discountType,
         });
       }
 
@@ -418,19 +428,22 @@ export default function DecidePage() {
               </div>
             </>
           ) : (
-            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-8 text-center">
-              <div className="text-5xl">🤷</div>
+            <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 p-8 text-center">
+              <div className="text-5xl">⚠️</div>
               <h2 className="mt-2 text-xl font-bold text-white">
-                Belum ada kupon yang cocok
+                Backend lagi bermasalah
               </h2>
-              <p className="mt-2 max-w-md text-sm text-amber-200">
-                Coba ulang dengan kriteria lebih longgar. Misal pilih{" "}
-                <span className="font-semibold">"Apa aja"</span> di tipe diskon.
+              <p className="mt-2 max-w-md text-sm text-rose-200">
+                Sistem mestinya selalu kasih hasil. Kalau ini muncul, backend mungkin
+                lagi error. Buka <code className="rounded bg-white/10 px-1">F12 → Console</code> untuk lihat detail.
+              </p>
+              <p className="mt-2 text-xs text-rose-300">
+                [Decide v3 deployed]
               </p>
               <button
                 type="button"
                 onClick={restart}
-                className="mt-4 rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-amber-600"
+                className="mt-4 rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-rose-600"
               >
                 🔄 Mulai Ulang
               </button>

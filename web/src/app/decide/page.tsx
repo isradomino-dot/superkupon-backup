@@ -87,6 +87,8 @@ export default function DecidePage() {
   const fetchRecommendation = async (e: React.MouseEvent<HTMLButtonElement>) => {
     setLoading(true);
     setStep(5);
+    console.log("[Decide v4] Start fetch:", answers);
+
     try {
       const purpose = PURPOSES.find((p) => p.id === answers.purpose);
       const budget = BUDGETS.find((b) => b.id === answers.budget);
@@ -95,77 +97,31 @@ export default function DecidePage() {
 
       const cats = purpose?.categories ?? [];
 
-      // ⭐ AGGRESSIVE PARALLEL FETCH — fetch baseline + strict bersamaan,
-      // gabungin & dedupe. Baseline jamin selalu ada hasil.
-      const baselinePromise = listCoupons({
-        sort: "quality",
-        limit: 15,
-        // Budget-aware: kalo budget low/mid, prefer kupon min_spend rendah
-        min_discount: budget?.id === "low" ? 0 : undefined,
-      }).catch(() => [] as Coupon[]);
-
-      const strictPromises =
-        cats.length === 0
-          ? [
-              listCoupons({
-                discount_type: discount?.apiVal ?? undefined,
-                sort: "quality",
-                limit: 10,
-              }).catch(() => [] as Coupon[]),
-            ]
-          : cats.map((cat) =>
-              listCoupons({
-                category: cat,
-                discount_type: discount?.apiVal ?? undefined,
-                sort: "quality",
-                limit: 10,
-              }).catch(() => [] as Coupon[]),
-            );
-
-      const [baselineCoupons, ...strictResults] = await Promise.all([
-        baselinePromise,
-        ...strictPromises,
-      ]);
-
-      // Merge: strict matches first (scored higher), then baseline as backfill
-      const merged: Coupon[] = [];
-      const seen = new Set<number>();
-      // Add strict matches first (will be scored higher karena category match)
-      strictResults.flat().forEach((c) => {
-        if (!seen.has(c.id)) {
-          seen.add(c.id);
-          merged.push(c);
-        }
-      });
-      // Backfill dari baseline supaya selalu ada hasil
-      baselineCoupons.forEach((c) => {
-        if (!seen.has(c.id)) {
-          seen.add(c.id);
-          merged.push(c);
-        }
-      });
-
-      // SAFETY NET v3: kalo somehow still empty, fetch broader 3x
-      if (merged.length === 0) {
-        const safetyNet = await listCoupons({ limit: 20 }).catch(
-          () => [] as Coupon[],
-        );
-        safetyNet.forEach((c) => {
-          if (!seen.has(c.id)) {
-            seen.add(c.id);
-            merged.push(c);
-          }
-        });
+      // ⭐ SIMPLE STRATEGY: Single baseline fetch (always works) + scoring
+      // Backend has 45+ active coupons, sort=quality limit=15 ALWAYS returns data.
+      let merged: Coupon[] = [];
+      try {
+        merged = await listCoupons({ sort: "quality", limit: 20 });
+        console.log("[Decide v4] Baseline fetched:", merged.length, "coupons");
+      } catch (err) {
+        console.error("[Decide v4] Baseline FAILED:", err);
       }
 
-      // ULTIMATE FALLBACK v3: kalo backend bener-bener mati, log error
+      // Safety net jika baseline somehow fail
       if (merged.length === 0) {
-        console.error("[Decide v3] ALL fetches returned empty:", {
-          baseline: baselineCoupons.length,
-          strict: strictResults.flat().length,
-          purpose: answers.purpose,
-          discount: answers.discountType,
-        });
+        try {
+          merged = await listCoupons({ limit: 10 });
+          console.log("[Decide v4] Safety net:", merged.length, "coupons");
+        } catch (err) {
+          console.error("[Decide v4] Safety net FAILED:", err);
+        }
+      }
+
+      // Last resort — kalau backend bener-bener mati, kasih placeholder error
+      if (merged.length === 0) {
+        console.error("[Decide v4] ALL fetches failed. Backend connection issue.");
+        setResults([]);
+        return;
       }
 
       // Score each: quality + category match + budget fit + urgency fit + discount match
@@ -207,6 +163,7 @@ export default function DecidePage() {
 
       scored.sort((a, b) => b.score - a.score);
       const top3 = scored.slice(0, 3).map((s) => s.coupon);
+      console.log("[Decide v4] Setting results:", top3.length, "coupons");
       setResults(top3);
 
       // Confetti for fun
@@ -215,8 +172,9 @@ export default function DecidePage() {
         origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
         particleCount: 120,
       });
-    } catch (e) {
-      if (!isAbortError(e)) setResults([]);
+    } catch (err) {
+      console.error("[Decide v4] OUTER catch:", err);
+      if (!isAbortError(err)) setResults([]);
     } finally {
       setLoading(false);
     }
@@ -438,7 +396,7 @@ export default function DecidePage() {
                 lagi error. Buka <code className="rounded bg-white/10 px-1">F12 → Console</code> untuk lihat detail.
               </p>
               <p className="mt-2 text-xs text-rose-300">
-                [Decide v3 deployed]
+                [Decide v4 — buka F12 Console untuk lihat detail]
               </p>
               <button
                 type="button"

@@ -95,64 +95,101 @@ export default function DecidePage() {
 
       const cats = purpose?.categories ?? [];
 
-      // ⭐ Smart fallback chain — selalu kasih hasil, gak pernah kosong
-      const fetchByCats = async (
-        useDiscountType: boolean,
-      ): Promise<Coupon[]> => {
-        const fetchOne = (cat?: string) =>
-          listCoupons({
-            category: cat,
-            discount_type: useDiscountType ? discount?.apiVal ?? undefined : undefined,
-            sort: "quality",
-            limit: 10,
-          }).catch(() => [] as Coupon[]);
-        const all =
-          cats.length === 0
-            ? [await fetchOne(undefined)]
-            : await Promise.all(cats.map((c) => fetchOne(c)));
-        const merged: Coupon[] = [];
-        const seen = new Set<number>();
-        all.flat().forEach((c) => {
+      // ⭐ AGGRESSIVE PARALLEL FETCH — fetch baseline + strict bersamaan,
+      // gabungin & dedupe. Baseline jamin selalu ada hasil.
+      const baselinePromise = listCoupons({
+        sort: "quality",
+        limit: 15,
+        // Budget-aware: kalo budget low/mid, prefer kupon min_spend rendah
+        min_discount: budget?.id === "low" ? 0 : undefined,
+      }).catch(() => [] as Coupon[]);
+
+      const strictPromises =
+        cats.length === 0
+          ? [
+              listCoupons({
+                discount_type: discount?.apiVal ?? undefined,
+                sort: "quality",
+                limit: 10,
+              }).catch(() => [] as Coupon[]),
+            ]
+          : cats.map((cat) =>
+              listCoupons({
+                category: cat,
+                discount_type: discount?.apiVal ?? undefined,
+                sort: "quality",
+                limit: 10,
+              }).catch(() => [] as Coupon[]),
+            );
+
+      const [baselineCoupons, ...strictResults] = await Promise.all([
+        baselinePromise,
+        ...strictPromises,
+      ]);
+
+      // Merge: strict matches first (scored higher), then baseline as backfill
+      const merged: Coupon[] = [];
+      const seen = new Set<number>();
+      // Add strict matches first (will be scored higher karena category match)
+      strictResults.flat().forEach((c) => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          merged.push(c);
+        }
+      });
+      // Backfill dari baseline supaya selalu ada hasil
+      baselineCoupons.forEach((c) => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          merged.push(c);
+        }
+      });
+
+      // SAFETY NET: kalo somehow still empty, fetch broader
+      if (merged.length === 0) {
+        const safetyNet = await listCoupons({ limit: 10 }).catch(
+          () => [] as Coupon[],
+        );
+        safetyNet.forEach((c) => {
           if (!seen.has(c.id)) {
             seen.add(c.id);
             merged.push(c);
           }
         });
-        return merged;
-      };
-
-      // Step 1: kategori + discount_type
-      let merged = await fetchByCats(true);
-
-      // Step 2: relax discount_type — keep category
-      if (merged.length === 0 && discount?.apiVal) {
-        merged = await fetchByCats(false);
       }
 
-      // Step 3: last resort — top quality across all (no category filter)
-      if (merged.length === 0) {
-        merged = await listCoupons({ sort: "quality", limit: 15 }).catch(
-          () => [] as Coupon[],
-        );
-      }
-
-      // Score each: quality + budget fit + urgency fit
+      // Score each: quality + category match + budget fit + urgency fit + discount match
       const scored = merged.map((c) => {
         let score = c.quality_score;
+
+        // BIG bonus: exact category match (strict match)
+        if (cats.length > 0 && c.category && cats.includes(c.category.slug)) {
+          score += 30;
+        }
+
+        // Discount type match bonus
+        if (discount?.apiVal && c.discount_type === discount.apiVal) {
+          score += 20;
+        }
 
         // Budget fit: lower min_spend = better fit for low budget
         const min = c.min_spend ?? 0;
         if (budget) {
-          if (budget.max && min < budget.max) score += 15;
-          if (budget.min && min >= budget.min) score += 5;
-          if (budget.id === "low" && min === 0) score += 20;
+          if (budget.id === "low" && min === 0) score += 25;
+          else if (budget.id === "low" && min <= 50000) score += 15;
+          else if (budget.id === "mid" && min >= 50000 && min <= 200000) score += 20;
+          else if (budget.id === "high" && min >= 200000 && min <= 500000) score += 20;
+          else if (budget.id === "max" && min >= 500000) score += 20;
+          // Catch-all: if budget allows it, give small bonus
+          else if (budget.max && min < budget.max) score += 10;
         }
 
         // Urgency fit: closer-to-expire bonus for urgent
         if (urgency && c.expires_at) {
           const daysLeft = (new Date(c.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-          if (urgency.days <= 1 && daysLeft <= 7) score += 10;
-          if (urgency.days <= 7 && daysLeft <= 14) score += 5;
+          if (urgency.days <= 1 && daysLeft <= 7) score += 15;
+          else if (urgency.days <= 7 && daysLeft <= 14) score += 10;
+          else if (urgency.days <= 30 && daysLeft <= 30) score += 5;
         }
 
         return { coupon: c, score };

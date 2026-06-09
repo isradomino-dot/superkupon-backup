@@ -112,17 +112,24 @@ export default function CouponDetailPage() {
 
   const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!coupon?.code) return;
+    // Capture rect BEFORE await
+    const rect = (e.currentTarget as HTMLElement)?.getBoundingClientRect();
     try {
       await navigator.clipboard.writeText(coupon.code);
       setCopied(true);
       void trackRedeem(coupon.id);
       addClaim(coupon);
       recordClaim();
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      fireConfetti({
-        origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-        particleCount: 120,
-      });
+      if (rect) {
+        try {
+          fireConfetti({
+            origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+            particleCount: 120,
+          });
+        } catch {
+          /* ignore confetti */
+        }
+      }
       setTimeout(() => setCopied(false), 1800);
     } catch {
       /* ignore */

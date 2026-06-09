@@ -18,6 +18,10 @@ export function SurpriseMeButton() {
   const [show, setShow] = useState(false);
 
   const pickRandom = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Capture rect BEFORE await — React synthetic event nulled after async
+    const buttonEl = e.currentTarget as HTMLElement;
+    const rect = buttonEl?.getBoundingClientRect();
+
     setLoading(true);
     try {
       const items = await getRecommendations({ limit: 25 });
@@ -25,11 +29,16 @@ export function SurpriseMeButton() {
       const pick = items[Math.floor(Math.random() * items.length)];
       setCoupon(pick);
       setShow(true);
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      fireConfetti({
-        origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-        particleCount: 80,
-      });
+      if (rect) {
+        try {
+          fireConfetti({
+            origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+            particleCount: 80,
+          });
+        } catch {
+          /* ignore confetti failure */
+        }
+      }
     } catch {
       /* ignore */
     } finally {

@@ -56,17 +56,24 @@ export function CouponActionGroup({ coupon }: Props) {
     e.preventDefault();
     e.stopPropagation();
     if (!coupon.code) return;
+    // Capture rect BEFORE await (synthetic event nulled after async)
+    const rect = (e.currentTarget as HTMLElement)?.getBoundingClientRect();
     try {
       await navigator.clipboard.writeText(coupon.code);
       setCopied(true);
       void trackRedeem(coupon.id);
       addClaim(coupon);
       recordClaim();
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      fireConfetti({
-        origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-        particleCount: 90,
-      });
+      if (rect) {
+        try {
+          fireConfetti({
+            origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+            particleCount: 90,
+          });
+        } catch {
+          /* ignore confetti */
+        }
+      }
       setTimeout(() => setCopied(false), 1800);
     } catch {
       /* ignore */

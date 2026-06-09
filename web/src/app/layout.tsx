@@ -20,6 +20,7 @@ import { FavoriteExpiryWatcher } from "@/components/FavoriteExpiryWatcher";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { SavedSearchWatcher } from "@/components/SavedSearchWatcher";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
+import { AskSuperKupon } from "@/components/AskSuperKupon";
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
@@ -135,6 +136,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SavedSearchWatcher />
             <PWAInstallBanner />
             <ScrollToTopButton />
+            <AskSuperKupon />
             <Analytics />
           </NotificationProvider>
           </FavoritesProvider>

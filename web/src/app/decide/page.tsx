@@ -93,11 +93,16 @@ export default function DecidePage() {
   };
 
   const fetchRecommendation = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    // CAPTURE rect IMMEDIATELY — React synthetic event nulled after await!
+    // This was the real bug: e.currentTarget = null after fetch → confetti throw → outer catch → empty results.
+    const buttonEl = e.currentTarget as HTMLElement;
+    const rect = buttonEl?.getBoundingClientRect();
+
     setLoading(true);
     setStep(5);
     setDebug(null);
     const apiBase = process.env.NEXT_PUBLIC_API_BASE || "(undefined!)";
-    console.log("[Decide v5] Start fetch:", answers, "API_BASE:", apiBase);
+    console.log("[Decide v6] Start fetch:", answers, "API_BASE:", apiBase);
 
     let dbg: DebugInfo = { baselineCount: 0, safetyCount: 0, apiBase };
 
@@ -176,17 +181,24 @@ export default function DecidePage() {
 
       scored.sort((a, b) => b.score - a.score);
       const top3 = scored.slice(0, 3).map((s) => s.coupon);
-      console.log("[Decide v4] Setting results:", top3.length, "coupons");
+      console.log("[Decide v6] Setting results:", top3.length, "coupons");
       setResults(top3);
 
-      // Confetti for fun
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      fireConfetti({
-        origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-        particleCount: 120,
-      });
+      // Confetti — pakai rect yg di-capture sebelum await, biar gak null
+      try {
+        if (rect) {
+          fireConfetti({
+            origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+            particleCount: 120,
+          });
+        }
+      } catch (confettiErr) {
+        console.warn("[Decide v6] Confetti failed (ignored):", confettiErr);
+      }
     } catch (err) {
-      console.error("[Decide v4] OUTER catch:", err);
+      console.error("[Decide v6] OUTER catch:", err);
+      dbg.errorMsg = `OUTER: ${err instanceof Error ? err.message : String(err)}`;
+      setDebug({ ...dbg });
       if (!isAbortError(err)) setResults([]);
     } finally {
       setLoading(false);
@@ -417,7 +429,7 @@ export default function DecidePage() {
                   )}
                 </div>
               )}
-              <p className="mt-3 text-xs text-rose-300">[Decide v5]</p>
+              <p className="mt-3 text-xs text-rose-300">[Decide v6 — confetti race fix]</p>
               <button
                 type="button"
                 onClick={restart}

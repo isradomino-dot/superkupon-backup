@@ -37,6 +37,16 @@
    BACKGROUND EFFECT — Network/Tech/Energy animated background
    ========================================================= */
 
+/* Content wrapper z-index — provider wrappers are 'display: contents' or normal,
+   sehingga semua header/main/footer/aside di dalamnya pakai relative + z-10 */
+header.sticky,
+main,
+footer,
+aside {
+  position: relative;
+  z-index: 10;
+}
+
 @keyframes bgFloat {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -127,10 +137,15 @@
    so we don't need to rewrite every component.
    ========================================================= */
 
-/* Body & root surfaces */
+/* Body & root surfaces — transparent supaya BackgroundEffect ke-show */
 body,
 .dark body {
-  background-color: #0f0e1a !important;
+  background-color: transparent !important;
+}
+
+/* HTML jadi fallback dark color, BackgroundEffect float di atasnya */
+html {
+  background-color: #0f0e1a;
 }
 
 /* All white card backgrounds become dark card */

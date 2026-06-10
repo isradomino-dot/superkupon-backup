@@ -40,7 +40,8 @@ export function BackgroundEffect() {
   return (
     <div
       aria-hidden
-      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
+      className="fixed inset-0 overflow-hidden pointer-events-none"
+      style={{ zIndex: 0 }}
     >
       {/* Layer 1: Base dark gradient with mesh */}
       <div

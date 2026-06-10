@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { getCouponsByIds, isAbortError } from "@/lib/api";
+import { getCouponsByIds, listCoupons, formatDiscount, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { CouponCard } from "@/components/CouponCard";
 import { CouponSkeletonGrid } from "@/components/CouponSkeleton";
 import { ExportImportControl } from "@/components/ExportImportControl";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { SavingsTracker } from "@/components/SavingsTracker";
+import { MerchantLogo } from "@/components/MerchantLogo";
 import { useFavorites } from "@/lib/use-favorites";
+import { useI18n } from "@/i18n/provider";
 
 export default function FavoritesPage() {
   const { ids, records, count, clear, folders } = useFavorites();
@@ -141,10 +143,14 @@ export default function FavoritesPage() {
 
       <SavingsTracker />
 
-      <ExportImportControl />
+      {/* Cross-link decision tools — cuma kalo ada favorit */}
+      {count > 0 && <FavoritesActionBar count={count} />}
+
+      {/* ExportImport hanya kalo udah ada favorit */}
+      {count > 0 && <ExportImportControl />}
 
       {count === 0 ? (
-        <EmptyState />
+        <EmptyStateWithSuggestions />
       ) : loading ? (
         <CouponSkeletonGrid count={Math.min(count, 6)} />
       ) : coupons.length === 0 ? (
@@ -202,21 +208,152 @@ export default function FavoritesPage() {
   );
 }
 
-function EmptyState() {
+function FavoritesActionBar({ count }: { count: number }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/15 p-12 text-center">
-      <div className="text-5xl" aria-hidden>♡</div>
-      <p className="text-base font-semibold text-gray-200">Belum ada kupon favorit</p>
-      <p className="max-w-md text-sm text-gray-400">
-        Klik icon hati di pojok kanan atas kupon untuk menyimpannya. Favorit
-        akan tersimpan di perangkat ini (localStorage).
-      </p>
-      <Link
-        href="/"
-        className="mt-3 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-      >
-        ← Jelajahi Kupon
-      </Link>
+    <section className="rounded-2xl border border-brand-400/30 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-lg">✨</span>
+        <p className="text-xs font-bold uppercase tracking-wider text-brand-300">
+          {count} favorit aktif — Yang bisa kamu lakukan:
+        </p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Link
+          href="/kalkulator"
+          className="group flex items-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 transition hover:border-emerald-400/60 hover:bg-emerald-500/15"
+        >
+          <span className="text-2xl transition-transform group-hover:scale-110">🧮</span>
+          <div>
+            <p className="text-xs font-bold text-emerald-200">Hitung Hemat</p>
+            <p className="text-[10px] text-gray-400">Input nominal → tahu hematan</p>
+          </div>
+        </Link>
+        <Link
+          href="/kombo"
+          className="group flex items-center gap-3 rounded-xl border border-purple-400/30 bg-purple-500/10 p-3 transition hover:border-purple-400/60 hover:bg-purple-500/15"
+        >
+          <span className="text-2xl transition-transform group-hover:scale-110">🎁</span>
+          <div>
+            <p className="text-xs font-bold text-purple-200">Kombo Helper</p>
+            <p className="text-[10px] text-gray-400">Stack 2-3 kupon hemat max</p>
+          </div>
+        </Link>
+        <Link
+          href="/belanja-hemat"
+          className="group flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 transition hover:border-amber-400/60 hover:bg-amber-500/15"
+        >
+          <span className="text-2xl transition-transform group-hover:scale-110">🎉</span>
+          <div>
+            <p className="text-xs font-bold text-amber-200">Bagi ke Teman</p>
+            <p className="text-[10px] text-gray-400">Share kupon via WhatsApp</p>
+          </div>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function EmptyStateWithSuggestions() {
+  const { t } = useI18n();
+  const { add: addFavorite } = useFavorites();
+  const [suggestions, setSuggestions] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    listCoupons({ sort: "quality", limit: 6 }, { signal: ctrl.signal })
+      .then((c) => {
+        if (!ctrl.signal.aborted) setSuggestions(c);
+      })
+      .catch((e) => {
+        if (!isAbortError(e)) setSuggestions([]);
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoading(false);
+      });
+    return () => ctrl.abort();
+  }, []);
+
+  const handleQuickAdd = (id: number) => {
+    addFavorite(id);
+    setAddedIds((prev) => new Set(prev).add(id));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/15 p-8 text-center">
+        <div className="text-5xl" aria-hidden>
+          ♡
+        </div>
+        <p className="text-base font-semibold text-gray-200">Belum ada kupon favorit</p>
+        <p className="max-w-md text-sm text-gray-400">
+          Klik chip kupon di bawah ↓ untuk tambah favorit instant.{" "}
+          <span className="text-gray-500">Atau klik icon hati ❤️ di kupon manapun.</span>
+        </p>
+      </div>
+
+      {/* Quick-add suggestions */}
+      <section className="rounded-2xl border border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xl">🔥</span>
+          <h2 className="text-sm font-bold text-white">Kupon Populer — Klik untuk Favorite</h2>
+        </div>
+        {loading ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />
+            ))}
+          </div>
+        ) : suggestions.length === 0 ? (
+          <p className="text-sm text-gray-400">Belum ada saran tersedia.</p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {suggestions.map((c) => {
+              const added = addedIds.has(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handleQuickAdd(c.id)}
+                  disabled={added}
+                  className={[
+                    "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition",
+                    added
+                      ? "cursor-not-allowed border-emerald-400/40 bg-emerald-500/10"
+                      : "border-white/10 bg-white/5 hover:scale-[1.01] hover:border-rose-400/40 hover:bg-rose-500/10",
+                  ].join(" ")}
+                >
+                  <MerchantLogo merchant={c.merchant} size={36} rounded="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-rose-300">
+                      {c.merchant.name}
+                    </p>
+                    <p className="line-clamp-1 text-xs font-bold text-white">{c.title}</p>
+                  </div>
+                  <div className="flex-none text-right">
+                    {added ? (
+                      <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                        ✓ ❤️
+                      </span>
+                    ) : (
+                      <span className="rounded bg-brand-500/20 px-1.5 py-0.5 text-[10px] font-bold text-brand-200">
+                        {formatDiscount(c, t)}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <Link
+          href="/"
+          className="mt-4 inline-block text-xs font-semibold text-rose-300 hover:underline"
+        >
+          → Browse semua kupon di beranda
+        </Link>
+      </section>
     </div>
   );
 }

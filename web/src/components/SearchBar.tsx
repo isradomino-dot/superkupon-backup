@@ -6,7 +6,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n } from "@/i18n/provider";
 import { getAutocomplete, isAbortError, type AutocompleteResponse } from "@/lib/api";
 import { useSearchHistory } from "@/lib/use-search-history";
-import { useSavedSearches } from "@/lib/use-saved-searches";
 import { SkeletonBar, SkeletonCircle } from "@/components/Skeleton";
 
 /**
@@ -25,10 +24,7 @@ export function SearchBar() {
   const params = useSearchParams();
   const { t } = useI18n();
   const { history, addEntry, removeEntry, clearAll } = useSearchHistory();
-  const { isSaved: isQuerySaved, add: addSavedSearch, removeByQuery: removeSavedSearch } =
-    useSavedSearches();
   const [q, setQ] = useState(params.get("q") ?? "");
-  const [savedToast, setSavedToast] = useState<"saved" | "removed" | null>(null);
   const [suggestions, setSuggestions] = useState<AutocompleteResponse | null>(null);
   const [open, setOpen] = useState(false);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
@@ -192,63 +188,7 @@ export function SearchBar() {
         >
           {t("search.button")}
         </button>
-        {q.trim().length >= 2 && (
-          <button
-            type="button"
-            onClick={async (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const trimmed = q.trim();
-              if (isQuerySaved(trimmed)) {
-                removeSavedSearch(trimmed);
-                setSavedToast("removed");
-              } else {
-                addSavedSearch(trimmed);
-                setSavedToast("saved");
-                // Request notification permission if needed
-                if (
-                  typeof window !== "undefined" &&
-                  "Notification" in window &&
-                  Notification.permission === "default"
-                ) {
-                  void Notification.requestPermission();
-                }
-              }
-              setTimeout(() => setSavedToast(null), 2500);
-            }}
-            aria-label={
-              isQuerySaved(q.trim())
-                ? "Hapus saved search"
-                : "Save search untuk notifikasi"
-            }
-            title={
-              isQuerySaved(q.trim())
-                ? "Click untuk hapus alert"
-                : "Save sebagai alert — dapat notifikasi kalau ada kupon baru match"
-            }
-            className={[
-              "flex-none rounded-lg border px-3 py-2 text-sm font-bold shadow-sm transition",
-              isQuerySaved(q.trim())
-                ? "border-amber-400 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
-                : "border-gray-300 bg-white text-gray-500 hover:border-amber-400 hover:text-amber-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400",
-            ].join(" ")}
-          >
-            {isQuerySaved(q.trim()) ? "🔔" : "🔕"}
-          </button>
-        )}
       </form>
-
-      {savedToast && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="absolute right-0 top-full z-50 mt-1 rounded-md bg-emerald-500/90 px-3 py-1 text-xs font-bold text-white shadow-lg backdrop-blur"
-        >
-          {savedToast === "saved"
-            ? `✓ Alert aktif: "${q.trim()}" — notif kalau ada kupon baru`
-            : `✓ Alert untuk "${q.trim()}" dihapus`}
-        </div>
-      )}
 
       {open && (showingHistory || items.length > 0 || loadingSuggest) && (
         <div

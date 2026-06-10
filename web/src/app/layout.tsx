@@ -17,7 +17,6 @@ import { StreakMilestoneModal } from "@/components/StreakMilestoneModal";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { FavoriteExpiryWatcher } from "@/components/FavoriteExpiryWatcher";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
-import { SavedSearchWatcher } from "@/components/SavedSearchWatcher";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { AskSuperKupon } from "@/components/AskSuperKupon";
 import { Sidebar } from "@/components/Sidebar";
@@ -131,7 +130,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <StreakMilestoneModal />
             <ServiceWorkerRegistrar />
             <FavoriteExpiryWatcher />
-            <SavedSearchWatcher />
             <PWAInstallBanner />
             <ScrollToTopButton />
             <AskSuperKupon />
@@ -161,10 +159,6 @@ function Footer() {
         <span className="opacity-40"> · </span>
         <Link href="/belanja-hemat" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
           🎉 Belanja Hemat
-        </Link>
-        <span className="opacity-40"> · </span>
-        <Link href="/alerts" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🔔 Alerts
         </Link>
       </div>
     </footer>

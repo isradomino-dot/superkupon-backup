@@ -396,15 +396,8 @@ function Home() {
         <ScrollReveal>
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-white">Fitur Tambahan</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
-                {
-                  href: "/alerts",
-                  emoji: "🔔",
-                  title: "Alerts & Notifikasi",
-                  desc: "Notifikasi real-time saat ada kupon baru atau harga produk turun.",
-                  cta: "Aktifkan",
-                },
                 {
                   href: "/belanja-hemat",
                   emoji: "🎉",

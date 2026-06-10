@@ -23,10 +23,10 @@ const SECTIONS: Section[] = [
   {
     label: "Tools",
     items: [
-      { href: "/pilihan", icon: "💡", label: "Pilihan Hari Ini", badge: "NEW" },
+      { href: "/pilihan", icon: "💡", label: "Pilihan Hari Ini" },
+      { href: "/belanja-hemat", icon: "🎉", label: "Belanja Hemat", badge: "BARU" },
       { href: "/favorites", icon: "⭐", label: "Favorit" },
       { href: "/alerts", icon: "🔔", label: "Saved Alerts" },
-      { href: "/bookmarklet", icon: "🔖", label: "Bookmarklet" },
     ],
   },
 ];

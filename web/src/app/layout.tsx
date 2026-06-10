@@ -153,18 +153,18 @@ function Footer() {
         Kupon di-aggregate dari halaman promo publik & channel resmi merchant. Validitas dapat
         berubah sewaktu-waktu — cek di merchant asli sebelum digunakan.
         <br />
-        <span className="opacity-70">© 2026 SuperKupon — Studio AAA Premium</span>
+        <span className="opacity-70">© 2026 SuperKupon</span>
         <span className="opacity-40"> · </span>
-        <Link href="/mockup" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🎨 Design Lab
+        <Link href="/pilihan" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
+          💡 Pilihan
+        </Link>
+        <span className="opacity-40"> · </span>
+        <Link href="/belanja-hemat" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
+          🎉 Belanja Hemat
         </Link>
         <span className="opacity-40"> · </span>
         <Link href="/alerts" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
           🔔 Alerts
-        </Link>
-        <span className="opacity-40"> · </span>
-        <Link href="/bookmarklet" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🔖 Bookmarklet
         </Link>
       </div>
     </footer>

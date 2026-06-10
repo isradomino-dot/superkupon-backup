@@ -406,11 +406,11 @@ function Home() {
                   cta: "Aktifkan",
                 },
                 {
-                  href: "/bookmarklet",
-                  emoji: "🧩",
-                  title: "Bookmarklet Tool",
-                  desc: "Drag tombol ke bookmark bar — klik saat di halaman checkout untuk cek kupon.",
-                  cta: "Cara Pasang",
+                  href: "/belanja-hemat",
+                  emoji: "🎉",
+                  title: "Belanja Hemat Hub",
+                  desc: "Bagi kupon ke teman, daftar belanja pintar, dan tips trik hemat.",
+                  cta: "Buka Hub",
                 },
                 {
                   href: "/favorites",

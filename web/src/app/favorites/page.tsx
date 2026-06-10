@@ -219,13 +219,13 @@ function FavoritesActionBar({ count }: { count: number }) {
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         <Link
-          href="/kalkulator"
+          href="/decide"
           className="group flex items-center gap-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 transition hover:border-emerald-400/60 hover:bg-emerald-500/15"
         >
-          <span className="text-2xl transition-transform group-hover:scale-110">🧮</span>
+          <span className="text-2xl transition-transform group-hover:scale-110">🎯</span>
           <div>
-            <p className="text-xs font-bold text-emerald-200">Hitung Hemat</p>
-            <p className="text-[10px] text-gray-400">Input nominal → tahu hematan</p>
+            <p className="text-xs font-bold text-emerald-200">Smart Pick</p>
+            <p className="text-[10px] text-gray-400">Cariin kupon hemat untukmu</p>
           </div>
         </Link>
         <Link

@@ -14,9 +14,8 @@ const SECTIONS: Section[] = [
     label: "Browse",
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
-      { href: "/decide", icon: "🧭", label: "Decision Helper" },
-      { href: "/kalkulator", icon: "🧮", label: "Kalkulator Hemat" },
-      { href: "/kombo", icon: "🎁", label: "Kombo Kupon", badge: "BARU" },
+      { href: "/decide", icon: "🎯", label: "Smart Pick", badge: "BARU" },
+      { href: "/kombo", icon: "🎁", label: "Kombo Kupon" },
       { href: "/stats", icon: "📊", label: "Statistik" },
     ],
   },

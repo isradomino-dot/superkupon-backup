@@ -3,401 +3,537 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { listCoupons, formatDiscount, isAbortError } from "@/lib/api";
+import { listCoupons, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
-import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
 
 export const dynamic = "force-dynamic";
 
-interface Answers {
-  purpose: string | null;
-  budget: string | null;
-  urgency: string | null;
-  discountType: string | null;
-}
-
-interface DebugInfo {
-  baselineCount: number;
-  safetyCount: number;
-  errorMsg?: string;
-  apiBase: string;
-}
-
+// ============================================================
+// CATEGORIES
+// ============================================================
 interface PurposeOption {
   id: string;
   emoji: string;
   label: string;
   desc: string;
   categories: string[];
+  color: string;
 }
 const PURPOSES: PurposeOption[] = [
-  { id: "makan", emoji: "🍔", label: "Makan", desc: "Makanan & minuman", categories: ["food"] },
-  { id: "belanja", emoji: "🛍️", label: "Belanja Online", desc: "E-commerce, fashion", categories: ["ecommerce", "fashion"] },
-  { id: "transport", emoji: "🚗", label: "Transport", desc: "Ojek, taksi online", categories: ["transport"] },
-  { id: "hiburan", emoji: "🎬", label: "Hiburan", desc: "Film, streaming, event", categories: ["entertainment"] },
-  { id: "bayar", emoji: "💳", label: "Bayar Tagihan", desc: "Pulsa, listrik, top-up", categories: ["bills"] },
-  { id: "all", emoji: "🌐", label: "Apa Aja Boleh", desc: "Tampilkan semua kategori", categories: [] },
+  {
+    id: "makan",
+    emoji: "🍔",
+    label: "Makan",
+    desc: "Food & minuman",
+    categories: ["food"],
+    color: "from-amber-500/30 to-orange-500/15 border-amber-400/40 hover:border-amber-400",
+  },
+  {
+    id: "belanja",
+    emoji: "🛍️",
+    label: "Belanja",
+    desc: "E-commerce",
+    categories: ["ecommerce", "fashion"],
+    color: "from-pink-500/30 to-rose-500/15 border-pink-400/40 hover:border-pink-400",
+  },
+  {
+    id: "transport",
+    emoji: "🚗",
+    label: "Transport",
+    desc: "Ojek, taksi",
+    categories: ["transport"],
+    color: "from-sky-500/30 to-blue-500/15 border-sky-400/40 hover:border-sky-400",
+  },
+  {
+    id: "hiburan",
+    emoji: "🎬",
+    label: "Hiburan",
+    desc: "Film, streaming",
+    categories: ["entertainment"],
+    color: "from-violet-500/30 to-purple-500/15 border-violet-400/40 hover:border-violet-400",
+  },
+  {
+    id: "bayar",
+    emoji: "💳",
+    label: "Bayar",
+    desc: "Tagihan, pulsa",
+    categories: ["bills"],
+    color: "from-emerald-500/30 to-teal-500/15 border-emerald-400/40 hover:border-emerald-400",
+  },
+  {
+    id: "all",
+    emoji: "🌐",
+    label: "Apa Aja",
+    desc: "Tampil semua",
+    categories: [],
+    color: "from-brand-500/30 to-purple-500/15 border-brand-400/40 hover:border-brand-400",
+  },
 ];
 
-const BUDGETS = [
-  { id: "low", label: "< Rp 50rb", desc: "Belanja kecil", max: 50000 },
-  { id: "mid", label: "Rp 50-200rb", desc: "Medium", min: 50000, max: 200000 },
-  { id: "high", label: "Rp 200-500rb", desc: "Lumayan", min: 200000, max: 500000 },
-  { id: "max", label: "> Rp 500rb", desc: "Belanja besar", min: 500000 },
-];
+const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000];
 
-const URGENCIES = [
-  { id: "today", label: "Hari ini juga", emoji: "🔥", days: 1 },
+const URGENCY_OPTIONS = [
+  { id: "anytime", label: "Sewaktu-waktu", emoji: "🌊", days: 365 },
+  { id: "today", label: "Hari ini", emoji: "🔥", days: 1 },
   { id: "week", label: "Minggu ini", emoji: "⏰", days: 7 },
   { id: "month", label: "Bulan ini", emoji: "📅", days: 30 },
-  { id: "anytime", label: "Sewaktu-waktu", emoji: "🌊", days: 365 },
 ];
 
-const DISCOUNTS = [
+const DISCOUNT_OPTIONS = [
+  { id: "any", label: "Apa aja", emoji: "✨", apiVal: null },
   { id: "percent", label: "Diskon %", emoji: "📉", apiVal: "percent" },
   { id: "fixed", label: "Diskon Rp", emoji: "💵", apiVal: "fixed" },
   { id: "cashback", label: "Cashback", emoji: "💰", apiVal: "cashback" },
   { id: "free_shipping", label: "Gratis Ongkir", emoji: "🚚", apiVal: "free_shipping" },
-  { id: "any", label: "Apa aja", emoji: "✨", apiVal: null },
 ];
 
-export default function DecidePage() {
-  const { t } = useI18n();
-  const [step, setStep] = useState(1);
-  const [answers, setAnswers] = useState<Answers>({
-    purpose: null,
-    budget: null,
-    urgency: null,
-    discountType: null,
-  });
-  const [results, setResults] = useState<Coupon[] | null>(null);
+// ============================================================
+// CALCULATION LOGIC
+// ============================================================
+interface SmartResult {
+  coupon: Coupon;
+  savings: number;
+  finalPrice: number;
+  savingsPercent: number;
+  reasons: string[];
+  rank: number;
+}
+
+function daysLeft(expires: string | null | undefined): number | null {
+  if (!expires) return null;
+  const d = new Date(expires);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function calcSaving(c: Coupon, amount: number): number {
+  const maxDisc = c.max_discount ?? Infinity;
+  const minSpend = c.min_spend ?? 0;
+  if (amount < minSpend) return 0;
+
+  switch (c.discount_type) {
+    case "percent":
+      return Math.min((amount * c.discount_value) / 100, maxDisc);
+    case "fixed":
+      return Math.min(c.discount_value, maxDisc);
+    case "cashback":
+      if (c.discount_value <= 100) {
+        return Math.min((amount * c.discount_value) / 100, maxDisc);
+      }
+      return Math.min(c.discount_value, maxDisc);
+    case "free_shipping":
+      return c.max_discount ?? 25000;
+    case "bogo":
+      return Math.min(amount * 0.5, maxDisc);
+    default:
+      return c.discount_value > 100 ? Math.min(c.discount_value, maxDisc) : 0;
+  }
+}
+
+function buildReasons(
+  c: Coupon,
+  purposeCategories: string[],
+  discountType: string | null,
+  urgencyDays: number,
+): string[] {
+  const reasons: string[] = [];
+
+  // Category match
+  if (c.category && purposeCategories.length > 0 && purposeCategories.includes(c.category.slug)) {
+    reasons.push(`🎯 Match ${c.category.name}`);
+  }
+
+  // Quality
+  if (c.quality_score >= 80) {
+    reasons.push(`⭐ Quality ${c.quality_score}`);
+  }
+
+  // No min spend
+  if (!c.min_spend || c.min_spend === 0) {
+    reasons.push("✅ Tanpa min belanja");
+  }
+
+  // Discount type match
+  if (discountType && c.discount_type === discountType) {
+    reasons.push("📌 Tipe diskon match");
+  }
+
+  // Urgency
+  if (c.expires_at) {
+    const d = daysLeft(c.expires_at);
+    if (d !== null && d > 0) {
+      if (urgencyDays <= 7 && d <= 7) {
+        reasons.push(`🔥 Tinggal ${d} hari`);
+      } else if (urgencyDays <= 30 && d <= 14) {
+        reasons.push(`⏰ ${d} hari lagi`);
+      }
+    }
+  }
+
+  // Has code
+  if (c.code && reasons.length < 4) {
+    reasons.push("🎫 Ada kode");
+  }
+
+  return reasons.slice(0, 4);
+}
+
+// ============================================================
+// PAGE
+// ============================================================
+export default function SmartPickPage() {
+  const [purpose, setPurpose] = useState<string | null>(null);
+  const [amount, setAmount] = useState<number>(200000);
+  const [amountInput, setAmountInput] = useState("200000");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [urgency, setUrgency] = useState<string>("anytime");
+  const [discountType, setDiscountType] = useState<string>("any");
+  const [results, setResults] = useState<SmartResult[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [debug, setDebug] = useState<DebugInfo | null>(null);
 
-  const totalSteps = 4;
-  const progress = (step / totalSteps) * 100;
+  const selectedPurpose = PURPOSES.find((p) => p.id === purpose);
+  const selectedUrgency = URGENCY_OPTIONS.find((u) => u.id === urgency)!;
+  const selectedDiscount = DISCOUNT_OPTIONS.find((d) => d.id === discountType)!;
 
-  const setAnswer = (key: keyof Answers, value: string) => {
-    setAnswers((prev) => ({ ...prev, [key]: value }));
+  const handleAmountChange = (val: string) => {
+    setAmountInput(val);
+    const clean = val.replace(/[^0-9]/g, "");
+    const n = Number(clean);
+    if (Number.isFinite(n)) setAmount(n);
   };
 
-  const goNext = () => setStep((s) => Math.min(s + 1, totalSteps + 1));
-  const goPrev = () => setStep((s) => Math.max(s - 1, 1));
-
-  const restart = () => {
-    setStep(1);
-    setAnswers({ purpose: null, budget: null, urgency: null, discountType: null });
-    setResults(null);
-  };
-
-  const fetchRecommendation = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // CAPTURE rect IMMEDIATELY — React synthetic event nulled after await!
-    // This was the real bug: e.currentTarget = null after fetch → confetti throw → outer catch → empty results.
+  const findBest = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!purpose) return;
     const buttonEl = e.currentTarget as HTMLElement;
     const rect = buttonEl?.getBoundingClientRect();
 
     setLoading(true);
-    setStep(5);
-    setDebug(null);
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || "(undefined!)";
-    console.log("[Decide v6] Start fetch:", answers, "API_BASE:", apiBase);
-
-    let dbg: DebugInfo = { baselineCount: 0, safetyCount: 0, apiBase };
+    setResults(null);
 
     try {
-      const purpose = PURPOSES.find((p) => p.id === answers.purpose);
-      const budget = BUDGETS.find((b) => b.id === answers.budget);
-      const urgency = URGENCIES.find((u) => u.id === answers.urgency);
-      const discount = DISCOUNTS.find((d) => d.id === answers.discountType);
+      const purposeData = PURPOSES.find((p) => p.id === purpose)!;
+      const cats = purposeData.categories;
 
-      const cats = purpose?.categories ?? [];
+      // Fetch baseline + category-filtered in parallel
+      const baselinePromise = listCoupons({ sort: "quality", limit: 30 }).catch(
+        () => [] as Coupon[],
+      );
+      const strictPromises =
+        cats.length === 0
+          ? [
+              listCoupons({
+                discount_type: selectedDiscount.apiVal ?? undefined,
+                sort: "quality",
+                limit: 30,
+              }).catch(() => [] as Coupon[]),
+            ]
+          : cats.map((cat) =>
+              listCoupons({
+                category: cat,
+                discount_type: selectedDiscount.apiVal ?? undefined,
+                sort: "quality",
+                limit: 30,
+              }).catch(() => [] as Coupon[]),
+            );
 
-      let merged: Coupon[] = [];
-      try {
-        merged = await listCoupons({ sort: "quality", limit: 20 });
-        dbg.baselineCount = merged.length;
-        console.log("[Decide v5] Baseline:", merged.length);
-      } catch (err) {
-        dbg.errorMsg = `Baseline: ${err instanceof Error ? err.message : String(err)}`;
-        console.error("[Decide v5] Baseline FAILED:", err);
-      }
+      const [baselineCoupons, ...strictResults] = await Promise.all([
+        baselinePromise,
+        ...strictPromises,
+      ]);
 
-      if (merged.length === 0) {
-        try {
-          merged = await listCoupons({ limit: 10 });
-          dbg.safetyCount = merged.length;
-          console.log("[Decide v5] Safety:", merged.length);
-        } catch (err) {
-          dbg.errorMsg = `${dbg.errorMsg ?? ""} | Safety: ${err instanceof Error ? err.message : String(err)}`;
-          console.error("[Decide v5] Safety FAILED:", err);
+      // Merge — strict first (will rank higher), baseline as backfill
+      const merged: Coupon[] = [];
+      const seen = new Set<number>();
+      strictResults.flat().forEach((c) => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          merged.push(c);
         }
-      }
-
-      if (merged.length === 0) {
-        console.error("[Decide v5] ALL FAILED. Debug:", dbg);
-        setDebug(dbg);
-        setResults([]);
-        return;
-      }
-
-      // Score each: quality + category match + budget fit + urgency fit + discount match
-      const scored = merged.map((c) => {
-        let score = c.quality_score;
-
-        // BIG bonus: exact category match (strict match)
-        if (cats.length > 0 && c.category && cats.includes(c.category.slug)) {
-          score += 30;
+      });
+      baselineCoupons.forEach((c) => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          merged.push(c);
         }
-
-        // Discount type match bonus
-        if (discount?.apiVal && c.discount_type === discount.apiVal) {
-          score += 20;
-        }
-
-        // Budget fit: lower min_spend = better fit for low budget
-        const min = c.min_spend ?? 0;
-        if (budget) {
-          if (budget.id === "low" && min === 0) score += 25;
-          else if (budget.id === "low" && min <= 50000) score += 15;
-          else if (budget.id === "mid" && min >= 50000 && min <= 200000) score += 20;
-          else if (budget.id === "high" && min >= 200000 && min <= 500000) score += 20;
-          else if (budget.id === "max" && min >= 500000) score += 20;
-          // Catch-all: if budget allows it, give small bonus
-          else if (budget.max && min < budget.max) score += 10;
-        }
-
-        // Urgency fit: closer-to-expire bonus for urgent
-        if (urgency && c.expires_at) {
-          const daysLeft = (new Date(c.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-          if (urgency.days <= 1 && daysLeft <= 7) score += 15;
-          else if (urgency.days <= 7 && daysLeft <= 14) score += 10;
-          else if (urgency.days <= 30 && daysLeft <= 30) score += 5;
-        }
-
-        return { coupon: c, score };
       });
 
-      scored.sort((a, b) => b.score - a.score);
-      const top3 = scored.slice(0, 3).map((s) => s.coupon);
-      console.log("[Decide v6] Setting results:", top3.length, "coupons");
+      // Calculate savings for each + build reasons
+      const candidates: SmartResult[] = merged
+        .map((c, idx): SmartResult | null => {
+          const savings = calcSaving(c, amount);
+          if (savings === 0) return null; // not applicable for this amount
+          return {
+            coupon: c,
+            savings: Math.round(savings),
+            finalPrice: Math.max(Math.round(amount - savings), 0),
+            savingsPercent: Math.round((savings / amount) * 1000) / 10,
+            reasons: buildReasons(
+              c,
+              purposeData.categories,
+              selectedDiscount.apiVal,
+              selectedUrgency.days,
+            ),
+            rank: idx + 1,
+          };
+        })
+        .filter((x): x is SmartResult => x !== null);
+
+      // Sort by savings DESC, then quality DESC
+      candidates.sort((a, b) => {
+        if (b.savings !== a.savings) return b.savings - a.savings;
+        return b.coupon.quality_score - a.coupon.quality_score;
+      });
+
+      const top3 = candidates.slice(0, 3).map((r, i) => ({ ...r, rank: i + 1 }));
       setResults(top3);
 
-      // Confetti — pakai rect yg di-capture sebelum await, biar gak null
-      try {
-        if (rect) {
+      // Confetti
+      if (rect && top3.length > 0) {
+        try {
           fireConfetti({
             origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
             particleCount: 120,
           });
+        } catch {
+          /* ignore */
         }
-      } catch (confettiErr) {
-        console.warn("[Decide v6] Confetti failed (ignored):", confettiErr);
       }
     } catch (err) {
-      console.error("[Decide v6] OUTER catch:", err);
-      dbg.errorMsg = `OUTER: ${err instanceof Error ? err.message : String(err)}`;
-      setDebug({ ...dbg });
       if (!isAbortError(err)) setResults([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const reset = () => {
+    setPurpose(null);
+    setResults(null);
+    setAmount(200000);
+    setAmountInput("200000");
+    setUrgency("anytime");
+    setDiscountType("any");
+    setShowAdvanced(false);
+  };
+
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-white/10 bg-gradient-to-br from-brand-500/25 via-purple-500/15 to-transparent p-6 animate-slide-up">
+      {/* Hero */}
+      <header className="rounded-2xl border border-brand-400/30 bg-gradient-to-br from-brand-500/25 via-purple-500/15 to-transparent p-6 animate-slide-up">
         <h1 className="flex items-center gap-3 text-2xl font-bold text-white sm:text-3xl">
-          <span className="text-4xl">🧭</span>
-          Decision Helper
+          <span className="text-4xl">🎯</span>
+          Smart Pick
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-gray-300">
-          Bingung pilih kupon mana? Jawab 4 pertanyaan singkat — kami kasih{" "}
-          <span className="font-semibold text-brand-300">top 3 rekomendasi</span> dengan
-          alasan kenapa cocok.
+          Cariin kupon paling hemat dalam{" "}
+          <span className="font-semibold text-brand-300">2 step</span> — pilih kebutuhan +
+          input nominal, dapat top 3 dengan kalkulasi rupiah hemat.
         </p>
+      </header>
 
-        {/* Progress bar */}
-        {step <= totalSteps && (
-          <div className="mt-5">
-            <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-semibold text-brand-200">
-                Step {step} / {totalSteps}
+      {/* STEP 1: Purpose */}
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white">
+            1
+          </span>
+          <h2 className="text-base font-bold text-white">Mau hemat untuk apa?</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
+          {PURPOSES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPurpose(p.id)}
+              className={[
+                "group flex flex-col items-center gap-1 rounded-xl border bg-gradient-to-br p-3 text-center transition-all sm:p-4",
+                p.color,
+                purpose === p.id
+                  ? "scale-105 shadow-lg shadow-brand-500/40 ring-2 ring-brand-400"
+                  : "hover:scale-105",
+              ].join(" ")}
+            >
+              <span className="text-2xl transition-transform group-hover:scale-110 sm:text-3xl">
+                {p.emoji}
               </span>
-              <span className="text-gray-400">{Math.round(progress)}% selesai</span>
+              <span className="text-xs font-bold text-white sm:text-sm">{p.label}</span>
+              <span className="text-[10px] text-gray-300">{p.desc}</span>
+              {purpose === p.id && (
+                <span className="mt-1 inline-block rounded-full bg-brand-500 px-2 py-0.5 text-[9px] font-black text-white">
+                  ✓ Dipilih
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* STEP 2: Amount */}
+      <section
+        className={[
+          "rounded-2xl border bg-white/5 p-5 transition-all",
+          purpose ? "border-white/10" : "border-white/5 opacity-50 pointer-events-none",
+        ].join(" ")}
+      >
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-xs font-black text-white">
+            2
+          </span>
+          <h2 className="text-base font-bold text-white">Berapa nominal belanjamu?</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-emerald-300">Rp</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={amountInput}
+            onChange={(e) => handleAmountChange(e.target.value)}
+            placeholder="200000"
+            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xl font-bold text-white placeholder:text-gray-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30"
+          />
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Quick:
+          </span>
+          {QUICK_AMOUNTS.map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => {
+                setAmount(a);
+                setAmountInput(String(a));
+              }}
+              className={[
+                "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition",
+                amount === a
+                  ? "border-brand-400 bg-brand-500/20 text-brand-200"
+                  : "border-white/10 bg-white/5 text-gray-300 hover:border-brand-400/50 hover:text-white",
+              ].join(" ")}
+            >
+              Rp {(a / 1000).toLocaleString("id-ID")}rb
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Optional: Advanced filters */}
+      <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="flex w-full items-center justify-between text-left"
+        >
+          <span className="text-sm font-semibold text-gray-300">
+            ⚙️ Filter lebih spesifik (opsional)
+          </span>
+          <span className="text-xs text-gray-500">{showAdvanced ? "▲ Tutup" : "▼ Buka"}</span>
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">
+                ⏰ Kapan mau pakai?
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {URGENCY_OPTIONS.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => setUrgency(u.id)}
+                    className={[
+                      "rounded-lg border px-2 py-1.5 text-xs font-semibold transition",
+                      urgency === u.id
+                        ? "border-brand-400 bg-brand-500/20 text-brand-200"
+                        : "border-white/10 bg-white/5 text-gray-300 hover:border-brand-400/40",
+                    ].join(" ")}
+                  >
+                    {u.emoji} {u.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand-500 via-purple-500 to-pink-500 transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">
+                📉 Tipe diskon
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {DISCOUNT_OPTIONS.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDiscountType(d.id)}
+                    className={[
+                      "rounded-lg border px-2 py-1.5 text-xs font-semibold transition",
+                      discountType === d.id
+                        ? "border-brand-400 bg-brand-500/20 text-brand-200"
+                        : "border-white/10 bg-white/5 text-gray-300 hover:border-brand-400/40",
+                    ].join(" ")}
+                  >
+                    {d.emoji} {d.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
-      </header>
+      </section>
 
-      {/* Step 1: Purpose */}
-      {step === 1 && (
-        <StepCard
-          stepNum={1}
-          question="Lagi mau apa hari ini?"
-          subtitle="Pilih kebutuhanmu — kita filter kupon yang relevan"
-        >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-            {PURPOSES.map((p) => (
-              <OptionButton
-                key={p.id}
-                emoji={p.emoji}
-                label={p.label}
-                desc={p.desc}
-                selected={answers.purpose === p.id}
-                onClick={() => setAnswer("purpose", p.id)}
-              />
-            ))}
-          </div>
-          <NavButtons
-            onNext={goNext}
-            disableNext={!answers.purpose}
-            showPrev={false}
-          />
-        </StepCard>
-      )}
+      {/* CTA */}
+      <button
+        type="button"
+        onClick={findBest}
+        disabled={!purpose || loading}
+        className="w-full rounded-2xl bg-gradient-to-r from-brand-500 via-purple-500 to-pink-500 px-6 py-5 text-base font-black text-white shadow-2xl shadow-brand-500/30 transition hover:scale-[1.01] hover:shadow-brand-500/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+      >
+        {loading ? "🔍 Mencari kupon terbaik..." : "✨ Cariin Top 3 Pilihan"}
+      </button>
 
-      {/* Step 2: Budget */}
-      {step === 2 && (
-        <StepCard
-          stepNum={2}
-          question="Budget belanjamu kira-kira?"
-          subtitle="Buat saring kupon yang sesuai minimum belanja"
-        >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            {BUDGETS.map((b) => (
-              <OptionButton
-                key={b.id}
-                emoji="💰"
-                label={b.label}
-                desc={b.desc}
-                selected={answers.budget === b.id}
-                onClick={() => setAnswer("budget", b.id)}
-              />
-            ))}
-          </div>
-          <NavButtons
-            onNext={goNext}
-            onPrev={goPrev}
-            disableNext={!answers.budget}
-          />
-        </StepCard>
-      )}
-
-      {/* Step 3: Urgency */}
-      {step === 3 && (
-        <StepCard
-          stepNum={3}
-          question="Kapan mau pakai kuponnya?"
-          subtitle="Kupon expiring soon dapat priority kalo urgent"
-        >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            {URGENCIES.map((u) => (
-              <OptionButton
-                key={u.id}
-                emoji={u.emoji}
-                label={u.label}
-                desc=""
-                selected={answers.urgency === u.id}
-                onClick={() => setAnswer("urgency", u.id)}
-              />
-            ))}
-          </div>
-          <NavButtons
-            onNext={goNext}
-            onPrev={goPrev}
-            disableNext={!answers.urgency}
-          />
-        </StepCard>
-      )}
-
-      {/* Step 4: Discount preference */}
-      {step === 4 && (
-        <StepCard
-          stepNum={4}
-          question="Prefer tipe diskon apa?"
-          subtitle="Opsional — pilih 'Apa aja' kalau gak peduli"
-        >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
-            {DISCOUNTS.map((d) => (
-              <OptionButton
-                key={d.id}
-                emoji={d.emoji}
-                label={d.label}
-                desc=""
-                selected={answers.discountType === d.id}
-                onClick={() => setAnswer("discountType", d.id)}
-              />
-            ))}
-          </div>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={goPrev}
-              className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              ← Kembali
-            </button>
-            <button
-              type="button"
-              onClick={fetchRecommendation}
-              disabled={!answers.discountType}
-              className="rounded-lg bg-gradient-to-r from-brand-500 to-purple-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-brand-500/30 transition hover:scale-105 hover:shadow-brand-500/50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              ✨ Cariin Kupon Terbaik
-            </button>
-          </div>
-        </StepCard>
-      )}
-
-      {/* Step 5: Results */}
-      {step === 5 && (
-        <section className="space-y-4">
-          {loading ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
-              <div className="text-5xl animate-bounce">🔍</div>
-              <p className="mt-4 text-lg font-bold text-white">
-                Mencari kupon yg paling cocok...
+      {/* RESULTS */}
+      {results !== null && !loading && (
+        <section className="space-y-3 animate-slide-up">
+          {results.length === 0 ? (
+            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-8 text-center">
+              <div className="text-5xl">🤔</div>
+              <h2 className="mt-3 text-lg font-bold text-white">
+                Belum ada kupon yang fit untuk nominal ini
+              </h2>
+              <p className="mt-2 max-w-md mx-auto text-sm text-amber-200">
+                Coba naikin nominal belanja, atau ganti kategori. Beberapa kupon punya min belanja
+                tertentu.
               </p>
-              <p className="mt-2 text-sm text-gray-400">Bentar yaa</p>
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-4 rounded-lg bg-amber-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-amber-600"
+              >
+                🔄 Mulai Ulang
+              </button>
             </div>
-          ) : results && results.length > 0 ? (
+          ) : (
             <>
-              <div className="rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-500/15 to-transparent p-6 text-center">
-                <div className="text-5xl">🎯</div>
-                <h2 className="mt-2 text-2xl font-bold text-white">
-                  Ini Top 3 Pilihanmu!
-                </h2>
-                <p className="mt-2 text-sm text-emerald-200">
-                  Berdasarkan jawabanmu, ini kupon yang paling cocok
+              <div className="rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-500/15 to-transparent p-5 text-center">
+                <div className="text-4xl">🎯</div>
+                <h2 className="mt-2 text-xl font-bold text-white">Top 3 Pilihan Untukmu!</h2>
+                <p className="mt-1 text-xs text-emerald-200">
+                  Sorted by rupiah hemat untuk{" "}
+                  <span className="font-bold">{selectedPurpose?.label}</span> dengan budget{" "}
+                  <span className="font-bold">Rp {amount.toLocaleString("id-ID")}</span>
                 </p>
               </div>
 
-              <SummaryBar answers={answers} />
-
               <div className="space-y-3">
-                {results.map((c, i) => (
-                  <ResultCard
-                    key={c.id}
-                    coupon={c}
-                    rank={i + 1}
-                    answers={answers}
-                    discount={formatDiscount(c, t)}
-                  />
+                {results.map((r) => (
+                  <ResultCard key={r.coupon.id} result={r} />
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+              <div className="flex flex-wrap justify-center gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={restart}
+                  onClick={reset}
                   className="rounded-lg border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
                   🔄 Mulai Ulang
@@ -410,34 +546,6 @@ export default function DecidePage() {
                 </Link>
               </div>
             </>
-          ) : (
-            <div className="rounded-2xl border border-rose-400/40 bg-rose-500/10 p-8 text-center">
-              <div className="text-5xl">⚠️</div>
-              <h2 className="mt-2 text-xl font-bold text-white">
-                Gagal connect ke backend
-              </h2>
-              {debug && (
-                <div className="mx-auto mt-4 max-w-lg rounded-lg border border-rose-300/30 bg-black/40 p-3 text-left font-mono text-[11px] text-rose-100">
-                  <div className="mb-1 font-bold text-rose-300">🔍 Debug Info:</div>
-                  <div>API_BASE: <span className="text-amber-200">{debug.apiBase}</span></div>
-                  <div>Baseline fetch: <span className="text-amber-200">{debug.baselineCount} kupon</span></div>
-                  <div>Safety fetch: <span className="text-amber-200">{debug.safetyCount} kupon</span></div>
-                  {debug.errorMsg && (
-                    <div className="mt-1 break-all border-t border-rose-300/20 pt-1">
-                      Error: <span className="text-amber-300">{debug.errorMsg}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              <p className="mt-3 text-xs text-rose-300">[Decide v6 — confetti race fix]</p>
-              <button
-                type="button"
-                onClick={restart}
-                className="mt-4 rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-rose-600"
-              >
-                🔄 Mulai Ulang
-              </button>
-            </div>
           )}
         </section>
       )}
@@ -445,187 +553,24 @@ export default function DecidePage() {
   );
 }
 
-function StepCard({
-  stepNum,
-  question,
-  subtitle,
-  children,
-}: {
-  stepNum: number;
-  question: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6 animate-slide-up">
-      <div className="mb-5">
-        <span className="inline-block rounded-full bg-brand-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-200">
-          Step {stepNum}
-        </span>
-        <h2 className="mt-2 text-xl font-bold text-white sm:text-2xl">{question}</h2>
-        <p className="mt-1 text-sm text-gray-400">{subtitle}</p>
-      </div>
-      {children}
-    </section>
-  );
-}
+function ResultCard({ result }: { result: SmartResult }) {
+  const { coupon, savings, finalPrice, savingsPercent, reasons, rank } = result;
 
-function OptionButton({
-  emoji,
-  label,
-  desc,
-  selected,
-  onClick,
-}: {
-  emoji: string;
-  label: string;
-  desc: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "group flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition-all sm:p-4",
-        selected
-          ? "scale-105 border-brand-400 bg-brand-500/20 shadow-lg shadow-brand-500/30"
-          : "border-white/10 bg-white/5 hover:border-brand-400/50 hover:bg-white/10",
-      ].join(" ")}
-    >
-      <span className="text-2xl transition-transform group-hover:scale-110 sm:text-3xl">
-        {emoji}
-      </span>
-      <span className="text-xs font-bold text-white sm:text-sm">{label}</span>
-      {desc && <span className="text-[10px] text-gray-400">{desc}</span>}
-      {selected && (
-        <span className="mt-1 inline-block rounded-full bg-brand-500 px-2 py-0.5 text-[9px] font-black text-white">
-          ✓ Dipilih
-        </span>
-      )}
-    </button>
-  );
-}
-
-function NavButtons({
-  onNext,
-  onPrev,
-  disableNext,
-  showPrev = true,
-}: {
-  onNext: () => void;
-  onPrev?: () => void;
-  disableNext?: boolean;
-  showPrev?: boolean;
-}) {
-  return (
-    <div className="mt-6 flex items-center justify-between gap-3">
-      {showPrev && onPrev ? (
-        <button
-          type="button"
-          onClick={onPrev}
-          className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-        >
-          ← Kembali
-        </button>
-      ) : (
-        <div />
-      )}
-      <button
-        type="button"
-        onClick={onNext}
-        disabled={disableNext}
-        className="rounded-lg bg-brand-500 px-6 py-2 text-sm font-bold text-white shadow transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Lanjut →
-      </button>
-    </div>
-  );
-}
-
-function SummaryBar({ answers }: { answers: Answers }) {
-  const purpose = PURPOSES.find((p) => p.id === answers.purpose);
-  const budget = BUDGETS.find((b) => b.id === answers.budget);
-  const urgency = URGENCIES.find((u) => u.id === answers.urgency);
-  const discount = DISCOUNTS.find((d) => d.id === answers.discountType);
-
-  const chips = [
-    purpose && { emoji: purpose.emoji, text: purpose.label },
-    budget && { emoji: "💰", text: budget.label },
-    urgency && { emoji: urgency.emoji, text: urgency.label },
-    discount && { emoji: discount.emoji, text: discount.label },
-  ].filter(Boolean) as { emoji: string; text: string }[];
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-        Filter:
-      </span>
-      {chips.map((c, i) => (
-        <span
-          key={i}
-          className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-semibold text-brand-200"
-        >
-          <span aria-hidden>{c.emoji}</span>
-          {c.text}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function ResultCard({
-  coupon,
-  rank,
-  answers,
-  discount,
-}: {
-  coupon: Coupon;
-  rank: number;
-  answers: Answers;
-  discount: string;
-}) {
-  const purpose = PURPOSES.find((p) => p.id === answers.purpose);
-  const budget = BUDGETS.find((b) => b.id === answers.budget);
-
-  // Build reasoning chips
-  const reasons: string[] = [];
-
-  if (coupon.quality_score >= 80) {
-    reasons.push(`⭐ Kualitas premium (★${coupon.quality_score})`);
-  }
-  if (coupon.category && purpose && purpose.categories.includes(coupon.category.slug)) {
-    reasons.push(`🎯 Match kategori "${coupon.category.name}"`);
-  }
-  if (budget) {
-    const min = coupon.min_spend ?? 0;
-    if (budget.id === "low" && min === 0) reasons.push("✅ Tanpa min belanja");
-    else if (budget.max && min < budget.max) {
-      reasons.push(`✅ Min belanja cocok budget`);
-    }
-  }
-  if (coupon.expires_at) {
-    const daysLeft = Math.ceil(
-      (new Date(coupon.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-    );
-    if (daysLeft <= 3 && daysLeft > 0) {
-      reasons.push(`🔥 Tinggal ${daysLeft} hari lagi`);
-    }
-  }
-  if (coupon.code) {
-    reasons.push("🎫 Ada kode promo");
-  }
-
-  const rankColor = rank === 1 ? "from-amber-400 to-orange-500" : rank === 2 ? "from-gray-300 to-gray-500" : "from-amber-700 to-amber-900";
+  const rankColors = {
+    1: "from-amber-400 to-orange-500 shadow-amber-500/30",
+    2: "from-gray-300 to-gray-500 shadow-gray-500/30",
+    3: "from-amber-700 to-amber-900 shadow-amber-700/30",
+  };
+  const rankColor = rankColors[rank as 1 | 2 | 3];
 
   return (
     <Link
       href={`/coupon/${coupon.id}`}
-      className="group block overflow-hidden rounded-2xl border-2 border-white/10 bg-white/5 transition-all hover:scale-[1.01] hover:border-brand-400/50 hover:shadow-xl"
+      className="group block overflow-hidden rounded-2xl border-2 border-white/10 bg-white/5 transition-all hover:scale-[1.01] hover:border-emerald-400/50 hover:shadow-xl"
     >
-      <div className="flex gap-4 p-5">
-        <div className="flex-none">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row">
+        {/* Rank badge */}
+        <div className="flex flex-row gap-3 sm:flex-col sm:items-center">
           <div
             className={[
               "flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-2xl font-black text-white shadow-lg",
@@ -634,26 +579,33 @@ function ResultCard({
           >
             #{rank}
           </div>
+          <div className="flex-1 sm:hidden">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-brand-300">
+              {coupon.merchant.name}
+            </p>
+            <p className="line-clamp-2 text-sm font-bold text-white">{coupon.title}</p>
+          </div>
         </div>
+
+        {/* Main info */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <MerchantLogo merchant={coupon.merchant} size={28} rounded="md" />
+          <div className="hidden items-center gap-2 sm:flex">
+            <MerchantLogo merchant={coupon.merchant} size={24} rounded="md" />
             <span className="text-xs font-bold uppercase tracking-wider text-brand-300">
               {coupon.merchant.name}
             </span>
           </div>
-          <h3 className="mt-1 line-clamp-2 text-base font-bold text-white sm:text-lg">
+          <h3 className="mt-1 hidden text-base font-bold text-white sm:block">
             {coupon.title}
           </h3>
+
           {coupon.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-gray-400">
-              {coupon.description}
-            </p>
+            <p className="mt-1 line-clamp-2 text-xs text-gray-400">{coupon.description}</p>
           )}
 
           {/* Reasoning chips */}
           {reasons.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1">
               {reasons.map((r, i) => (
                 <span
                   key={i}
@@ -664,19 +616,30 @@ function ResultCard({
               ))}
             </div>
           )}
-        </div>
-        <div className="flex-none text-right">
-          <div className="rounded-xl bg-brand-500/20 px-3 py-2">
-            <div className="text-[10px] uppercase text-brand-300">Diskon</div>
-            <div className="mt-0.5 font-mono text-sm font-black text-brand-200 sm:text-base">
-              {discount}
-            </div>
-          </div>
+
+          {/* Code */}
           {coupon.code && (
-            <code className="mt-2 inline-block rounded bg-amber-500/20 px-2 py-1 font-mono text-[10px] font-bold text-amber-200">
+            <code className="mt-2 inline-block rounded bg-amber-500/20 px-2 py-1 font-mono text-xs font-bold text-amber-200">
               {coupon.code}
             </code>
           )}
+        </div>
+
+        {/* Savings hero */}
+        <div className="flex-none rounded-2xl border border-emerald-300/30 bg-black/30 p-3 text-center sm:min-w-[140px]">
+          <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-300">
+            💰 Hemat
+          </div>
+          <div className="mt-1 font-mono text-xl font-black text-emerald-200 sm:text-2xl">
+            Rp {savings.toLocaleString("id-ID")}
+          </div>
+          <div className="text-[10px] text-gray-400">({savingsPercent}%)</div>
+          <div className="mt-2 border-t border-emerald-300/20 pt-1">
+            <div className="text-[9px] uppercase text-gray-400">Bayar</div>
+            <div className="font-mono text-sm font-bold text-white">
+              Rp {finalPrice.toLocaleString("id-ID")}
+            </div>
+          </div>
         </div>
       </div>
     </Link>

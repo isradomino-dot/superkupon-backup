@@ -312,7 +312,7 @@ function Home() {
           className="relative mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand-700 shadow-lg transition hover:scale-105 hover:bg-amber-50 hover:shadow-xl"
         >
           <span className="text-lg">🧭</span>
-          <span>Bingung pilih? Pakai Decision Helper</span>
+          <span>Bingung pilih? Pakai Smart Pick</span>
           <span className="text-brand-500">→</span>
         </Link>
       </section>

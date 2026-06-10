@@ -33,13 +33,13 @@ const STEPS: Step[] = [
   {
     title: "3. Header icon",
     description:
-      "♥ Favorit · 🔔 Saved Alerts · 🧮 Kalkulator Hemat · 🎁 Kombo Kupon · 🤖 Tanya SuperKupon · 🇮🇩 Bahasa (3 lang) · 🖥️ Theme.",
+      "♥ Favorit · 🎯 Smart Pick · 🎁 Kombo Kupon · 🤖 Tanya SuperKupon · 🇮🇩 Bahasa (3 lang) · 🖥️ Theme.",
     emoji: "🎯",
   },
   {
     title: "4. Smart Decision Tools",
     description:
-      "🧭 Decision Helper (wizard 4-step) · 🧮 Kalkulator (input nominal → kupon paling hemat) · 🎁 Kombo Kupon (cari kupon yg bisa di-stack untuk hemat maksimal).",
+      "🎯 Smart Pick (2-step: pilih kebutuhan + nominal → top 3 kupon hemat) · 🎁 Kombo Kupon (cari kupon yg bisa di-stack hemat maksimal) · 🤖 Tanya SuperKupon (bot natural language).",
     emoji: "🧠",
   },
   {

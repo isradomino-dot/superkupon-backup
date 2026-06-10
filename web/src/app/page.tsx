@@ -20,7 +20,6 @@ import { MerchantLogo } from "@/components/MerchantLogo";
 import { FollowedMerchantsSection } from "@/components/FollowedMerchantsSection";
 import { TopPicksCarousel } from "@/components/TopPicksCarousel";
 import { TrendingNowSection } from "@/components/TrendingNowSection";
-import { SmartPick } from "@/components/SmartPick";
 import { CouponOfTheDay } from "@/components/CouponOfTheDay";
 import { MerchantSpotlight } from "@/components/MerchantSpotlight";
 import { RightSidebar } from "@/components/RightSidebar";
@@ -325,23 +324,16 @@ function Home() {
         </ScrollReveal>
       )}
 
-      {/* Smart Pick — pilih goal */}
-      {!isSearching && (
-        <ScrollReveal delay={50}>
-          <SmartPick />
-        </ScrollReveal>
-      )}
-
       {/* Merchant Spotlight — featured 1 merchant random */}
       {!isSearching && (
-        <ScrollReveal delay={100}>
+        <ScrollReveal delay={50}>
           <MerchantSpotlight />
         </ScrollReveal>
       )}
 
       {/* Live Trending — kupon paling rame saat ini */}
       {!isSearching && (
-        <ScrollReveal delay={150}>
+        <ScrollReveal delay={100}>
           <TrendingNowSection />
         </ScrollReveal>
       )}

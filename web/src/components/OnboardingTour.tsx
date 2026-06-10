@@ -33,14 +33,14 @@ const STEPS: Step[] = [
   {
     title: "3. Header icon",
     description:
-      "🕒 History (kupon yang sudah lo salin) · ♥ Favorit (saved coupons + folders) · 🔔 Notifikasi (baru + expiring) · 🇮🇩 Bahasa (3 lang) · 🖥️ Theme toggle.",
+      "♥ Favorit · 🔔 Saved Alerts · 🧮 Kalkulator Hemat · 🎁 Kombo Kupon · 🤖 Tanya SuperKupon · 🇮🇩 Bahasa (3 lang) · 🖥️ Theme.",
     emoji: "🎯",
   },
   {
-    title: "4. Salin = otomatis tercatat",
+    title: "4. Smart Decision Tools",
     description:
-      "Setiap klik tombol 'Salin' di kupon → kode masuk clipboard + otomatis tersimpan di /history. Lo bisa lihat statistik penggunaan + estimasi penghematan per bulan.",
-    emoji: "📋",
+      "🧭 Decision Helper (wizard 4-step) · 🧮 Kalkulator (input nominal → kupon paling hemat) · 🎁 Kombo Kupon (cari kupon yg bisa di-stack untuk hemat maksimal).",
+    emoji: "🧠",
   },
   {
     title: "Selesai! 🎉",

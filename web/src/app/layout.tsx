@@ -10,7 +10,6 @@ import { NotificationProvider } from "@/lib/use-notifications";
 import { FavoritesProvider } from "@/lib/use-favorites";
 import { FavoritesLink } from "@/components/FavoritesLink";
 import { HistoryProvider } from "@/lib/use-history";
-import { HistoryLink } from "@/components/HistoryLink";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { StreakProvider } from "@/lib/use-streak";
 import { StreakIndicator } from "@/components/StreakIndicator";
@@ -115,7 +114,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </Link>
                 <div className="flex items-center gap-2">
                   <StreakIndicator />
-                  <HistoryLink />
                   <FavoritesLink />
                   <NotificationCenter />
                   <LanguageSwitcher />

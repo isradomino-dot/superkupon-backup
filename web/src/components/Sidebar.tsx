@@ -14,10 +14,10 @@ const SECTIONS: Section[] = [
     label: "Browse",
     items: [
       { href: "/", icon: "🏷️", label: "Halaman Depan" },
-      { href: "/decide", icon: "🧭", label: "Decision Helper", badge: "NEW" },
-      { href: "/kalkulator", icon: "🧮", label: "Kalkulator Hemat", badge: "BARU" },
+      { href: "/decide", icon: "🧭", label: "Decision Helper" },
+      { href: "/kalkulator", icon: "🧮", label: "Kalkulator Hemat" },
+      { href: "/kombo", icon: "🎁", label: "Kombo Kupon", badge: "BARU" },
       { href: "/stats", icon: "📊", label: "Statistik" },
-      { href: "/history", icon: "🕒", label: "Riwayat" },
     ],
   },
   {

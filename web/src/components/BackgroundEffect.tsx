@@ -24,15 +24,15 @@ export function BackgroundEffect() {
     setMounted(true);
     // Generate particles client-side (avoid hydration mismatch)
     const isMobile = window.innerWidth < 640;
-    const count = isMobile ? 20 : 40;
+    const count = isMobile ? 35 : 60;
     setParticles(
       Array.from({ length: count }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
+        size: Math.random() * 6 + 4, // 4-10px (much bigger)
         delay: Math.random() * 20,
-        duration: 15 + Math.random() * 25,
+        duration: 12 + Math.random() * 20,
       })),
     );
   }, []);
@@ -43,28 +43,28 @@ export function BackgroundEffect() {
       className="fixed inset-0 overflow-hidden pointer-events-none"
       style={{ zIndex: 0 }}
     >
-      {/* Layer 1: Base dark gradient with mesh */}
+      {/* Layer 1: Base dark gradient with mesh — MORE DRAMATIC */}
       <div
         className="absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 80% 50% at 50% 30%, rgba(139, 92, 246, 0.25), transparent 60%),
-            radial-gradient(ellipse 60% 80% at 80% 80%, rgba(236, 72, 153, 0.15), transparent 70%),
-            radial-gradient(ellipse 60% 60% at 20% 70%, rgba(56, 189, 248, 0.1), transparent 60%),
+            radial-gradient(ellipse 100% 70% at 50% 30%, rgba(139, 92, 246, 0.45), transparent 60%),
+            radial-gradient(ellipse 80% 90% at 80% 80%, rgba(236, 72, 153, 0.35), transparent 70%),
+            radial-gradient(ellipse 70% 70% at 20% 70%, rgba(56, 189, 248, 0.25), transparent 60%),
             linear-gradient(180deg, #0a0817 0%, #1a0b2e 50%, #0a0817 100%)
           `,
         }}
       />
 
-      {/* Layer 2: Grid pattern */}
+      {/* Layer 2: Grid pattern — more visible */}
       <svg
-        className="absolute inset-0 h-full w-full opacity-[0.06]"
+        className="absolute inset-0 h-full w-full opacity-[0.12]"
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          <pattern id="bg-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+          <pattern id="bg-grid" width="60" height="60" patternUnits="userSpaceOnUse">
             <path
-              d="M 80 0 L 0 0 0 80"
+              d="M 60 0 L 0 0 0 60"
               fill="none"
               stroke="rgb(167, 139, 250)"
               strokeWidth="1"
@@ -178,10 +178,11 @@ export function BackgroundEffect() {
         </line>
       </svg>
 
-      {/* Layer 5: Glow blobs (slow pulsing) */}
-      <div className="bg-effect-blob-1 absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-purple-600/25 blur-3xl" />
-      <div className="bg-effect-blob-2 absolute bottom-0 right-1/4 h-[500px] w-[500px] rounded-full bg-pink-600/15 blur-3xl" />
-      <div className="bg-effect-blob-3 absolute top-1/2 right-0 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+      {/* Layer 5: Glow blobs (slow pulsing) — MUCH BIGGER & BRIGHTER */}
+      <div className="bg-effect-blob-1 absolute -top-32 left-1/4 h-[600px] w-[600px] rounded-full bg-purple-600/40 blur-3xl" />
+      <div className="bg-effect-blob-2 absolute bottom-0 right-1/4 h-[700px] w-[700px] rounded-full bg-pink-600/30 blur-3xl" />
+      <div className="bg-effect-blob-3 absolute top-1/2 right-0 h-[500px] w-[500px] rounded-full bg-cyan-500/25 blur-3xl" />
+      <div className="bg-effect-blob-1 absolute top-1/3 left-0 h-[400px] w-[400px] rounded-full bg-violet-500/35 blur-3xl" />
     </div>
   );
 }

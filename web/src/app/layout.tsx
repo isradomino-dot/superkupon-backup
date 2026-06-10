@@ -19,6 +19,7 @@ import { FavoriteExpiryWatcher } from "@/components/FavoriteExpiryWatcher";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { AskSuperKupon } from "@/components/AskSuperKupon";
+import { BackgroundEffect } from "@/components/BackgroundEffect";
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
@@ -97,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <BackgroundEffect />
         <I18nProvider>
           <HistoryProvider>
           <StreakProvider>

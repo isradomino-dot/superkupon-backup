@@ -34,6 +34,94 @@
 }
 
 /* =========================================================
+   BACKGROUND EFFECT — Network/Tech/Energy animated background
+   ========================================================= */
+
+@keyframes bgFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(40px, -80px) scale(1.4);
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes bgBlobPulse {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2) translate(30px, -20px);
+    opacity: 0.7;
+  }
+}
+
+@keyframes bgBlobPulse2 {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.15) translate(-40px, 30px);
+    opacity: 0.6;
+  }
+}
+
+@keyframes bgBlobPulse3 {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.5;
+  }
+}
+
+.bg-effect-particle {
+  position: absolute;
+  background: radial-gradient(circle, rgb(196, 181, 253) 0%, rgb(139, 92, 246) 60%, transparent 100%);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.8);
+  animation: bgFloat ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bg-effect-blob-1 {
+  animation: bgBlobPulse 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bg-effect-blob-2 {
+  animation: bgBlobPulse2 15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bg-effect-blob-3 {
+  animation: bgBlobPulse3 10s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Reduce motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .bg-effect-particle,
+  .bg-effect-blob-1,
+  .bg-effect-blob-2,
+  .bg-effect-blob-3 {
+    animation: none !important;
+  }
+}
+
+/* =========================================================
    GOFIT-INSPIRED DARK THEME OVERRIDES
    Force dark surface colors over existing component classes
    so we don't need to rewrite every component.

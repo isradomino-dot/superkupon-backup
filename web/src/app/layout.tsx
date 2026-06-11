@@ -150,18 +150,67 @@ function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="container-app py-6 text-xs text-gray-500 dark:text-gray-400">
-        Kupon di-aggregate dari halaman promo publik & channel resmi merchant. Validitas dapat
-        berubah sewaktu-waktu — cek di merchant asli sebelum digunakan.
-        <br />
-        <span className="opacity-70">© 2026 SuperKupon</span>
-        <span className="opacity-40"> · </span>
-        <Link href="/pilihan" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          💡 Pilihan
-        </Link>
-        <span className="opacity-40"> · </span>
-        <Link href="/belanja-hemat" className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400">
-          🎉 Belanja Hemat
-        </Link>
+        <p>
+          Kupon di-aggregate dari halaman promo publik & channel resmi merchant. Validitas
+          dapat berubah sewaktu-waktu — cek di merchant asli sebelum digunakan.
+        </p>
+
+        {/* Quick nav links */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Link
+            href="/pilihan"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            💡 Pilihan Hari Ini
+          </Link>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/belanja-hemat"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            🎉 Belanja Hemat
+          </Link>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/mood"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            🎨 Mood Picker
+          </Link>
+        </div>
+
+        {/* Legal / info links */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-gray-200/30 pt-3 dark:border-gray-800/50">
+          <span className="opacity-60">© 2026 SuperKupon</span>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/tentang"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            📋 Tentang Kami
+          </Link>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/faq"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            ❓ FAQ
+          </Link>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/privasi"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            🔒 Privacy
+          </Link>
+          <span className="opacity-40">·</span>
+          <Link
+            href="/syarat"
+            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
+          >
+            📜 Syarat
+          </Link>
+        </div>
       </div>
     </footer>
   );

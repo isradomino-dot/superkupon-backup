@@ -235,24 +235,28 @@ function ShareCard({ coupon, discount }: { coupon: Coupon; discount: string }) {
 
   const handleShare = async () => {
     const msg = buildMessage();
-    // Try Web Share API first (mobile-friendly)
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ title: `Kupon ${coupon.merchant.name}`, text: msg });
-        setShared(true);
-        setTimeout(() => setShared(false), 2000);
-        return;
-      } catch {
-        /* user cancelled or not supported, fallback */
-      }
-    }
-    // Fallback: copy to clipboard
+    // ALWAYS copy to clipboard — predictable behavior cross-platform.
+    // Web Share API di Windows munculin dialog OS yg useless (Nearby Sharing).
     try {
       await navigator.clipboard.writeText(msg);
       setShared(true);
-      setTimeout(() => setShared(false), 2000);
+      setTimeout(() => setShared(false), 2500);
     } catch {
-      /* ignore */
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = msg;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        setShared(true);
+        setTimeout(() => setShared(false), 2500);
+      } catch {
+        /* ignore */
+      }
+      document.body.removeChild(textarea);
     }
   };
 
@@ -305,10 +309,16 @@ function ShareCard({ coupon, discount }: { coupon: Coupon; discount: string }) {
               ? "bg-emerald-500 text-white"
               : "border border-white/15 bg-white/5 text-gray-200 hover:bg-white/10",
           ].join(" ")}
+          title="Salin pesan ke clipboard, lalu paste ke chat manapun"
         >
-          {shared ? "✓ Disalin!" : "📋 Salin Pesan"}
+          {shared ? "✓ Tersalin! Paste di chat" : "📋 Copy Pesan"}
         </button>
       </div>
+      {shared && (
+        <div className="mt-2 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs text-emerald-200">
+          ✅ <strong>Pesan tersalin!</strong> Buka chat apapun (WhatsApp, Telegram, SMS, Discord, dll) → tekan & tahan kolom chat → klik <strong>Paste</strong>.
+        </div>
+      )}
     </div>
   );
 }

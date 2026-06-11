@@ -24,7 +24,8 @@ const SECTIONS: Section[] = [
     label: "Tools",
     items: [
       { href: "/pilihan", icon: "💡", label: "Pilihan Hari Ini" },
-      { href: "/mood", icon: "🎨", label: "Mood Picker", badge: "BARU" },
+      { href: "/mood", icon: "🎨", label: "Mood Picker" },
+      { href: "/poster", icon: "🖼️", label: "Wallpaper Generator", badge: "BARU" },
       { href: "/belanja-hemat", icon: "🎉", label: "Belanja Hemat" },
       { href: "/favorites", icon: "⭐", label: "Favorit" },
     ],

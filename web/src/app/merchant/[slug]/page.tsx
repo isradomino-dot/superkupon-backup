@@ -36,7 +36,7 @@ export default async function MerchantPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-14 z-30 -mx-4 border-b border-white/10 bg-gray-950/85 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="sticky top-14 z-20 -mx-4 border-b border-white/10 bg-gray-950/85 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <nav className="text-xs text-gray-400">
           <Link href="/" className="hover:text-brand-300 hover:underline">
             Beranda

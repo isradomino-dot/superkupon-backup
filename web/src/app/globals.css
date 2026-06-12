@@ -35,14 +35,15 @@
    BACKGROUND EFFECT — Network/Tech/Energy animated background
    ========================================================= */
 
-/* Content wrapper z-index — provider wrappers are 'display: contents' or normal,
-   sehingga semua header/main/footer/aside di dalamnya pakai relative + z-10 */
-header.sticky,
+/* Lift content above the fixed BackgroundEffect (z-index:0) tanpa menjebak
+   sticky header di stacking context yang terlalu rendah.
+   Header punya Tailwind z-50 sendiri di layout.tsx — JANGAN target header di sini
+   atau specificity (0,1,1) bakal override Tailwind utility (0,1,0). */
 main,
 footer,
 aside {
   position: relative;
-  z-index: 10;
+  z-index: 1;
 }
 
 @keyframes bgFloat {

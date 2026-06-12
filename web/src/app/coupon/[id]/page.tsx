@@ -178,7 +178,7 @@ export default function CouponDetailPage() {
   return (
     <div className="space-y-6">
       {/* Sticky Breadcrumb */}
-      <div className="sticky top-14 z-30 -mx-4 border-b border-gray-200/60 bg-white/85 px-4 py-2 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="sticky top-14 z-20 -mx-4 border-b border-gray-200/60 bg-white/85 px-4 py-2 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <nav className="flex flex-wrap items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
           <Link href="/" className="hover:text-brand-600 dark:hover:text-brand-400">
             Beranda

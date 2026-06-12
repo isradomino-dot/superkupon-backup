@@ -522,7 +522,7 @@ function Home() {
         </div>
       </section>
 
-      <div className="sticky top-14 z-30 -mx-4 space-y-2 border-y border-gray-200/60 bg-white/85 px-4 py-2 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="sticky top-14 z-20 -mx-4 space-y-2 border-y border-gray-200/60 bg-white/85 px-4 py-2 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="max-w-3xl">
           <SearchBar />
         </div>

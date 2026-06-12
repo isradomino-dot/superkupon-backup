@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StreakProvider>
           <FavoritesProvider>
           <NotificationProvider>
-            <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+            <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
               <div className="container-app flex h-14 items-center justify-between gap-3">
                 <Link
                   href="/"

@@ -56,7 +56,7 @@ export function NotificationCenter() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-white/10 bg-[#1e1b2e] shadow-2xl">
+        <div className="absolute right-0 z-[100] mt-2 w-[360px] overflow-hidden rounded-xl border-2 border-brand-400/30 bg-[#16131f] shadow-2xl shadow-black/70 ring-1 ring-black/40">
           <div className="flex border-b border-white/10">
             <TabButton active={tab === "new"} onClick={() => setTab("new")} count={newCount}>
               Baru
@@ -96,7 +96,7 @@ export function NotificationCenter() {
             />
           )}
 
-          <div className="border-t border-white/10 bg-black/20 p-2 text-center">
+          <div className="border-t border-white/10 bg-[#0f0e1a] p-2 text-center">
             <Link
               href="/?expiring=true"
               onClick={() => setOpen(false)}

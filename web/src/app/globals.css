@@ -97,12 +97,12 @@ aside {
 
 .bg-effect-particle {
   position: absolute;
-  background: radial-gradient(circle, rgb(216, 180, 254) 0%, rgb(168, 85, 247) 50%, rgba(139, 92, 246, 0.4) 100%);
+  background: radial-gradient(circle, rgb(196, 181, 253) 0%, rgb(139, 92, 246) 60%, transparent 100%);
   border-radius: 9999px;
-  box-shadow: 0 0 20px rgba(168, 85, 247, 1), 0 0 40px rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
   animation: bgFloat ease-in-out infinite;
   will-change: transform, opacity;
-  opacity: 0.9;
+  opacity: 0.5;
 }
 
 .bg-effect-blob-1 {

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>SuperKupon — Profile Picture Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0815;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: white;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 32px;
+    background: linear-gradient(135deg, #a78bfa, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .desc {
+    color: #94a3b8;
+    margin-bottom: 30px;
+    font-size: 16px;
+  }
+  .instruction {
+    max-width: 600px;
+    margin: 0 auto 40px;
+    padding: 20px 28px;
+    background: rgba(139, 92, 246, 0.12);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 14px;
+    text-align: left;
+    font-family: -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .instruction strong { color: #c4b5fd; }
+  .instruction ol { padding-left: 24px; margin-top: 8px; }
+
+  .label {
+    margin: 30px 0 12px;
+    padding: 10px 20px;
+    background: rgba(236, 72, 153, 0.15);
+    border-left: 4px solid #ec4899;
+    border-radius: 6px;
+    display: inline-block;
+    font-weight: 700;
+    color: #fbcfe8;
+  }
+
+  /* ========== VERSION A: BOLD ICON ========== */
+  .pic {
+    width: 1080px;
+    height: 1080px;
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .v1 {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(236, 72, 153, 0.4), transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(56, 189, 248, 0.3), transparent 60%),
+      linear-gradient(135deg, #6d28d9 0%, #4c1d95 50%, #831843 100%);
+  }
+  .v1::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px);
+    background-size: 50px 50px;
+  }
+  .v1-icon {
+    position: relative;
+    font-size: 500px;
+    line-height: 1;
+    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.4));
+    margin-bottom: 30px;
+  }
+  .v1-text {
+    position: relative;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 130px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -0.02em;
+    text-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+
+  /* ========== VERSION B: SK MONOGRAM ========== */
+  .v2 {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  }
+  .v2-circle {
+    width: 700px;
+    height: 700px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .v2-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 360px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #6d28d9, #be185d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+
+  /* ========== VERSION C: TARGET ICON + TEXT ========== */
+  .v3 {
+    background:
+      radial-gradient(ellipse at center, #1e1b3a 0%, #0f0e1a 100%);
+  }
+  .v3-icon-wrap {
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 25px 80px rgba(139, 92, 246, 0.6);
+    margin-bottom: 50px;
+    position: relative;
+  }
+  .v3-icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    border: 4px solid rgba(167, 139, 250, 0.4);
+    border-radius: 50%;
+    animation: spin 30s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .v3-icon {
+    font-size: 350px;
+    line-height: 1;
+  }
+  .v3-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 140px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffffff, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+  }
+</style>
+</head>
+<body>
+
+<h1>📷 SuperKupon — Profile Picture</h1>
+<p class="desc">3 versi profile picture. Pilih yang paling lo suka → screenshot → upload ke Instagram.</p>
+
+<div class="instruction">
+  <strong>📸 Cara Screenshot Profile Picture:</strong>
+  <ol>
+    <li>Tekan <kbd>Ctrl + 0</kbd> dulu (pastiin zoom 100%)</li>
+    <li>Tekan <kbd>Win + Shift + S</kbd> → pilih <strong>Rectangular Snip</strong></li>
+    <li>Drag pas di pinggir gambar profile (ikutin shadow violet)</li>
+    <li>Otomatis ke-copy → buka <strong>Paint</strong> → <kbd>Ctrl + V</kbd> → Save sebagai <strong>PNG</strong></li>
+    <li>Transfer file PNG ke HP (via WhatsApp Web/Google Drive)</li>
+    <li>Upload ke Instagram pas signup</li>
+  </ol>
+  <p style="margin-top: 10px; color: #fbbf24;"><strong>💡 Tip:</strong> IG bakal crop jadi LINGKARAN. Versi gue udah desain center-friendly, gak bakal kepotong.</p>
+</div>
+
+<div class="label">VERSI A — Bold Icon + Text (RECOMMENDED)</div>
+<div class="pic v1">
+  <div class="v1-icon">🎯</div>
+  <div class="v1-text">SUPERKUPON</div>
+</div>
+
+<div class="label">VERSI B — SK Monogram (Minimalist)</div>
+<div class="pic v2">
+  <div class="v2-circle">
+    <div class="v2-text">SK</div>
+  </div>
+</div>
+
+<div class="label">VERSI C — Premium Badge (Modern)</div>
+<div class="pic v3">
+  <div class="v3-icon-wrap">
+    <div class="v3-icon">🎯</div>
+  </div>
+  <div class="v3-text">SUPERKUPON</div>
+</div>
+
+<div class="instruction" style="margin-top: 40px;">
+  <strong>🎨 Rekomendasi Gue:</strong>
+  <p style="margin-top: 8px;"><strong>Versi A</strong> paling cocok karena:</p>
+  <ul style="padding-left: 24px; margin-top: 6px;">
+    <li>Brand name SUPERKUPON kebaca jelas walau di-crop kecil 320×320</li>
+    <li>Icon 🎯 langsung kelihatan = positioning "target hemat"</li>
+    <li>Gradient violet-pink matching website</li>
+  </ul>
+  <p style="margin-top: 12px;"><strong>Versi B</strong> bagus kalau lo prefer minimalist clean (kayak brand premium).</p>
+  <p style="margin-top: 6px;"><strong>Versi C</strong> bagus buat aesthetic dark mood (cocok feed yang konsisten dark theme).</p>
+</div>
+
+</body>
+</html>

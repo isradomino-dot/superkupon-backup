@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 import type { Coupon } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8001";
 const STORAGE_KEY = "dk_notif_settings_v1";
 const SEEN_KEY = "dk_notif_seen_ids_v1";
 const POLL_INTERVAL_MS = 60_000;

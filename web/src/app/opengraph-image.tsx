@@ -73,7 +73,7 @@ export default async function OGImage() {
               fontWeight: 700,
             }}
           >
-            🔥 159+ Kupon Aktif
+            🔥 50+ Kupon Aktif
           </div>
           <div
             style={{

@@ -49,13 +49,13 @@ export const metadata: Metadata = {
     url: "https://superkupon.vercel.app",
     title: "SuperKupon — Aggregator Kupon Digital Indonesia",
     description:
-      "159+ kupon aktif dari 22 merchant Indonesia. Update otomatis. 100% gratis.",
+      "50+ kupon aktif dari merchant Indonesia. Update otomatis. 100% gratis.",
     siteName: "SuperKupon",
   },
   twitter: {
     card: "summary_large_image",
     title: "SuperKupon — Aggregator Kupon Digital",
-    description: "159+ kupon aktif dari 22 merchant Indonesia. Update otomatis.",
+    description: "50+ kupon aktif dari merchant Indonesia. Update otomatis.",
   },
   robots: {
     index: true,
@@ -75,8 +75,6 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { Coupon } from "@/lib/types";
 import { trackRedeem } from "@/lib/api";
+import { wrapAffiliateLink, trackOutbound } from "@/lib/affiliate";
 import { useI18n } from "@/i18n/provider";
 import { useHistory } from "@/lib/use-history";
 import { useStreak } from "@/lib/use-streak";
@@ -109,10 +110,13 @@ export function CouponActionGroup({ coupon }: Props) {
       {/* Open merchant site */}
       {coupon.merchant.website && (
         <a
-          href={coupon.merchant.website}
+          href={wrapAffiliateLink(coupon.merchant.slug, coupon.merchant.website, coupon.id)}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            trackOutbound(coupon.merchant.slug, coupon.id);
+          }}
           className="inline-flex items-center gap-0.5 border-l border-white/20 bg-emerald-500 px-2 py-1 text-xs font-bold text-white transition hover:bg-emerald-600"
           title={`Buka ${coupon.merchant.name}`}
         >

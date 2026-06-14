@@ -14,6 +14,7 @@ import {
   trackRedeem,
   trackView,
 } from "@/lib/api";
+import { wrapAffiliateLink, trackOutbound } from "@/lib/affiliate";
 import { useI18n } from "@/i18n/provider";
 import { useHistory } from "@/lib/use-history";
 import { useStreak } from "@/lib/use-streak";
@@ -277,9 +278,10 @@ export default function CouponDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {coupon.merchant.website && (
               <a
-                href={coupon.merchant.website}
+                href={wrapAffiliateLink(coupon.merchant.slug, coupon.merchant.website, coupon.id)}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackOutbound(coupon.merchant.slug, coupon.id)}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-600"
               >
                 🌐 Pakai di {coupon.merchant.name}

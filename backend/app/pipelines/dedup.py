@@ -65,6 +65,10 @@ def upsert_coupons(db: Session, items: Iterable[CouponRaw]) -> Tuple[int, int]:
             existing.expires_at = raw.expires_at or existing.expires_at
             existing.status = "active"
             existing.quality_score = max(existing.quality_score, q_score)
+            # Refresh source_url + source_target di tiap upsert biar mock data updates
+            # ke-pickup (e.g. ganti placeholder example.com → real source URL).
+            existing.source_url = raw.source_url
+            existing.source_target = raw.source_target
             updated_count += 1
             continue
 

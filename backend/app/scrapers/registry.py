@@ -9,6 +9,7 @@ from app.scrapers.sample_blog import SampleBlogScraper
 from app.scrapers.involve_asia import InvolveAsiaScraper
 from app.scrapers.shopee_affiliate import ShopeeAffiliateScraper
 from app.scrapers.telegram_channel import TelegramChannelScraper
+from app.scrapers.google_news import GoogleNewsPromoScraper
 from app.scrapers.social_media import SocialMediaScraper
 from app.scrapers.telco import TelkomselScraper, IndosatScraper, XLScraper
 from app.scrapers.bank import BCAScraper, MandiriScraper, BRIScraper
@@ -27,6 +28,7 @@ _ALL_SCRAPERS = [
     InvolveAsiaScraper,
     ShopeeAffiliateScraper,
     TelegramChannelScraper,
+    GoogleNewsPromoScraper,
     SocialMediaScraper,
     TelkomselScraper,
     IndosatScraper,

@@ -7,27 +7,44 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ||
   "https://superkupon-backend-production.up.railway.app";
 
-export const revalidate = 3600;
+// Force fully dynamic — no cache. Sitemap regen tiap request.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+interface CouponSitemapData {
+  id: number;
+  expires_at?: string | null;
+  scraped_at?: string | null;
+}
+
+interface FetchDebug {
+  status: number | "error";
+  error?: string;
+  count: number;
+}
 
 /**
  * Direct fetch bypass api.ts Next.js cache layer.
- * api.ts pakai `next: { revalidate: 60 }` yang bisa stale di server-side context.
- * Sitemap butuh data fresh tiap regen — pake cache: 'no-store'.
+ * Return both data + debug info untuk troubleshooting kalau gagal di prod.
  */
-async function fetchAllCoupons(): Promise<
-  Array<{ id: number; expires_at?: string | null; scraped_at?: string | null }>
-> {
+async function fetchAllCoupons(): Promise<{
+  data: CouponSitemapData[];
+  debug: FetchDebug;
+}> {
   try {
-    const res = await fetch(`${API_BASE}/coupons?limit=500`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.items)) return data.items;
-    return [];
-  } catch {
-    return [];
+    const url = `${API_BASE}/coupons?limit=500`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      return { data: [], debug: { status: res.status, count: 0 } };
+    }
+    const raw = await res.json();
+    let arr: CouponSitemapData[] = [];
+    if (Array.isArray(raw)) arr = raw;
+    else if (raw && Array.isArray(raw.items)) arr = raw.items;
+    return { data: arr, debug: { status: res.status, count: arr.length } };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { data: [], debug: { status: "error", error: msg, count: 0 } };
   }
 }
 
@@ -53,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/syarat`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const [merchants, categories, coupons] = await Promise.all([
+  const [merchants, categories, couponsResult] = await Promise.all([
     listMerchants().catch(() => []),
     listCategories().catch(() => []),
     fetchAllCoupons(),
@@ -75,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Individual coupon URLs — core content untuk SEO discovery.
   // Skip expired coupons biar Google gak indeks halaman invalid.
-  const couponRoutes: MetadataRoute.Sitemap = coupons
+  const couponRoutes: MetadataRoute.Sitemap = couponsResult.data
     .filter((c) => !c.expires_at || new Date(c.expires_at) > now)
     .map((c) => ({
       url: `${SITE_URL}/coupon/${c.id}`,
@@ -84,5 +101,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     }));
 
-  return [...staticRoutes, ...merchantRoutes, ...categoryRoutes, ...couponRoutes];
+  // Debug marker URL — tampil di sitemap kalau fetch gagal/empty.
+  // Format: /_debug-sitemap-fetch-{status}-{count}-{error}
+  // Aman buat live (Google ignore 404 path), tapi kasih sinyal masalah.
+  const debugRoute: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/_debug-sitemap-status-${couponsResult.debug.status}-count-${couponsResult.debug.count}${couponsResult.debug.error ? `-err-${encodeURIComponent(couponsResult.debug.error).slice(0, 50)}` : ""}`,
+      lastModified: now,
+      changeFrequency: "never" as const,
+      priority: 0.0,
+    },
+  ];
+
+  return [
+    ...staticRoutes,
+    ...merchantRoutes,
+    ...categoryRoutes,
+    ...couponRoutes,
+    ...debugRoute,
+  ];
 }

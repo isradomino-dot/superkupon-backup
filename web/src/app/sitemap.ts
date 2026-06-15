@@ -1,10 +1,35 @@
 import type { MetadataRoute } from "next";
 
-import { listCategories, listCoupons, listMerchants } from "@/lib/api";
+import { listCategories, listMerchants } from "@/lib/api";
 
 const SITE_URL = "https://superkupon.vercel.app";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE ||
+  "https://superkupon-backend-production.up.railway.app";
 
 export const revalidate = 3600;
+
+/**
+ * Direct fetch bypass api.ts Next.js cache layer.
+ * api.ts pakai `next: { revalidate: 60 }` yang bisa stale di server-side context.
+ * Sitemap butuh data fresh tiap regen — pake cache: 'no-store'.
+ */
+async function fetchAllCoupons(): Promise<
+  Array<{ id: number; expires_at?: string | null; scraped_at?: string | null }>
+> {
+  try {
+    const res = await fetch(`${API_BASE}/coupons?limit=500`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.items)) return data.items;
+    return [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -31,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [merchants, categories, coupons] = await Promise.all([
     listMerchants().catch(() => []),
     listCategories().catch(() => []),
-    listCoupons({ limit: 500 }).catch(() => []),
+    fetchAllCoupons(),
   ]);
 
   const merchantRoutes: MetadataRoute.Sitemap = merchants.map((m) => ({

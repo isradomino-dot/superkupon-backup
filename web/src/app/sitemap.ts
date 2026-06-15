@@ -32,7 +32,9 @@ async function fetchAllCoupons(): Promise<{
   debug: FetchDebug;
 }> {
   try {
-    const url = `${API_BASE}/coupons?limit=500`;
+    // Backend max limit = 200 (per Pydantic validator di /coupons endpoint).
+    // Kalau ke depannya kupon > 200, perlu paginasi.
+    const url = `${API_BASE}/coupons?limit=200`;
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
       return { data: [], debug: { status: res.status, count: 0 } };

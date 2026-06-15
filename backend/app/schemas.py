@@ -61,6 +61,51 @@ class CouponRaw(BaseModel):
     region: str = "national"
 
 
+class ManualCouponIn(BaseModel):
+    """Input untuk manual curation endpoint.
+
+    Curator (admin/atasan) udah verify kupon ini works di merchant asli,
+    terus add ke DB lewat endpoint /admin/coupons/manual-add.
+
+    Field wajib: code, title, discount_type, discount_value, merchant_slug, source_url.
+    expires_at WAJIB ISO format: "2026-06-30T23:59:59" (atau dengan tz: "...Z" / "+07:00").
+    """
+    code: str  # kupon manual WAJIB ada kode (utama buat user copy-paste)
+    title: str
+    description: Optional[str] = None
+    discount_type: str = "fixed"  # percent | fixed | cashback | bogo | free_shipping
+    discount_value: float = 0
+    min_spend: Optional[float] = None
+    max_discount: Optional[float] = None
+    merchant_slug: str  # contoh: "shopee", "tokopedia", "grab", "gojek"
+    category_slug: Optional[str] = None  # contoh: "fashion", "food-delivery", "ecommerce"
+    expires_at: Optional[datetime] = None
+    source_url: str  # URL halaman promo merchant (bukti kupon real)
+    region: str = "national"
+
+
+class ManualCouponBatch(BaseModel):
+    """Bulk insert multiple kupon manual sekaligus.
+
+    Contoh body:
+    {
+      "coupons": [
+        {"code": "SHOPEEFASHION99", "title": "...", "merchant_slug": "shopee", ...},
+        {"code": "TOKOPED50K", "title": "...", "merchant_slug": "tokopedia", ...}
+      ]
+    }
+    """
+    coupons: list[ManualCouponIn]
+
+
+class ManualCouponResult(BaseModel):
+    """Response dari manual-add endpoint."""
+    added: int
+    updated: int
+    skipped: int
+    errors: list[str] = []
+
+
 class ScrapeLogOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

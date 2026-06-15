@@ -1,11 +1,19 @@
+from datetime import datetime
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api._auth import require_admin
 from app.db import get_db
 from app.models import ScrapeLog
-from app.schemas import ScrapeLogOut
+from app.pipelines.dedup import upsert_coupons
+from app.schemas import (
+    CouponRaw,
+    ManualCouponBatch,
+    ManualCouponResult,
+    ScrapeLogOut,
+)
 from app.scrapers.registry import REGISTRY
 from app.scheduler import run_scraper
 
@@ -54,3 +62,113 @@ def list_logs(limit: int = 50, db: Session = Depends(get_db)):
         .limit(limit)
         .all()
     )
+
+
+@router.post("/coupons/manual-add", response_model=ManualCouponResult)
+def manual_add_coupons(
+    batch: ManualCouponBatch,
+    db: Session = Depends(get_db),
+):
+    """Bulk insert kupon real yang udah di-verify manual oleh curator/admin.
+
+    Use case: sambil nunggu Involve Asia affiliate approval, curator browse
+    promo publik di Shopee/Tokopedia/Grab/Gojek, verify works, lalu add ke DB
+    lewat endpoint ini. Real data berkualitas vs mock data yg gak bisa redeem.
+
+    Authentication: WAJIB header X-API-Key (lihat ADMIN_API_KEY env).
+
+    Setiap kupon yang masuk di-tag:
+    - source_target = "manual_curation"
+    - verified_at = now() (artinya: curator udah test works)
+    - quality_score = 95 (sangat tinggi karena verified manual)
+
+    Dedup: upsert via content_hash + merchant_id. Kupon dengan code+title
+    yang sama → di-update bukan dobel.
+    """
+    raw_items: list[CouponRaw] = []
+    errors: list[str] = []
+    skipped = 0
+
+    for idx, c in enumerate(batch.coupons):
+        # Basic validation
+        if not c.code or not c.code.strip():
+            errors.append(f"#{idx + 1}: code is required")
+            skipped += 1
+            continue
+        if not c.merchant_slug or not c.merchant_slug.strip():
+            errors.append(f"#{idx + 1} ({c.code}): merchant_slug is required")
+            skipped += 1
+            continue
+        if not c.source_url or not c.source_url.startswith(("http://", "https://")):
+            errors.append(f"#{idx + 1} ({c.code}): source_url must be valid HTTP URL")
+            skipped += 1
+            continue
+        if c.discount_type not in {"percent", "fixed", "cashback", "bogo", "free_shipping"}:
+            errors.append(f"#{idx + 1} ({c.code}): invalid discount_type")
+            skipped += 1
+            continue
+
+        raw_items.append(
+            CouponRaw(
+                code=c.code.strip().upper(),  # normalize code uppercase
+                title=c.title.strip(),
+                description=c.description.strip() if c.description else None,
+                discount_type=c.discount_type,
+                discount_value=c.discount_value,
+                min_spend=c.min_spend,
+                max_discount=c.max_discount,
+                merchant_slug=c.merchant_slug.strip().lower(),
+                category_slug=c.category_slug.strip().lower() if c.category_slug else None,
+                expires_at=c.expires_at,
+                source_url=c.source_url.strip(),
+                source_target="manual_curation",
+                region=c.region or "national",
+            )
+        )
+
+    if not raw_items:
+        return ManualCouponResult(added=0, updated=0, skipped=skipped, errors=errors)
+
+    try:
+        new_count, updated_count = upsert_coupons(db, raw_items)
+        # Boost quality_score buat manual coupons (verified by human curator)
+        from app.models import Coupon
+        db.query(Coupon).filter(
+            Coupon.source_target == "manual_curation",
+            Coupon.quality_score < 95,
+        ).update({Coupon.quality_score: 95}, synchronize_session=False)
+        db.commit()
+
+        return ManualCouponResult(
+            added=new_count,
+            updated=updated_count,
+            skipped=skipped,
+            errors=errors,
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Failed to insert: {str(e)}")
+
+
+@router.delete("/coupons/manual/{coupon_id}")
+def delete_manual_coupon(coupon_id: int, db: Session = Depends(get_db)):
+    """Delete kupon manual yg udah expired / gak relevan.
+
+    Hanya bisa delete kupon dengan source_target='manual_curation'.
+    Buat scraped coupons, biarin lifecycle job auto-expire.
+    """
+    from app.models import Coupon
+
+    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(404, "Coupon not found")
+    if coupon.source_target != "manual_curation":
+        raise HTTPException(
+            400,
+            "Endpoint ini hanya untuk manual coupons. "
+            "Scraped coupons di-handle oleh lifecycle job.",
+        )
+
+    db.delete(coupon)
+    db.commit()
+    return {"ok": True, "deleted_id": coupon_id}

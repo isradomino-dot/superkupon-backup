@@ -103,17 +103,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     }));
 
-  // Debug marker URL — tampil di sitemap kalau fetch gagal/empty.
-  // Format: /_debug-sitemap-fetch-{status}-{count}-{error}
-  // Aman buat live (Google ignore 404 path), tapi kasih sinyal masalah.
-  const debugRoute: MetadataRoute.Sitemap = [
-    {
-      url: `${SITE_URL}/_debug-sitemap-status-${couponsResult.debug.status}-count-${couponsResult.debug.count}${couponsResult.debug.error ? `-err-${encodeURIComponent(couponsResult.debug.error).slice(0, 50)}` : ""}`,
-      lastModified: now,
-      changeFrequency: "never" as const,
-      priority: 0.0,
-    },
-  ];
+  // Debug marker — cuma tampil kalau ada masalah fetch (count=0 atau status non-200).
+  // Healthy state: sitemap rapi tanpa marker. Broken state: marker auto-appear.
+  const isHealthy =
+    couponsResult.debug.status === 200 && couponsResult.debug.count > 0;
+  const debugRoute: MetadataRoute.Sitemap = isHealthy
+    ? []
+    : [
+        {
+          url: `${SITE_URL}/_debug-sitemap-status-${couponsResult.debug.status}-count-${couponsResult.debug.count}${couponsResult.debug.error ? `-err-${encodeURIComponent(couponsResult.debug.error).slice(0, 50)}` : ""}`,
+          lastModified: now,
+          changeFrequency: "never" as const,
+          priority: 0.0,
+        },
+      ];
 
   return [
     ...staticRoutes,

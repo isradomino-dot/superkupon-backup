@@ -2,7 +2,28 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import List
 
+from app.config import settings
 from app.schemas import CouponRaw
+
+
+def should_use_mock(target_id: str) -> bool:
+    """Per-scraper resolver: tentuin scraper ini pakai mock atau real fetch.
+
+    Logic:
+    1. Kalau SCRAPER_USE_MOCK=false (global flip) -> SEMUA scraper real fetch
+    2. Kalau target_id ada di SCRAPER_REAL_OVERRIDES -> scraper ini real fetch
+       (walau SCRAPER_USE_MOCK=true global)
+    3. Default -> pakai mock
+
+    Pattern: gradual rollout per-scraper. Aktifin Telegram dulu (real impl ready),
+    biarin sample_blog/multi_blog tetep mock sampai real impl.
+    """
+    if not settings.SCRAPER_USE_MOCK:
+        return False
+    overrides = {x.strip() for x in settings.SCRAPER_REAL_OVERRIDES.split(",") if x.strip()}
+    if target_id in overrides:
+        return False
+    return True
 
 
 class BaseScraper(ABC):

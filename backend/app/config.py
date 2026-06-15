@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     SCRAPER_TIMEOUT_SECONDS: int = 30
     SCRAPER_USE_MOCK: bool = True  # V1 default: mock data, no real fetch ke target high-anti-bot
 
+    # Per-scraper override: comma-separated target_ids yang dipaksa pakai REAL fetch
+    # walau SCRAPER_USE_MOCK=true. Pattern: gradual rollout, hindari big-bang flip.
+    # Contoh: SCRAPER_REAL_OVERRIDES="telegram_promo_aggregator,involve_asia_api"
+    SCRAPER_REAL_OVERRIDES: str = ""
+
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHANNEL_ID: str = ""
 

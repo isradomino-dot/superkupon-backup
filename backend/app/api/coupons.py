@@ -1,9 +1,11 @@
 from datetime import datetime
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import or_, func
 from sqlalchemy.orm import Session, joinedload
 
+from app.api._ratelimit import get_client_ip, rate_limit
+from app.config import settings
 from app.db import get_db, is_postgres
 from app.models import Coupon, Merchant, Category
 from app.schemas import CouponOut
@@ -206,7 +208,9 @@ def trending_now(
 
 
 @router.post("/{coupon_id}/view")
-def track_view(coupon_id: int, db: Session = Depends(get_db)):
+def track_view(coupon_id: int, request: Request, db: Session = Depends(get_db)):
+    ip = get_client_ip(request)
+    rate_limit(f"view:{ip}", max_calls=settings.RATE_LIMIT_VIEW_PER_MIN, window_seconds=60.0)
     coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
     if not coupon:
         raise HTTPException(404, "Coupon not found")
@@ -216,7 +220,9 @@ def track_view(coupon_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{coupon_id}/redeem")
-def track_redeem(coupon_id: int, db: Session = Depends(get_db)):
+def track_redeem(coupon_id: int, request: Request, db: Session = Depends(get_db)):
+    ip = get_client_ip(request)
+    rate_limit(f"redeem:{ip}", max_calls=settings.RATE_LIMIT_REDEEM_PER_MIN, window_seconds=60.0)
     coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
     if not coupon:
         raise HTTPException(404, "Coupon not found")

@@ -5,7 +5,7 @@ Usage:
         target_id="myapp_promo",
         merchant_slug="myapp",
         name="My App Promo",
-        url="https://example.com/promo",
+        url="https://www.example-source.id/promo",  # placeholder; override per scraper
         mock_data=[{...}, {...}],
         interval_minutes=120,
         category_default="food",

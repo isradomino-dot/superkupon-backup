@@ -2,13 +2,18 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api._auth import require_admin
 from app.db import get_db
 from app.models import ScrapeLog
 from app.schemas import ScrapeLogOut
 from app.scrapers.registry import REGISTRY
 from app.scheduler import run_scraper
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 
 @router.get("/scrapers")

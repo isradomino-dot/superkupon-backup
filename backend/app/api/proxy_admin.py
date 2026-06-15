@@ -1,9 +1,14 @@
 """Admin endpoint untuk proxy pool monitoring."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.anti_detect.proxy import get_pool
+from app.api._auth import require_admin
 
-router = APIRouter(prefix="/admin/proxy", tags=["admin-proxy"])
+router = APIRouter(
+    prefix="/admin/proxy",
+    tags=["admin-proxy"],
+    dependencies=[Depends(require_admin)],
+)
 
 
 @router.get("/stats")

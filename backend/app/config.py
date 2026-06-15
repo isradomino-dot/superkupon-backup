@@ -30,6 +30,14 @@ class Settings(BaseSettings):
     INVOLVE_ASIA_API_KEY: str = ""
     INVOLVE_ASIA_API_SECRET: str = ""
 
+    # Admin auth — wajib di-set di production buat lock /admin/* endpoints.
+    # Empty default = fail-closed (admin endpoints block semua request).
+    ADMIN_API_KEY: str = ""
+
+    # Rate limiting per IP (in-memory, single-instance only)
+    RATE_LIMIT_VIEW_PER_MIN: int = 30
+    RATE_LIMIT_REDEEM_PER_MIN: int = 10
+
     SHOPEE_AFFILIATE_APP_ID: str = ""
     SHOPEE_AFFILIATE_SECRET: str = ""
 

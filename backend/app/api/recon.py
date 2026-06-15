@@ -4,9 +4,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-router = APIRouter(prefix="/admin/recon", tags=["admin-recon"])
+from app.api._auth import require_admin
+
+router = APIRouter(
+    prefix="/admin/recon",
+    tags=["admin-recon"],
+    dependencies=[Depends(require_admin)],
+)
 
 RECON_DIR = Path(__file__).resolve().parent.parent.parent / "recon"
 CAPTURES_DIR = RECON_DIR / "captures"

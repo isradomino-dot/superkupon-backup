@@ -34,7 +34,7 @@ _MOCK_DATA = {
             {
                 "offer_id": 1001,
                 "offer_name": "Shopee Indonesia",
-                "merchant_logo": "https://example.com/shopee.png",
+                "merchant_logo": "/logos/shopee.png",
                 "coupons": [
                     {
                         "coupon_code": "AFFIL10",
@@ -59,7 +59,7 @@ _MOCK_DATA = {
             {
                 "offer_id": 1002,
                 "offer_name": "Tokopedia",
-                "merchant_logo": "https://example.com/tokopedia.png",
+                "merchant_logo": "/logos/tokopedia.png",
                 "coupons": [
                     {
                         "coupon_code": "TOKAFFNEW",

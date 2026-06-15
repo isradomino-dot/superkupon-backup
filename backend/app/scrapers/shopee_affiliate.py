@@ -46,7 +46,7 @@ _MOCK_DATA = {
                     "minSpend": 150000,
                     "validPeriodEnd": int((datetime.utcnow() + timedelta(days=10)).timestamp()),
                     "offerLink": "https://shope.ee/aff/12345abc",
-                    "imageUrl": "https://example.com/shop_a.png",
+                    "imageUrl": "/logos/shopee.png",
                 },
                 {
                     "shopId": 67890,
@@ -59,7 +59,7 @@ _MOCK_DATA = {
                     "minSpend": 100000,
                     "validPeriodEnd": int((datetime.utcnow() + timedelta(days=7)).timestamp()),
                     "offerLink": "https://shope.ee/aff/67890def",
-                    "imageUrl": "https://example.com/fashion.png",
+                    "imageUrl": "/logos/shopee.png",
                 },
             ]
         }

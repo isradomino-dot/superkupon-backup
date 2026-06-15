@@ -54,7 +54,7 @@ class SampleBlogScraper(BaseScraper):
         if settings.SCRAPER_USE_MOCK:
             return _MOCK_HTML
         # Production: from app.anti_detect.fetcher import fetch
-        # resp = await fetch("https://example.com/coupons")
+        # resp = await fetch("https://www.diskon.com/promo")
         # return resp.text
         raise NotImplementedError("Set SCRAPER_USE_MOCK=true untuk PoC")
 
@@ -93,7 +93,7 @@ class SampleBlogScraper(BaseScraper):
                     merchant_slug=merchant_el.get_text(strip=True) if merchant_el else "multi",
                     category_slug=cat_el.get_text(strip=True) if cat_el else None,
                     expires_at=expires_at,
-                    source_url="https://example.com/coupons",
+                    source_url="https://www.diskon.com/promo",
                     source_target=self.target_id,
                 )
             )

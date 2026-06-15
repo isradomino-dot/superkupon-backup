@@ -117,7 +117,7 @@ MultiBlogScraper = make_promo_scraper(
     target_id="multi_blog_aggregator",
     merchant_slug="multi",
     name="Multi Blog Aggregator (Indonesian)",
-    url="https://example.com/coupon-feed",
+    url="https://www.kupondiskon.com/",
     mock_data=_BLOG_DATA,
     interval_minutes=120,
 )

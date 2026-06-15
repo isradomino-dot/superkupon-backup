@@ -276,6 +276,10 @@ function Home() {
 
   return (
     <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+    {/* SEO H1 — screen-reader only, biar gak ganggu hero design tapi tetep Google-friendly */}
+    <h1 className="sr-only">
+      SuperKupon — Aggregator Kupon Digital Indonesia: Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO
+    </h1>
     <div className="min-w-0 space-y-6">
       <ExpiringBanner />
 

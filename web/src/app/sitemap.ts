@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { listCategories, listMerchants } from "@/lib/api";
+import { listCategories, listCoupons, listMerchants } from "@/lib/api";
 
 const SITE_URL = "https://superkupon.vercel.app";
 
@@ -28,9 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/syarat`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 
-  const [merchants, categories] = await Promise.all([
+  const [merchants, categories, coupons] = await Promise.all([
     listMerchants().catch(() => []),
     listCategories().catch(() => []),
+    listCoupons({ limit: 500 }).catch(() => []),
   ]);
 
   const merchantRoutes: MetadataRoute.Sitemap = merchants.map((m) => ({
@@ -47,5 +48,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...merchantRoutes, ...categoryRoutes];
+  // Individual coupon URLs — core content untuk SEO discovery.
+  // Skip expired coupons biar Google gak indeks halaman invalid.
+  const couponRoutes: MetadataRoute.Sitemap = coupons
+    .filter((c) => !c.expires_at || new Date(c.expires_at) > now)
+    .map((c) => ({
+      url: `${SITE_URL}/coupon/${c.id}`,
+      lastModified: c.scraped_at ? new Date(c.scraped_at) : now,
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    }));
+
+  return [...staticRoutes, ...merchantRoutes, ...categoryRoutes, ...couponRoutes];
 }

@@ -95,8 +95,59 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             `,
           }}
         />
+        {/* JSON-LD: WebSite + Organization schema buat Google rich result */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "SuperKupon",
+                alternateName: "SuperKupon Indonesia",
+                url: "https://superkupon.vercel.app",
+                description:
+                  "Aggregator kupon digital Indonesia — Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka. Smart Pick & Cart Calculator buat hemat maksimal.",
+                inLanguage: "id-ID",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: "https://superkupon.vercel.app/?q={search_term_string}",
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "SuperKupon",
+                url: "https://superkupon.vercel.app",
+                logo: "https://superkupon.vercel.app/opengraph-image",
+                sameAs: ["https://instagram.com/superkupon.id"],
+              },
+            ]),
+          }}
+        />
       </head>
       <body>
+        {/* Noscript fallback — search bots & users tanpa JS dapet konten basic */}
+        <noscript>
+          <div style={{ padding: "16px", textAlign: "center", background: "#1e1b2e", color: "#e5e7eb", fontFamily: "sans-serif" }}>
+            <h1 style={{ fontSize: "20px", marginBottom: "8px" }}>SuperKupon — Aggregator Kupon Digital Indonesia</h1>
+            <p style={{ marginBottom: "8px" }}>
+              Kupon digital terbaru dari Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dan merchant Indonesia lainnya.
+            </p>
+            <p>
+              <strong>SuperKupon butuh JavaScript untuk pengalaman terbaik.</strong> Aktifkan JavaScript di browser lo untuk akses Smart Pick,
+              Cart Calculator, Hall of Fame, dan ratusan kupon real-time.
+            </p>
+            <p style={{ marginTop: "12px", fontSize: "14px" }}>
+              Lihat juga: <a href="/tentang" style={{ color: "#a78bfa" }}>Tentang</a> · <a href="/faq" style={{ color: "#a78bfa" }}>FAQ</a> ·
+              <a href="/privasi" style={{ color: "#a78bfa" }}>Privasi</a>
+            </p>
+          </div>
+        </noscript>
         <BackgroundEffect />
         <I18nProvider>
           <HistoryProvider>

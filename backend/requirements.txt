@@ -26,3 +26,9 @@ anthropic>=0.40,<1
 # mitmproxy>=11
 # frida-tools>=13
 # playwright>=1.49
+
+# Testing
+pytest>=8.0,<9
+pytest-asyncio>=0.24,<1
+pytest-cov>=5,<6
+freezegun>=1.5,<2

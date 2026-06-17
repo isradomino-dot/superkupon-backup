@@ -22,6 +22,7 @@ import { AskSuperKupon } from "@/components/AskSuperKupon";
 import { BackgroundEffect } from "@/components/BackgroundEffect";
 import { BetaBanner } from "@/components/BetaBanner";
 import { Clarity } from "@/components/Clarity";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
@@ -190,6 +191,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AskSuperKupon />
             <Analytics />
             <Clarity />
+            <GoogleAnalytics />
           </NotificationProvider>
           </FavoritesProvider>
           </StreakProvider>

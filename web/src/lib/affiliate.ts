@@ -71,33 +71,10 @@ export function wrapAffiliateLink(
 
 /**
  * Track outbound click ke merchant.
- * Fires event ke Vercel Analytics dan GA4 (kalau di-setup).
- * Call ini di onClick handler tombol "Buka merchant".
+ * Re-export dari @/lib/analytics buat backward compat — actual impl di analytics.ts
+ * (centralized tracking ke GA4 + Clarity + Vercel Analytics).
  */
-export function trackOutbound(
-  merchantSlug: string | undefined,
-  couponId?: string | number,
-): void {
-  if (typeof window === "undefined") return;
-
-  const eventData = {
-    merchant: merchantSlug || "unknown",
-    coupon_id: String(couponId ?? "unknown"),
-  };
-
-  const w = window as unknown as {
-    va?: (event: string, data: Record<string, unknown>) => void;
-    gtag?: (event: string, action: string, params: Record<string, unknown>) => void;
-  };
-
-  if (typeof w.va === "function") {
-    w.va("event", { name: "outbound_click", data: eventData });
-  }
-
-  if (typeof w.gtag === "function") {
-    w.gtag("event", "outbound_click", eventData);
-  }
-}
+export { trackOutboundClick as trackOutbound } from "./analytics";
 
 /**
  * Convenience: wrap + track dalam satu call.

@@ -21,6 +21,7 @@ import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { AskSuperKupon } from "@/components/AskSuperKupon";
 import { BackgroundEffect } from "@/components/BackgroundEffect";
 import { BetaBanner } from "@/components/BetaBanner";
+import { Clarity } from "@/components/Clarity";
 import { Sidebar } from "@/components/Sidebar";
 
 import "./globals.css";
@@ -188,6 +189,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ScrollToTopButton />
             <AskSuperKupon />
             <Analytics />
+            <Clarity />
           </NotificationProvider>
           </FavoritesProvider>
           </StreakProvider>

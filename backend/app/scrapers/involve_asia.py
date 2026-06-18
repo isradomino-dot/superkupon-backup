@@ -85,7 +85,7 @@ class InvolveAsiaScraper(BaseScraper):
     tier = "semi-public"
 
     AUTH_URL = "https://api.involve.asia/api/authenticate"
-    COUPONS_URL = "https://api.involve.asia/api/coupon/all"
+    COUPONS_URL = "https://api.involve.asia/api/offers/all"
 
     OFFER_TO_MERCHANT = {
         "shopee": "shopee",

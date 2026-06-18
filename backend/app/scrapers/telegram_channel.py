@@ -69,8 +69,12 @@ class TelegramChannelScraper(BaseScraper):
             return _MOCK_HTML
 
         from app.anti_detect.fetcher import fetch
-        resp = await fetch(self.url, respect_robots=True)
-        return resp.text
+        try:
+            resp = await fetch(self.url, respect_robots=True)
+            return resp.text
+        except Exception as e:
+            logger.error(f"Telegram channel {self.channel_username} fetch failed: {e}")
+            return ""
 
     def parse(self, raw: str) -> List[CouponRaw]:
         soup = BeautifulSoup(raw, "lxml")

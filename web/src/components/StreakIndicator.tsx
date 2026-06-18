@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { useStreak } from "@/lib/use-streak";
 
 export function StreakIndicator() {
-  const { data, isActiveToday, nextMilestone } = useStreak();
+  const { data, isActiveToday, nextMilestone, hydrated } = useStreak();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -17,6 +17,7 @@ export function StreakIndicator() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
+  if (!hydrated) return null;
   if (data.currentStreak < 1 && data.totalDays < 1) return null;
 
   return (

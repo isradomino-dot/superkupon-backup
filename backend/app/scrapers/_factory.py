@@ -49,10 +49,13 @@ def make_promo_scraper(
     def _parse(self, raw: Any) -> List[CouponRaw]:
         items: List[CouponRaw] = []
         for row in raw or []:
+            title = row.get("title")
+            if not title:
+                continue
             items.append(
                 CouponRaw(
                     code=row.get("code"),
-                    title=row["title"],
+                    title=title,
                     description=row.get("description"),
                     discount_type=row.get("discount_type", "fixed"),
                     discount_value=float(row.get("discount_value", 0)),

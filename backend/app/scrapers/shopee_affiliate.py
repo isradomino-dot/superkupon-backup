@@ -114,20 +114,34 @@ class ShopeeAffiliateScraper(BaseScraper):
 
         ts = int(time.time())
         payload = json.dumps({"query": SHOP_OFFER_QUERY}, separators=(",", ":"))
-        signature = self._sign(payload, ts)
-        app_id = settings.SHOPEE_AFFILIATE_APP_ID
 
-        async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT_SECONDS) as client:
-            r = await client.post(
-                self.ENDPOINT,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"SHA256 Credential={app_id}, Timestamp={ts}, Signature={signature}",
-                },
-                content=payload,
-            )
-            r.raise_for_status()
-            return r.json()
+        try:
+            signature = self._sign(payload, ts)
+            app_id = settings.SHOPEE_AFFILIATE_APP_ID
+
+            async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT_SECONDS) as client:
+                r = await client.post(
+                    self.ENDPOINT,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"SHA256 Credential={app_id}, Timestamp={ts}, Signature={signature}",
+                    },
+                    content=payload,
+                )
+                r.raise_for_status()
+                return r.json()
+        except RuntimeError as e:
+            logger.warning(f"Shopee Affiliate credentials missing: {e}")
+            return {}
+        except httpx.TimeoutException as e:
+            logger.warning(f"Shopee Affiliate API timeout: {e}")
+            return {}
+        except httpx.HTTPError as e:
+            logger.warning(f"Shopee Affiliate API HTTP error: {e}")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.warning(f"Shopee Affiliate API returned invalid JSON: {e}")
+            return {}
 
     def parse(self, raw: dict) -> List[CouponRaw]:
         items: List[CouponRaw] = []

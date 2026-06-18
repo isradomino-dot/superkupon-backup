@@ -48,11 +48,12 @@ const NotifContext = createContext<NotifContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<NotifSettings>(DEFAULTS);
-  const [data, setData] = useState<NotifData>({ new: [], expiring: [], asOf: new Date().toISOString() });
+  const [data, setData] = useState<NotifData>({ new: [], expiring: [], asOf: '' });
   const [loading, setLoading] = useState(false);
-  const sinceRef = useRef<string>(new Date().toISOString());
+  const sinceRef = useRef<string>('');
 
   useEffect(() => {
+    sinceRef.current = new Date().toISOString();
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setSettingsState({ ...DEFAULTS, ...JSON.parse(raw) });
@@ -108,7 +109,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       let changed = false;
       for (const c of newCoupons) {
         if (seen.includes(c.id)) continue;
-        new Notification(`🎟️ Kupon baru: ${c.merchant.name}`, {
+        new Notification(`🎟️ Kupon baru: ${c.merchant?.name ?? 'Promo'}`, {
           body: `${c.title}${c.code ? ` · ${c.code}` : ""}`,
           icon: "/icon-192.svg",
           tag: `coupon-${c.id}`,

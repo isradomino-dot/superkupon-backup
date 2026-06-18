@@ -85,20 +85,50 @@ _CASHBACK_RE = re.compile(r"cashback", re.IGNORECASE)
 
 def _parse_rupiah_to_int(s: str) -> int:
     """Convert 'Rp 50.000' / '50rb' / '1jt' → integer rupiah."""
-    s = s.lower().replace(".", "").replace(",", "").strip()
+    # Detect suffix BEFORE stripping dots — kalau ada suffix (rb/k/jt),
+    # dots di angka biasanya bukan thousand separator (e.g. '1.5jt' = 1.5 juta),
+    # jadi suffix multiplier sudah cukup. Tanpa cek ini, '50.000rb' bakal
+    # diparse sebagai 50000 * 1000 = 50jt (salah; should be Rp 50.000).
+    s_lower = s.lower().strip()
     multiplier = 1
-    if "rb" in s or "ribu" in s or s.endswith("k"):
+    has_suffix = False
+    if "rb" in s_lower or "ribu" in s_lower or s_lower.endswith("k"):
         multiplier = 1000
-    elif "jt" in s or "juta" in s:
+        has_suffix = True
+    elif "jt" in s_lower or "juta" in s_lower:
         multiplier = 1_000_000
-    digits = re.sub(r"[^\d]", "", s)
+        has_suffix = True
+
+    if has_suffix:
+        # Angka sebelum suffix: ambil digits + treat dot/comma as decimal separator
+        # Strip suffix dulu biar gak ke-include di digit extraction
+        num_part = re.sub(r"(rb|ribu|jt|juta|k)$", "", s_lower).strip()
+        # Treat dot/comma sebagai decimal (e.g. '1.5jt' → 1.5 * 1jt = 1.5jt)
+        num_part = num_part.replace(",", ".")
+        try:
+            value = float(num_part) if num_part else 0.0
+        except ValueError:
+            # Fallback: strip non-digits dan parse int
+            digits = re.sub(r"[^\d]", "", num_part)
+            value = float(digits) if digits else 0.0
+        return int(value * multiplier)
+
+    # No suffix: dots are thousand separators (e.g. 'Rp 50.000' = 50000)
+    digits = re.sub(r"[^\d]", "", s_lower)
     if not digits:
         return 0
-    return int(digits) * multiplier
+    return int(digits)
 
 
 def _guess_discount(title: str) -> tuple[str, float]:
     """Coba detect discount type + value dari article title.
+
+    Precedence (first match wins):
+      1. free_shipping — keyword "gratis ongkir" / "free shipping" detected
+      2. percent — pattern "<N>%" detected (e.g. "Diskon 50%")
+      3. rupiah (cashback/fixed) — pattern "Rp <N>" / "<N>rb" / "<N>jt" detected;
+         type = "cashback" kalau title mention "cashback", else "fixed"
+      4. fallback — ("fixed", 0)
 
     Returns: (discount_type, discount_value)
     Default: ("fixed", 0) kalau gak ke-detect.

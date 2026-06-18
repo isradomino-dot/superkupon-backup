@@ -85,7 +85,7 @@ class InvolveAsiaScraper(BaseScraper):
     tier = "semi-public"
 
     AUTH_URL = "https://api.involve.asia/api/authenticate"
-    COUPONS_URL = "https://api.involve.asia/api/coupons"
+    COUPONS_URL = "https://api.involve.asia/api/coupon/all"
 
     OFFER_TO_MERCHANT = {
         "shopee": "shopee",
@@ -154,7 +154,11 @@ class InvolveAsiaScraper(BaseScraper):
                 data={"key": api_key, "secret": api_secret},
             )
             r.raise_for_status()
-            return r.json()["data"]["token"]
+            payload = r.json()
+            token = (payload.get("data") or {}).get("token")
+            if not token:
+                raise RuntimeError(f"Involve Asia auth failed: {payload}")
+            return token
 
     async def fetch_raw(self) -> dict:
         if should_use_mock(self.target_id):
@@ -189,34 +193,41 @@ class InvolveAsiaScraper(BaseScraper):
             category = self._category_for_offer(offer.get("offer_name", ""))
 
             for c in offer.get("coupons", []) or []:
-                disc_type, disc_value = self._normalize_discount(
-                    c.get("discount_unit", "fixed"),
-                    c.get("discount_value", 0),
-                )
-
-                expires_at = None
-                if c.get("valid_until"):
-                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%Y"):
-                        try:
-                            expires_at = datetime.strptime(c["valid_until"], fmt)
-                            break
-                        except ValueError:
-                            continue
-
-                items.append(
-                    CouponRaw(
-                        code=c.get("coupon_code"),
-                        title=c.get("title", "Affiliate Promo"),
-                        description=c.get("description"),
-                        discount_type=disc_type,
-                        discount_value=disc_value,
-                        merchant_slug=merchant,
-                        category_slug=category,
-                        expires_at=expires_at,
-                        source_url=c.get("tracking_link"),
-                        source_target=self.target_id,
+                try:
+                    disc_type, disc_value = self._normalize_discount(
+                        c.get("discount_unit", "fixed"),
+                        c.get("discount_value", 0),
                     )
-                )
+
+                    expires_at = None
+                    if c.get("valid_until"):
+                        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d", "%d/%m/%Y"):
+                            try:
+                                expires_at = datetime.strptime(c["valid_until"], fmt)
+                                break
+                            except ValueError:
+                                continue
+
+                    items.append(
+                        CouponRaw(
+                            code=c.get("coupon_code"),
+                            title=c.get("title", "Affiliate Promo"),
+                            description=c.get("description"),
+                            discount_type=disc_type,
+                            discount_value=disc_value,
+                            merchant_slug=merchant,
+                            category_slug=category,
+                            expires_at=expires_at,
+                            source_url=c.get("tracking_link"),
+                            source_target=self.target_id,
+                        )
+                    )
+                except (ValueError, TypeError) as e:
+                    logger.warning(
+                        f"InvolveAsia skip malformed coupon (code={c.get('coupon_code')!r}, "
+                        f"discount_value={c.get('discount_value')!r}): {e.__class__.__name__}: {e}"
+                    )
+                    continue
 
         logger.info(f"InvolveAsia parsed {len(items)} coupons across {len(offers)} offers")
         return items

@@ -30,6 +30,7 @@ interface StreakContextValue {
   reset: () => void;
   isActiveToday: boolean;
   nextMilestone: number | null;
+  hydrated: boolean;
 }
 
 const StreakContext = createContext<StreakContextValue | null>(null);
@@ -140,13 +141,13 @@ export function StreakProvider({ children }: { children: ReactNode }) {
   const dismissMilestone = useCallback(() => setMilestone(null), []);
   const reset = useCallback(() => setData(DEFAULT), []);
 
-  const isActiveToday = data.lastClaimDate === todayString();
+  const isActiveToday = hydrated && data.lastClaimDate === todayString();
   const nextMilestone =
     MILESTONES.find((m) => m > data.currentStreak) ?? null;
 
   const value = useMemo<StreakContextValue>(
-    () => ({ data, milestone, recordClaim, dismissMilestone, reset, isActiveToday, nextMilestone }),
-    [data, milestone, recordClaim, dismissMilestone, reset, isActiveToday, nextMilestone]
+    () => ({ data, milestone, recordClaim, dismissMilestone, reset, isActiveToday, nextMilestone, hydrated }),
+    [data, milestone, recordClaim, dismissMilestone, reset, isActiveToday, nextMilestone, hydrated]
   );
 
   return <StreakContext.Provider value={value}>{children}</StreakContext.Provider>;

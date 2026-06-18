@@ -22,7 +22,7 @@ from typing import Any, List
 import httpx
 
 from app.config import settings
-from app.scrapers.base import BaseScraper
+from app.scrapers.base import BaseScraper, should_use_mock
 from app.schemas import CouponRaw
 
 logger = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ class InvolveAsiaScraper(BaseScraper):
             return r.json()["data"]["token"]
 
     async def fetch_raw(self) -> dict:
-        if settings.SCRAPER_USE_MOCK:
+        if should_use_mock(self.target_id):
             return _MOCK_DATA
 
         token = await self._get_token()

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { getCouponsByIds, isAbortError } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import { useFavorites } from "@/lib/use-favorites";
 
 const STORAGE_KEY = "sk_expiry_notified_v1";
@@ -96,7 +97,7 @@ export function FavoriteExpiryWatcher() {
             });
             notif.onclick = () => {
               window.focus();
-              window.location.href = `/coupon/${c.id}`;
+              window.location.href = `/coupon/${couponSlug(c)}`;
               notif.close();
             };
             notified[c.id] = now;

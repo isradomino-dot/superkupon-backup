@@ -3,6 +3,7 @@
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 
+import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon } from "@/lib/types";
 
 interface Props {
@@ -21,10 +22,11 @@ export function QrCodeModal({ open, onClose, coupon, url }: Props) {
   const [generating, setGenerating] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
+  const slug = couponSlug(coupon);
   const fallbackUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/coupon/${coupon.id}`
-      : `/coupon/${coupon.id}`;
+      ? `${window.location.origin}/coupon/${slug}`
+      : `/coupon/${slug}`;
   const detailUrl = url ?? fallbackUrl;
 
   const encodedText = mode === "code" && coupon.code ? coupon.code : detailUrl;

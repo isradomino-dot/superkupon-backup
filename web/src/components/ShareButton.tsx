@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { Coupon } from "@/lib/types";
+import { couponSlug } from "@/lib/coupon-slug";
 import { QrCodeModal } from "@/components/QrCodeModal";
 
 interface Props {
@@ -23,10 +24,11 @@ export function ShareButton({ coupon }: Props) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
+  const slug = couponSlug(coupon);
   const url =
     typeof window !== "undefined"
-      ? `${window.location.origin}/coupon/${coupon.id}`
-      : `/coupon/${coupon.id}`;
+      ? `${window.location.origin}/coupon/${slug}`
+      : `/coupon/${slug}`;
 
   const message = formatMessage(coupon, url);
   const tgText = `${coupon.merchant.name}: ${coupon.title}${

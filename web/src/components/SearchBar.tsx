@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 import { useI18n } from "@/i18n/provider";
 import { getAutocomplete, isAbortError, type AutocompleteResponse } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import { useSearchHistory } from "@/lib/use-search-history";
 import { SkeletonBar, SkeletonCircle } from "@/components/Skeleton";
 
@@ -382,7 +383,11 @@ function flattenSuggestions(s: AutocompleteResponse | null): FlatItem[] {
   s.codes.forEach((c) =>
     flat.push({
       type: "coupon",
-      payload: String(c.id),
+      payload: couponSlug({
+        id: c.id,
+        title: c.title,
+        merchant: c.merchant_name ? { name: c.merchant_name } : null,
+      }),
       label: c.code ?? "",
       sublabel: `${c.merchant_name ?? ""} · ${c.title.slice(0, 50)}`,
       emoji: "🎟️",

@@ -7,6 +7,7 @@ import { getRecommendations } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
+import { couponSlug } from "@/lib/coupon-slug";
 
 /**
  * Surprise Me — pop random kupon kualitas tinggi (≥70).
@@ -131,7 +132,7 @@ export function SurpriseMeButton() {
 
               <div className="flex flex-wrap gap-2 pt-2">
                 <Link
-                  href={`/coupon/${coupon.id}`}
+                  href={`/coupon/${couponSlug(coupon)}`}
                   onClick={() => setShow(false)}
                   className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-center text-sm font-bold text-white shadow transition hover:bg-amber-600"
                 >

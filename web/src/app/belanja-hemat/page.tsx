@@ -7,6 +7,7 @@ import { listCoupons, formatDiscount, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -227,7 +228,7 @@ function ShareCard({ coupon, discount }: { coupon: Coupon; discount: string }) {
       lines.push(`Berlaku sampai: ${exp}`);
     }
     lines.push(``);
-    lines.push(`Detail kupon: https://superkupon.vercel.app/coupon/${coupon.id}`);
+    lines.push(`Detail kupon: https://superkupon.vercel.app${couponHref(coupon)}`);
     lines.push(``);
     lines.push(`✨ Via SuperKupon — aggregator kupon Indonesia`);
     return lines.join("\n");
@@ -261,7 +262,7 @@ function ShareCard({ coupon, discount }: { coupon: Coupon; discount: string }) {
   };
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(buildMessage())}`;
-  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(`https://superkupon.vercel.app/coupon/${coupon.id}`)}&text=${encodeURIComponent(buildMessage())}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(`https://superkupon.vercel.app${couponHref(coupon)}`)}&text=${encodeURIComponent(buildMessage())}`;
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-brand-400/40">
@@ -423,7 +424,7 @@ function BelanjaTab() {
                   {m.coupons.map((c) => (
                     <Link
                       key={c.id}
-                      href={`/coupon/${c.id}`}
+                      href={couponHref(c)}
                       className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 p-2 transition hover:border-brand-400/40 hover:bg-white/10"
                     >
                       <MerchantLogo merchant={c.merchant} size={28} rounded="md" />

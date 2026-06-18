@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { listCoupons, listMerchants, isAbortError } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
 
@@ -117,7 +118,7 @@ export function MerchantSpotlight() {
           {topCoupons.map((c, i) => (
             <Link
               key={c.id}
-              href={`/coupon/${c.id}`}
+              href={`/coupon/${couponSlug(c)}`}
               className="group flex items-center gap-2 rounded-lg p-2 transition hover:bg-white/5"
             >
               <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-violet-500/20 text-xs font-bold text-violet-200">

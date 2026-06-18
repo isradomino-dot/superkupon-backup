@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import type { Coupon } from "@/lib/types";
 import { formatDiscount, trackRedeem } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import { useI18n } from "@/i18n/provider";
 import { Highlight } from "@/lib/highlight";
 import { FavoriteButton } from "@/components/FavoriteButton";
@@ -114,7 +115,12 @@ export function CouponCard({ coupon, highlight = "", isStackable = false }: Prop
             <Highlight text={coupon.merchant.name} query={highlight} />
           </div>
           <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-            <Highlight text={coupon.title} query={highlight} />
+            <Link
+              href={`/coupon/${couponSlug(coupon)}`}
+              className="hover:text-brand-600 hover:underline dark:hover:text-brand-400"
+            >
+              <Highlight text={coupon.title} query={highlight} />
+            </Link>
           </h3>
         </div>
         <div className="flex-none rounded-md bg-brand-50 px-2 py-1 text-right dark:bg-brand-800/30">

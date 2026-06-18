@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { listCategories, listMerchants } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 
 const SITE_URL = "https://superkupon.vercel.app";
 const API_BASE =
@@ -13,8 +14,10 @@ export const revalidate = 0;
 
 interface CouponSitemapData {
   id: number;
+  title?: string | null;
   expires_at?: string | null;
   scraped_at?: string | null;
+  merchant?: { name?: string | null } | null;
 }
 
 interface FetchDebug {
@@ -94,10 +97,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Individual coupon URLs — core content untuk SEO discovery.
   // Skip expired coupons biar Google gak indeks halaman invalid.
+  // Pakai slugged form via couponSlug() biar URL SEO-friendly:
+  // /coupon/{id}-{merchant-slug}-{title-slug}
   const couponRoutes: MetadataRoute.Sitemap = couponsResult.data
     .filter((c) => !c.expires_at || new Date(c.expires_at) > now)
     .map((c) => ({
-      url: `${SITE_URL}/coupon/${c.id}`,
+      url: `${SITE_URL}/coupon/${couponSlug({
+        id: c.id,
+        title: c.title ?? "",
+        merchant: { name: c.merchant?.name ?? "" },
+      })}`,
       lastModified: c.scraped_at ? new Date(c.scraped_at) : now,
       changeFrequency: "daily" as const,
       priority: 0.9,

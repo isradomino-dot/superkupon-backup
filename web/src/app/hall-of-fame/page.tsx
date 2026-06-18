@@ -7,6 +7,7 @@ import { listCoupons, formatDiscount, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -271,7 +272,7 @@ function PodiumCard({
   const { coupon, hallmark } = item;
   return (
     <Link
-      href={`/coupon/${coupon.id}`}
+      href={couponHref(coupon)}
       className={[
         "group flex flex-col overflow-hidden rounded-2xl border-2 bg-gradient-to-br from-white/5 to-transparent p-4 transition-all hover:scale-105",
         isWinner
@@ -337,7 +338,7 @@ function RankCard({
   const { coupon, hallmark } = item;
   return (
     <Link
-      href={`/coupon/${coupon.id}`}
+      href={couponHref(coupon)}
       className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-amber-400/40 hover:bg-white/10"
     >
       <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-amber-500/20 font-mono text-sm font-black text-amber-200">

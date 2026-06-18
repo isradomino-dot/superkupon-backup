@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { isAbortError, listCoupons, listMerchants } from "@/lib/api";
+import { couponHref } from "@/lib/coupon-slug";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
 
@@ -44,7 +45,7 @@ export function RightSidebar() {
         <ul className="space-y-3">
           {RECO_KINDS.map((r, i) => {
             const linkedCoupon = topCoupons[i];
-            const href = linkedCoupon ? `/coupon/${linkedCoupon.id}` : "/";
+            const href = linkedCoupon ? couponHref(linkedCoupon) : "/";
             return (
               <li key={r.key}>
                 <Link

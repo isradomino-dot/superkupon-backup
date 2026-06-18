@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { getTrendingNow, isAbortError } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
 
@@ -74,7 +75,7 @@ export function TrendingNowSection() {
         {items.map((c, idx) => (
           <Link
             key={c.id}
-            href={`/coupon/${c.id}`}
+            href={`/coupon/${couponSlug(c)}`}
             className="group flex-none snap-start rounded-xl border border-rose-400/20 bg-gradient-to-br from-rose-500/10 via-orange-500/5 to-transparent p-3 shadow-md transition-all hover:border-rose-400/50 hover:from-rose-500/15"
             style={{ width: "260px" }}
           >

@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { SmartLink } from "@/components/SmartLink";
 import { useExpiryCountdown } from "@/lib/use-expiry-countdown";
+import { couponSlug } from "@/lib/coupon-slug";
 
 /**
  * Top-of-page big featured hero card. Pulls top-quality coupon with highest discount.
@@ -65,7 +66,7 @@ function HeroCard({
   const expiry = useExpiryCountdown(coupon.expires_at);
   return (
     <SmartLink
-      href={`/coupon/${coupon.id}`}
+      href={`/coupon/${couponSlug(coupon)}`}
       className="group block overflow-hidden rounded-2xl border-2 border-violet-400/40 bg-gradient-to-br from-violet-700/30 via-purple-700/20 to-blue-700/30 shadow-2xl transition hover:-translate-y-1 hover:shadow-violet-500/30 animate-slide-up"
     >
       <div className="grid grid-cols-1 md:grid-cols-3">

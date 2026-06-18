@@ -180,8 +180,8 @@ export default function UtmBuilderPage() {
             className="mt-1 w-full rounded-lg border border-white/10 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none"
           />
           <p className="mt-1 text-xs text-gray-500">
-            Halaman target. Default: homepage. Bisa diganti ke `/coupon/123`,
-            `/merchant/shopee`, dll.
+            Halaman target. Default: homepage. Bisa diganti ke
+            `/coupon/123-shopee-diskon-20`, `/merchant/shopee`, dll.
           </p>
         </div>
 

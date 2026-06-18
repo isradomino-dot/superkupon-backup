@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { listCoupons, formatDiscount, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
+import { couponHref } from "@/lib/coupon-slug";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 
@@ -439,7 +440,7 @@ export function AskSuperKupon() {
                         {msg.results.map((c) => (
                           <Link
                             key={c.id}
-                            href={`/coupon/${c.id}`}
+                            href={couponHref(c)}
                             onClick={() => setOpen(false)}
                             className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-2 transition hover:border-brand-400/50 hover:bg-white/10"
                           >

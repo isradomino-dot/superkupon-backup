@@ -8,6 +8,7 @@ import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -380,7 +381,7 @@ function MoodCouponCard({
 }) {
   return (
     <Link
-      href={`/coupon/${coupon.id}`}
+      href={couponHref(coupon)}
       className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:scale-[1.02] hover:border-pink-400/50 hover:shadow-lg"
     >
       <div className="flex items-start gap-3">

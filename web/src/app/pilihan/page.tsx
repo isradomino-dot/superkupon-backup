@@ -7,6 +7,7 @@ import { listCoupons, formatDiscount, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -159,7 +160,7 @@ export default function PilihanPage() {
             </span>
           </div>
           <Link
-            href={`/coupon/${expiring.id}`}
+            href={couponHref(expiring)}
             className="group block rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-rose-400/50 hover:bg-white/10"
           >
             <div className="flex items-start gap-3">
@@ -223,7 +224,7 @@ export default function PilihanPage() {
             {topQuality.map((c, i) => (
               <Link
                 key={c.id}
-                href={`/coupon/${c.id}`}
+                href={couponHref(c)}
                 className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-brand-400/50 hover:bg-white/10"
               >
                 <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-amber-500/30 text-xs font-bold text-amber-200">
@@ -289,7 +290,7 @@ function CategoryCard({
 
   return (
     <Link
-      href={`/coupon/${c.id}`}
+      href={couponHref(c)}
       className={[
         "group block overflow-hidden rounded-2xl border bg-gradient-to-br p-5 transition-all hover:scale-[1.02] hover:shadow-xl",
         pick.color,

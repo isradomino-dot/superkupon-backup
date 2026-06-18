@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import type { Coupon } from "@/lib/types";
 import {
   formatDiscount,
   formatExpiry,
-  getCoupon,
   getRecommendations,
   isAbortError,
   trackRedeem,
@@ -49,53 +47,23 @@ function formatRupiah(amount: number): string {
   return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
-export default function CouponDetailPage() {
-  const params = useParams<{ id: string }>();
-  const idParam = params?.id;
-  const id = Number(idParam);
-
+export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
   const { t } = useI18n();
   const { addClaim } = useHistory();
   const { recordClaim } = useStreak();
 
-  const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [related, setRelated] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [relatedCategory, setRelatedCategory] = useState<Coupon[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [relatedCategoryLoading, setRelatedCategoryLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const expiry = useExpiryCountdown(coupon?.expires_at ?? null);
+  const expiry = useExpiryCountdown(coupon.expires_at ?? null);
 
-  // Fetch coupon + track view
   useEffect(() => {
-    if (!Number.isFinite(id) || id <= 0) {
-      setError("ID kupon tidak valid");
-      setLoading(false);
-      return;
-    }
-    const ctrl = new AbortController();
-    setLoading(true);
-    setError(null);
-    getCoupon(id, { signal: ctrl.signal })
-      .then((c) => {
-        if (ctrl.signal.aborted) return;
-        setCoupon(c);
-        void trackView(id);
-      })
-      .catch((e) => {
-        if (isAbortError(e)) return;
-        const msg = e instanceof Error ? e.message : "Gagal load kupon";
-        setError(msg.includes("404") ? "Kupon tidak ditemukan" : msg);
-      })
-      .finally(() => {
-        if (!ctrl.signal.aborted) setLoading(false);
-      });
-    return () => ctrl.abort();
-  }, [id]);
+    void trackView(coupon.id);
+  }, [coupon.id]);
 
-  // Fetch related coupons from same merchant
   useEffect(() => {
-    if (!coupon) return;
     const ctrl = new AbortController();
     setRelatedLoading(true);
     getRecommendations({ merchant: coupon.merchant.slug, limit: 7 }, { signal: ctrl.signal })
@@ -110,11 +78,35 @@ export default function CouponDetailPage() {
         if (!ctrl.signal.aborted) setRelatedLoading(false);
       });
     return () => ctrl.abort();
-  }, [coupon]);
+  }, [coupon.id, coupon.merchant.slug]);
+
+  useEffect(() => {
+    if (!coupon.category) {
+      setRelatedCategory([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    setRelatedCategoryLoading(true);
+    getRecommendations({ category: coupon.category.slug, limit: 12 }, { signal: ctrl.signal })
+      .then((items) => {
+        if (ctrl.signal.aborted) return;
+        setRelatedCategory(
+          items
+            .filter((c) => c.id !== coupon.id && c.merchant.id !== coupon.merchant.id)
+            .slice(0, 6),
+        );
+      })
+      .catch((e) => {
+        if (!isAbortError(e)) setRelatedCategory([]);
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setRelatedCategoryLoading(false);
+      });
+    return () => ctrl.abort();
+  }, [coupon.id, coupon.merchant.id, coupon.category]);
 
   const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!coupon?.code) return;
-    // Capture rect BEFORE await
+    if (!coupon.code) return;
     const rect = (e.currentTarget as HTMLElement)?.getBoundingClientRect();
     try {
       await navigator.clipboard.writeText(coupon.code);
@@ -138,70 +130,13 @@ export default function CouponDetailPage() {
     }
   };
 
-  if (loading) {
-    return <DetailSkeleton />;
-  }
-
-  if (error || !coupon) {
-    return (
-      <div className="space-y-6">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
-        >
-          ← Kembali ke beranda
-        </Link>
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-gray-300 p-12 text-center dark:border-gray-700">
-          <div className="text-6xl" aria-hidden>
-            🔍
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {error || "Kupon tidak ditemukan"}
-          </h1>
-          <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">
-            Kupon yang lo cari mungkin sudah expired, dihapus, atau ID-nya salah. Coba browse kupon
-            lain dari beranda.
-          </p>
-          <Link
-            href="/"
-            className="mt-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-          >
-            Lihat kupon lainnya
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const isNew = isNewCoupon(coupon.scraped_at);
   const isExpiringSoon = expiry.urgency === "warning" || expiry.urgency === "critical";
   const isExpired = expiry.urgency === "expired";
 
   return (
     <div className="space-y-6">
-      {/* Sticky Breadcrumb */}
-      <div className="sticky top-14 z-20 -mx-4 border-b border-gray-200/60 bg-white/85 px-4 py-2 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-950/85 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <nav className="flex flex-wrap items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-          <Link href="/" className="hover:text-brand-600 dark:hover:text-brand-400">
-            Beranda
-          </Link>
-          <span aria-hidden>›</span>
-          <Link
-            href={`/merchant/${coupon.merchant.slug}`}
-            className="hover:text-brand-600 dark:hover:text-brand-400"
-          >
-            {coupon.merchant.name}
-          </Link>
-          <span aria-hidden>›</span>
-          <span className="truncate font-medium text-gray-700 dark:text-gray-200">
-            {coupon.title}
-          </span>
-        </nav>
-      </div>
-
-      {/* Main coupon card */}
       <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 animate-slide-up">
-        {/* Header bar with discount badge */}
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-dashed border-gray-200 bg-gradient-to-br from-brand-500/5 to-brand-700/5 p-6 dark:border-gray-700 dark:from-brand-900/20 dark:to-brand-700/10">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -231,9 +166,6 @@ export default function CouponDetailPage() {
                 </Link>
               )}
             </div>
-            <h1 className="mt-2 text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
-              {coupon.title}
-            </h1>
             {coupon.description && (
               <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 sm:text-base">
                 {coupon.description}
@@ -247,10 +179,14 @@ export default function CouponDetailPage() {
             <div className="mt-0.5 text-2xl font-black text-brand-700 dark:text-brand-300 sm:text-3xl">
               {formatDiscount(coupon, t)}
             </div>
+            {coupon.max_discount ? (
+              <div className="mt-1 text-[10px] font-semibold text-brand-600/80 dark:text-brand-400/80">
+                Hemat hingga {formatRupiah(coupon.max_discount)}
+              </div>
+            ) : null}
           </div>
         </header>
 
-        {/* Code + action buttons */}
         <div className="space-y-4 p-6">
           {coupon.code ? (
             <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-brand-400 bg-brand-50/40 p-4 dark:border-brand-500 dark:bg-brand-900/20 sm:flex-row sm:items-center">
@@ -294,7 +230,6 @@ export default function CouponDetailPage() {
         </div>
       </article>
 
-      {/* Details grid */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <DetailTile
           label="Berlaku Sampai"
@@ -302,11 +237,7 @@ export default function CouponDetailPage() {
           icon={expiry.urgency === "critical" ? "🔥" : "⏰"}
           highlight={isExpiringSoon || isExpired}
           tone={isExpired ? "danger" : isExpiringSoon ? "warning" : "neutral"}
-          subValue={
-            expiry.isLive && !isExpired
-              ? `Sisa ${expiry.text}`
-              : undefined
-          }
+          subValue={expiry.isLive && !isExpired ? `Sisa ${expiry.text}` : undefined}
         />
         <DetailTile
           label="Min Belanja"
@@ -325,7 +256,99 @@ export default function CouponDetailPage() {
         />
       </section>
 
-      {/* Source info */}
+      <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+          Cara Pakai Kode Promo
+        </h2>
+        <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+              1
+            </span>
+            <span>
+              {coupon.code ? (
+                <>
+                  Salin kode <span className="font-mono font-semibold">{coupon.code}</span> di atas.
+                </>
+              ) : (
+                <>Klik tombol &ldquo;Pakai di {coupon.merchant.name}&rdquo; — promo otomatis berlaku.</>
+              )}
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+              2
+            </span>
+            <span>
+              Buka aplikasi atau situs <strong>{coupon.merchant.name}</strong>.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+              3
+            </span>
+            <span>
+              Belanja seperti biasa{coupon.min_spend
+                ? `, pastikan total minimal ${formatRupiah(coupon.min_spend)}`
+                : ""}
+              {coupon.code ? ", lalu masukkan kode promo di kolom voucher saat checkout." : "."}
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-brand-500 text-xs font-bold text-white">
+              4
+            </span>
+            <span>
+              Diskon otomatis terpotong dari total belanja
+              {coupon.max_discount ? ` (maksimal ${formatRupiah(coupon.max_discount)})` : ""}.
+            </span>
+          </li>
+        </ol>
+      </section>
+
+      <details className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
+        <summary className="cursor-pointer text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
+          Syarat &amp; Ketentuan
+        </summary>
+        <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-gray-700 dark:text-gray-300">
+          {coupon.min_spend ? (
+            <li>
+              Minimum belanja <strong>{formatRupiah(coupon.min_spend)}</strong> sebelum diskon.
+            </li>
+          ) : (
+            <li>Tidak ada minimum belanja.</li>
+          )}
+          {coupon.max_discount ? (
+            <li>
+              Maksimal diskon yang bisa didapat <strong>{formatRupiah(coupon.max_discount)}</strong>.
+            </li>
+          ) : null}
+          {coupon.expires_at ? (
+            <li>
+              Promo berlaku sampai <strong>{formatExpiry(coupon.expires_at, t)}</strong> atau kuota
+              habis.
+            </li>
+          ) : (
+            <li>Tanggal berakhir promo tidak disebutkan — cek di situs merchant.</li>
+          )}
+          {coupon.region ? (
+            <li>
+              Berlaku untuk wilayah <strong>{coupon.region}</strong>.
+            </li>
+          ) : (
+            <li>Berlaku untuk seluruh Indonesia (kecuali disebutkan lain di situs merchant).</li>
+          )}
+          <li>
+            Tidak dapat digabung dengan promo lain dari {coupon.merchant.name} kecuali ada keterangan
+            khusus.
+          </li>
+          <li>
+            Syarat &amp; ketentuan dari {coupon.merchant.name} berlaku — cek halaman promo resmi
+            untuk detail terbaru.
+          </li>
+        </ul>
+      </details>
+
       <section className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
         <h2 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
           Sumber Data
@@ -357,10 +380,8 @@ export default function CouponDetailPage() {
         </dl>
       </section>
 
-      {/* Verify / Report */}
       <VerifyButtons couponId={coupon.id} />
 
-      {/* Related coupons from same merchant */}
       <section>
         <header className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -387,6 +408,35 @@ export default function CouponDetailPage() {
           </div>
         )}
       </section>
+
+      {coupon.category && (
+        <section>
+          <header className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Kupon serupa di kategori {coupon.category.name}
+            </h2>
+            <Link
+              href={`/category/${coupon.category.slug}`}
+              className="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
+            >
+              Lihat semua →
+            </Link>
+          </header>
+          {relatedCategoryLoading ? (
+            <CouponSkeletonGrid count={3} />
+          ) : relatedCategory.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              Belum ada kupon lain di kategori ini.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedCategory.map((c) => (
+                <CouponCard key={c.id} coupon={c} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
@@ -438,30 +488,6 @@ function DetailTile({
           ⏱ {subValue}
         </div>
       )}
-    </div>
-  );
-}
-
-function DetailSkeleton() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-800" />
-      <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-        <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="h-8 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="h-4 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="mt-4 h-14 rounded-xl bg-gray-200 dark:bg-gray-700" />
-        <div className="mt-2 flex gap-2">
-          <div className="h-10 w-32 rounded-lg bg-gray-200 dark:bg-gray-700" />
-          <div className="h-10 w-20 rounded-lg bg-gray-200 dark:bg-gray-700" />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-20 rounded-xl bg-gray-200 dark:bg-gray-800" />
-        ))}
-      </div>
     </div>
   );
 }

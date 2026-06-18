@@ -8,6 +8,7 @@ import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { useExpiryCountdown } from "@/lib/use-expiry-countdown";
+import { couponSlug } from "@/lib/coupon-slug";
 
 export function TopPicksCarousel() {
   const { t } = useI18n();
@@ -104,7 +105,7 @@ function TopPickCard({
   const expiry = useExpiryCountdown(coupon.expires_at);
   return (
     <Link
-      href={`/coupon/${coupon.id}`}
+      href={`/coupon/${couponSlug(coupon)}`}
       className="group relative w-56 shrink-0 snap-start overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-brand-700/30 via-purple-700/20 to-blue-700/20 p-4 transition hover:-translate-y-0.5 hover:border-brand-400/40 hover:shadow-lg hover:shadow-brand-500/20"
     >
       <div className="flex items-center justify-between">

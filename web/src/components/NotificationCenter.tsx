@@ -9,6 +9,7 @@ import { useHistory } from "@/lib/use-history";
 import { useStreak } from "@/lib/use-streak";
 import { formatDiscount, formatExpiry } from "@/lib/api";
 import { fireConfetti } from "@/lib/confetti";
+import { couponHref } from "@/lib/coupon-slug";
 import type { Coupon } from "@/lib/types";
 
 export function NotificationCenter() {
@@ -121,7 +122,7 @@ function NotifItem({ coupon, onClose }: { coupon: Coupon; onClose: () => void })
   const fav = isFavorite(coupon.id);
 
   const handleShare = async () => {
-    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/coupon/${coupon.id}`;
+    const url = `${typeof window !== "undefined" ? window.location.origin : ""}${couponHref(coupon)}`;
     const text = `${coupon.merchant.name}: ${coupon.title}${coupon.code ? ` · Kode: ${coupon.code}` : ""}\n${url}\n\nvia SuperKupon`;
     if (typeof navigator !== "undefined" && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
       try {
@@ -145,7 +146,7 @@ function NotifItem({ coupon, onClose }: { coupon: Coupon; onClose: () => void })
   return (
     <div className="border-b border-white/5 p-3 transition hover:bg-white/5">
       <Link
-        href={`/coupon/${coupon.id}`}
+        href={couponHref(coupon)}
         onClick={onClose}
         className="block"
       >

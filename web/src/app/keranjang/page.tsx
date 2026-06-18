@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listCoupons, listMerchants, isAbortError } from "@/lib/api";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -347,7 +348,7 @@ export default function KeranjangPage() {
                 {combos[0].breakdown.map((b, i) => (
                   <Link
                     key={b.coupon.id}
-                    href={`/coupon/${b.coupon.id}`}
+                    href={couponHref(b.coupon)}
                     className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:border-emerald-400/50"
                   >
                     <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-emerald-500 text-xs font-black text-white">

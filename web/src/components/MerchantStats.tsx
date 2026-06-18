@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { getMerchantStats, isAbortError, type MerchantStatsResponse } from "@/lib/api";
 import { SkeletonBar, SkeletonBox } from "@/components/Skeleton";
+import { couponHref } from "@/lib/coupon-slug";
 
 const TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   percent: { label: "Persen %", emoji: "💯" },
@@ -145,7 +146,7 @@ export function MerchantStats({ slug }: { slug: string }) {
             {top_by_discount.map((c, i) => (
               <li key={c.id}>
                 <Link
-                  href={`/coupon/${c.id}`}
+                  href={couponHref(c)}
                   className="flex items-center gap-3 rounded-md p-2 transition hover:bg-white/5"
                 >
                   <span

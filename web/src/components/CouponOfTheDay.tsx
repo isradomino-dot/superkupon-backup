@@ -7,6 +7,7 @@ import { getRecommendations, isAbortError, formatDiscount } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { couponSlug } from "@/lib/coupon-slug";
 
 /**
  * Coupon of the Day — deterministic pick berdasarkan tanggal.
@@ -158,7 +159,7 @@ export function CouponOfTheDay() {
           </span>
         </div>
         <Link
-          href={`/coupon/${coupon.id}`}
+          href={`/coupon/${couponSlug(coupon)}`}
           className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-sm font-bold text-white shadow-md transition hover:scale-105 hover:shadow-lg"
         >
           Klaim Sekarang →

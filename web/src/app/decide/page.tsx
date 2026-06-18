@@ -7,6 +7,7 @@ import { listCoupons, isAbortError } from "@/lib/api";
 import type { Coupon } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
+import { couponHref } from "@/lib/coupon-slug";
 
 export const dynamic = "force-dynamic";
 
@@ -565,7 +566,7 @@ function ResultCard({ result }: { result: SmartResult }) {
 
   return (
     <Link
-      href={`/coupon/${coupon.id}`}
+      href={couponHref(coupon)}
       className="group block overflow-hidden rounded-2xl border-2 border-white/10 bg-white/5 transition-all hover:scale-[1.01] hover:border-emerald-400/50 hover:shadow-xl"
     >
       <div className="flex flex-col gap-4 p-5 sm:flex-row">

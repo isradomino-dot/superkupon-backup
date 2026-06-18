@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { isAbortError, listCoupons, formatDiscount } from "@/lib/api";
+import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon } from "@/lib/types";
 import { SkeletonBar, SkeletonBox } from "@/components/Skeleton";
 
@@ -186,7 +187,7 @@ export function StackingSection() {
                   {s.coupons.map((c) => (
                     <Link
                       key={c.id}
-                      href={`/coupon/${c.id}`}
+                      href={`/coupon/${couponSlug(c)}`}
                       className="flex items-center justify-between rounded-md bg-white/5 p-2 transition hover:bg-white/10"
                     >
                       <div className="min-w-0 flex-1">

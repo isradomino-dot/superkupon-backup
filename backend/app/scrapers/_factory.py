@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from typing import List, Any
 
 from app.config import settings
-from app.scrapers.base import BaseScraper
+from app.scrapers.base import BaseScraper, should_use_mock
 from app.schemas import CouponRaw
 
 
@@ -39,7 +39,7 @@ def make_promo_scraper(
     """
 
     async def _fetch(self) -> Any:
-        if settings.SCRAPER_USE_MOCK:
+        if should_use_mock(self.target_id):
             return mock_data
         raise NotImplementedError(
             f"Production scrape for {target_id} not implemented — "

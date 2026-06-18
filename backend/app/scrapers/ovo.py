@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 from app.config import settings
-from app.scrapers.base import BaseScraper
+from app.scrapers.base import BaseScraper, should_use_mock
 from app.schemas import CouponRaw
 
 
@@ -40,7 +40,7 @@ class OvoPromoScraper(BaseScraper):
     tier = "public"
 
     async def fetch_raw(self):
-        if settings.SCRAPER_USE_MOCK:
+        if should_use_mock(self.target_id):
             return _MOCK_DATA
         raise NotImplementedError("Set SCRAPER_USE_MOCK=true untuk PoC")
 

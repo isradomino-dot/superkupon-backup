@@ -15,7 +15,7 @@ from typing import List
 
 from app.config import settings
 from app.ml.coupon_extractor import extract_coupons
-from app.scrapers.base import BaseScraper
+from app.scrapers.base import BaseScraper, should_use_mock
 from app.schemas import CouponRaw
 
 
@@ -56,7 +56,7 @@ class SocialMediaScraper(BaseScraper):
     tier = "public"
 
     async def fetch_raw(self) -> list[dict]:
-        if settings.SCRAPER_USE_MOCK:
+        if should_use_mock(self.target_id):
             return _MOCK_POSTS
 
         # TODO production:

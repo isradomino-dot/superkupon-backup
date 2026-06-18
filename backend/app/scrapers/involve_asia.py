@@ -160,18 +160,25 @@ class InvolveAsiaScraper(BaseScraper):
         if should_use_mock(self.target_id):
             return _MOCK_DATA
 
-        token = await self._get_token()
-        async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT_SECONDS) as client:
-            r = await client.post(
-                self.COUPONS_URL,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Accept": "application/json",
-                },
-                data={"page": 1, "limit": 100},
-            )
-            r.raise_for_status()
-            return r.json()
+        try:
+            token = await self._get_token()
+            async with httpx.AsyncClient(timeout=settings.SCRAPER_TIMEOUT_SECONDS) as client:
+                r = await client.post(
+                    self.COUPONS_URL,
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "Accept": "application/json",
+                    },
+                    data={"page": 1, "limit": 100},
+                )
+                r.raise_for_status()
+                return r.json()
+        except httpx.HTTPError as e:
+            logger.warning(f"Involve Asia API failed: {e.__class__.__name__}: {e}")
+            return {"data": {"data": []}}
+        except Exception as e:
+            logger.warning(f"Involve Asia API failed: {e.__class__.__name__}: {e}")
+            return {"data": {"data": []}}
 
     def parse(self, raw: dict) -> List[CouponRaw]:
         items: List[CouponRaw] = []

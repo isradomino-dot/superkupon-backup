@@ -7,7 +7,7 @@ from typing import List
 from bs4 import BeautifulSoup
 
 from app.config import settings
-from app.scrapers.base import BaseScraper
+from app.scrapers.base import BaseScraper, should_use_mock
 from app.schemas import CouponRaw
 from app.pipelines.normalizer import normalize_discount
 
@@ -51,7 +51,7 @@ class SampleBlogScraper(BaseScraper):
     tier = "public"
 
     async def fetch_raw(self) -> str:
-        if settings.SCRAPER_USE_MOCK:
+        if should_use_mock(self.target_id):
             return _MOCK_HTML
         # Production: from app.anti_detect.fetcher import fetch
         # resp = await fetch("https://www.diskon.com/promo")

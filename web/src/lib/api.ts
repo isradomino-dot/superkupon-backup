@@ -154,6 +154,41 @@ export async function trackRedeem(id: number): Promise<void> {
   } catch {}
 }
 
+export interface CouponVoteCounts {
+  coupon_id: number;
+  works_24h: number;
+  expired_24h: number;
+  archived: boolean;
+}
+
+export async function voteCoupon(
+  id: number,
+  value: "works" | "expired",
+): Promise<CouponVoteCounts | null> {
+  try {
+    const r = await fetch(`${API_BASE}/coupons/${id}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value }),
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as CouponVoteCounts;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCouponVotes(
+  id: number,
+  opts: FetchOptions = {},
+): Promise<CouponVoteCounts | null> {
+  try {
+    return await get<CouponVoteCounts>(`/coupons/${id}/votes`, opts);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Helper: identify AbortError so callers can swallow it silently.
  */

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { voteCoupon } from "@/lib/api";
+
 const STORAGE_KEY = "sk_coupon_votes_v1";
 
 export type VoteValue = "works" | "expired";
@@ -50,6 +52,7 @@ export function useCouponVotes() {
       ...prev,
       [couponId]: { vote, votedAt: Date.now() },
     }));
+    void voteCoupon(couponId, vote);
   }, []);
 
   const clearVote = useCallback((couponId: number) => {

@@ -1,4 +1,5 @@
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import or_, func
@@ -7,8 +8,8 @@ from sqlalchemy.orm import Session, joinedload
 from app.api._ratelimit import get_client_ip, rate_limit
 from app.config import settings
 from app.db import get_db, is_postgres
-from app.models import Coupon, Merchant, Category
-from app.schemas import CouponOut
+from app.models import Coupon, CouponVote, Merchant, Category
+from app.schemas import CouponOut, CouponVoteIn, CouponVoteResponse
 
 
 def _fuzzy_merchant_match(db: Session, token: str, threshold: float = 0.35) -> Optional[str]:
@@ -229,6 +230,120 @@ def track_redeem(coupon_id: int, request: Request, db: Session = Depends(get_db)
     coupon.redeem_count += 1
     db.commit()
     return {"ok": True, "redeem_count": coupon.redeem_count}
+
+
+# Auto-archive threshold — minimum jumlah 'expired' vote dalam 24h sebelum
+# kupon di-archive (asumsi gak ada 'works' override di periode yang sama).
+_AUTOARCHIVE_EXPIRED_THRESHOLD = 3
+
+
+def _hash_ip(ip: str) -> str:
+    return hashlib.sha256(ip.encode("utf-8")).hexdigest()[:32]
+
+
+def _count_votes_24h(db: Session, coupon_id: int, value: str) -> int:
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    return (
+        db.query(CouponVote)
+        .filter(
+            CouponVote.coupon_id == coupon_id,
+            CouponVote.value == value,
+            CouponVote.created_at >= cutoff,
+        )
+        .count()
+    )
+
+
+@router.post("/{coupon_id}/vote", response_model=CouponVoteResponse)
+def vote_coupon(
+    coupon_id: int,
+    body: CouponVoteIn,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """User vote kupon: works (👍) atau expired (👎).
+
+    Dedup: 1 IP cuma bisa vote 1x per kupon per 24h. Vote ulang dengan value
+    beda akan UPDATE vote lama (bukan dobel).
+
+    Auto-archive: kalau total `expired` vote dalam 24h >= 3 DAN gak ada
+    `works` vote di periode yang sama → status='archived'.
+    """
+    if body.value not in ("works", "expired"):
+        raise HTTPException(422, "value must be 'works' or 'expired'")
+
+    ip = get_client_ip(request)
+    rate_limit(f"vote:{ip}", max_calls=20, window_seconds=60.0)
+
+    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(404, "Coupon not found")
+
+    ip_hash = _hash_ip(ip)
+    now = datetime.utcnow()
+    cutoff_24h = now - timedelta(hours=24)
+
+    existing = (
+        db.query(CouponVote)
+        .filter(
+            CouponVote.coupon_id == coupon_id,
+            CouponVote.reporter_ip_hash == ip_hash,
+            CouponVote.created_at >= cutoff_24h,
+        )
+        .order_by(CouponVote.created_at.desc())
+        .first()
+    )
+
+    if existing:
+        if existing.value != body.value:
+            existing.value = body.value
+            existing.created_at = now
+    else:
+        db.add(
+            CouponVote(
+                coupon_id=coupon_id,
+                value=body.value,
+                reporter_ip_hash=ip_hash,
+                created_at=now,
+            )
+        )
+    db.flush()
+
+    expired_count = _count_votes_24h(db, coupon_id, "expired")
+    works_count = _count_votes_24h(db, coupon_id, "works")
+
+    archived_now = False
+    if (
+        body.value == "expired"
+        and coupon.status == "active"
+        and expired_count >= _AUTOARCHIVE_EXPIRED_THRESHOLD
+        and works_count == 0
+    ):
+        coupon.status = "archived"
+        archived_now = True
+
+    db.commit()
+
+    return CouponVoteResponse(
+        coupon_id=coupon_id,
+        works_24h=works_count,
+        expired_24h=expired_count,
+        archived=archived_now,
+    )
+
+
+@router.get("/{coupon_id}/votes", response_model=CouponVoteResponse)
+def get_coupon_votes(coupon_id: int, db: Session = Depends(get_db)):
+    """24h rolling vote counts buat social proof display di card / detail page."""
+    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    if not coupon:
+        raise HTTPException(404, "Coupon not found")
+    return CouponVoteResponse(
+        coupon_id=coupon_id,
+        works_24h=_count_votes_24h(db, coupon_id, "works"),
+        expired_24h=_count_votes_24h(db, coupon_id, "expired"),
+        archived=coupon.status == "archived",
+    )
 
 
 @router.get("/{coupon_id}", response_model=CouponOut)

@@ -117,3 +117,20 @@ class ScrapeLogOut(BaseModel):
     items_new: int
     items_updated: int
     error: Optional[str] = None
+
+
+class CouponVoteIn(BaseModel):
+    """Body POST /coupons/{id}/vote."""
+    value: str  # "works" | "expired"
+
+
+class CouponVoteResponse(BaseModel):
+    """Response GET /coupons/{id}/votes + POST /coupons/{id}/vote.
+
+    Returns 24h rolling counts (older votes excluded — stale signal).
+    `archived` true kalau kupon baru saja auto-archived via vote ini.
+    """
+    coupon_id: int
+    works_24h: int
+    expired_24h: int
+    archived: bool = False

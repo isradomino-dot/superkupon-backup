@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useCouponVotes, type VoteValue } from "@/lib/use-coupon-votes";
 import { fireConfetti } from "@/lib/confetti";
+import { getCouponVotes, type CouponVoteCounts } from "@/lib/api";
 
 interface Props {
   couponId: number;
@@ -14,6 +15,33 @@ export function VerifyButtons({ couponId, compact = false }: Props) {
   const { getVote, setVote, clearVote } = useCouponVotes();
   const current = getVote(couponId);
   const [justVoted, setJustVoted] = useState<VoteValue | null>(null);
+  const [counts, setCounts] = useState<CouponVoteCounts | null>(null);
+
+  useEffect(() => {
+    if (compact) return;
+    let cancelled = false;
+    void getCouponVotes(couponId).then((data) => {
+      if (!cancelled) setCounts(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [couponId, compact]);
+
+  useEffect(() => {
+    if (compact) return;
+    if (!justVoted) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void getCouponVotes(couponId).then((data) => {
+        if (!cancelled) setCounts(data);
+      });
+    }, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [justVoted, couponId, compact]);
 
   const handleVote = (e: React.MouseEvent<HTMLButtonElement>, val: VoteValue) => {
     e.preventDefault();
@@ -91,7 +119,13 @@ export function VerifyButtons({ couponId, compact = false }: Props) {
           onClick={(e) => handleVote(e, "works")}
           label="Masih works"
           emoji="👍"
-          subtext={justVoted === "works" ? "Thanks! ✓" : ""}
+          subtext={
+            justVoted === "works"
+              ? "Thanks! ✓"
+              : counts && counts.works_24h > 0
+                ? `${counts.works_24h} verified 24j`
+                : ""
+          }
         />
         <FullBtn
           active={current === "expired"}
@@ -99,12 +133,24 @@ export function VerifyButtons({ couponId, compact = false }: Props) {
           onClick={(e) => handleVote(e, "expired")}
           label="Sudah expired"
           emoji="👎"
-          subtext={justVoted === "expired" ? "Dilaporkan ✓" : ""}
+          subtext={
+            justVoted === "expired"
+              ? "Dilaporkan ✓"
+              : counts && counts.expired_24h > 0
+                ? `${counts.expired_24h} lapor 24j`
+                : ""
+          }
         />
       </div>
 
+      {counts?.archived && (
+        <p className="mt-2 rounded-md bg-rose-50 px-2 py-1.5 text-[11px] font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+          ⚠️ Kupon ini sudah ke-archive otomatis karena banyak laporan expired.
+        </p>
+      )}
+
       <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
-        Vote disimpan lokal di perangkat lo (tidak dikirim ke server). Lo bisa ubah kapan aja.
+        Vote dikirim ke server (anonim) + cache lokal. Kupon yang banyak dilaporkan expired auto-archive otomatis.
       </p>
     </div>
   );

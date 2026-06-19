@@ -43,3 +43,4 @@ backend/recon/mitmproxy/.mitmproxy/
 *.har
 session_*.jsonl
 *.endpoints.json
+scripts/supabase_migration.sql

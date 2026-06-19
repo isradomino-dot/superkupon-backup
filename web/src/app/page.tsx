@@ -27,6 +27,9 @@ import { DiscountSlider } from "@/components/DiscountSlider";
 import { SmartLink } from "@/components/SmartLink";
 import { StickyMerchantStrip } from "@/components/StickyMerchantStrip";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { MerchantFilterChips } from "@/components/filters/MerchantFilterChips";
+import { CategoryFilterChips } from "@/components/filters/CategoryFilterChips";
+import { ActiveFiltersBar } from "@/components/filters/ActiveFiltersBar";
 import { useI18n } from "@/i18n/provider";
 
 const FALLBACK_MERCHANTS = [
@@ -537,6 +540,15 @@ function Home() {
           onMinQualityChange={setMinQuality}
           totalCount={coupons.length}
         />
+        <MerchantFilterChips
+          merchants={merchants}
+          activeSlug={quick.merchant}
+          onSelect={(slug) => setQuick((s) => ({ ...s, merchant: slug }))}
+        />
+        <CategoryFilterChips
+          activeSlug={quick.category}
+          onSelect={(slug) => setQuick((s) => ({ ...s, category: slug }))}
+        />
         {!isSearching && merchants.length > 0 && (
           <StickyMerchantStrip
             merchants={merchants}
@@ -544,6 +556,18 @@ function Home() {
           />
         )}
       </div>
+
+      <ActiveFiltersBar
+        quick={quick}
+        setQuick={setQuick}
+        q={q}
+        onClearSearch={clearSearch}
+        sort={sort}
+        setSort={setSort}
+        minQuality={minQuality}
+        setMinQuality={setMinQuality}
+        merchants={merchants}
+      />
 
       <div className="flex flex-wrap items-center justify-end gap-2 -mt-2">
         <AutoRefreshControl state={autoRefresh} />

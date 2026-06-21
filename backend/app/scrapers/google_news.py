@@ -162,6 +162,60 @@ def _clean_title(title: str) -> str:
     return title.strip()
 
 
+# Noise patterns yang sering muncul di news article tapi gak relevan buat promo headline
+NEWS_NOISE_PATTERNS = [
+    # Numbers + topic noise prefix: "326 Kepsek SMA di Sulsel Mundur"
+    r'^\d+\s+\w+',
+    # Date patterns yg gak relevan: "Senin, 21 Juni:"
+    r'^(senin|selasa|rabu|kamis|jumat|sabtu|minggu)[\s,]+\d+\s+\w+[\s:]*',
+    # News source prefix uppercase: "JAKARTA - "
+    r'^[A-Z]{3,}\s*-\s*',
+    # Trailing news source: "...Berkaitan Temuan Cashback Dana BOS"
+    r'\bBerkaitan\b.*$',
+]
+
+# Keywords yang nandain article bukan promo (politik, scandal, kriminal, etc)
+_REJECT_KEYWORDS = [
+    'mundur', 'kepsek', 'kasus', 'tertangkap', 'meninggal', 'kecelakaan',
+    'tewas', 'ditangkap', 'korupsi', 'penipuan', 'penangkapan', 'skandal',
+    'dipecat', 'diberhentikan', 'demonstrasi', 'protes', 'unjuk rasa',
+]
+
+
+def normalize_news_title(raw_title: str, merchant_name: str) -> str:
+    """Clean Google News article title to promo headline.
+
+    Heuristics:
+    - Reject if title kena reject keywords (probably unrelated article)
+    - Trim noise prefixes/suffixes
+    - Truncate to 80 chars
+    - Add "Promo {merchant}" prefix sbg fallback kalau terlalu pendek/kosong
+    """
+    if not raw_title:
+        return f"Promo {merchant_name}"
+
+    title = raw_title.strip()
+
+    # Reject obvious non-promo articles (politik, berita scandal, etc)
+    title_lower = title.lower()
+    if any(k in title_lower for k in _REJECT_KEYWORDS):
+        return f"Promo {merchant_name} Terbaru"
+
+    # Apply noise pattern removal
+    for pat in NEWS_NOISE_PATTERNS:
+        title = re.sub(pat, '', title, flags=re.IGNORECASE).strip()
+
+    # Truncate to 80 chars at word boundary
+    if len(title) > 80:
+        title = title[:77].rsplit(' ', 1)[0] + '...'
+
+    # Fallback kalau terlalu pendek setelah strip noise
+    if len(title) < 10:
+        return f"Promo {merchant_name} Terbaru"
+
+    return title
+
+
 def _extract_source_name(title: str) -> str | None:
     """Extract publisher dari ' - Tirto.id' suffix."""
     parts = title.rsplit(" - ", 1)
@@ -239,6 +293,13 @@ class GoogleNewsPromoScraper(BaseScraper):
                     source = _extract_source_name(raw_title)
                     discount_type, discount_value = _guess_discount(clean_title)
 
+                    # Normalize: strip news noise prefixes/suffixes, reject scandal articles,
+                    # fallback ke "Promo {merchant} Terbaru" kalau title gak layak.
+                    # Pakai merchant_slug.title() (e.g. "Shopee", "Dana") sebagai display name.
+                    normalized_title = normalize_news_title(
+                        clean_title, merchant_slug.replace("-", " ").title()
+                    )
+
                     description = (
                         f"Sumber: {source}. Klik untuk baca selengkapnya."
                         if source
@@ -260,7 +321,7 @@ class GoogleNewsPromoScraper(BaseScraper):
                     items.append(
                         CouponRaw(
                             code=None,  # Google News doesn't expose codes — user reads article
-                            title=clean_title[:240],
+                            title=normalized_title[:240],
                             description=description,
                             discount_type=discount_type,
                             discount_value=discount_value,

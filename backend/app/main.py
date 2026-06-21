@@ -1,13 +1,31 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.db import init_db
 from app.api import coupons, merchants, admin, recon, proxy_admin, stats, i18n as i18n_api, notifications, search as search_api
 from app.i18n.middleware import LanguageMiddleware
 from app.scheduler import start_scheduler, stop_scheduler
+
+
+class HeadMethodMiddleware(BaseHTTPMiddleware):
+    """Allow HEAD requests by routing to GET internally — monitoring tools sering pakai HEAD."""
+
+    async def dispatch(self, request, call_next):
+        if request.method == "HEAD":
+            # Convert to GET internally
+            request.scope["method"] = "GET"
+            response = await call_next(request)
+            # Strip body for HEAD response, preserve headers + status
+            return Response(
+                status_code=response.status_code,
+                headers=response.headers,
+                media_type=response.media_type,
+            )
+        return await call_next(request)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -100,6 +118,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(HeadMethodMiddleware)
 app.add_middleware(LanguageMiddleware)
 app.add_middleware(
     CORSMiddleware,

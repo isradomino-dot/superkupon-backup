@@ -20,15 +20,25 @@ const INVOLVE_ASIA_AFF_ID =
  * Slug harus match dengan `merchant.slug` di backend (lowercase).
  */
 const MERCHANT_OFFER_IDS: Record<string, string> = {
-  // shopee: "12345",
-  // tokopedia: "12346",
-  // lazada: "12347",
-  // traveloka: "12348",
-  // tiket: "12349",
-  // grab: "12350",
-  // gojek: "12351",
-  // agoda: "12352",
-  // booking: "12353",
+  // PRIORITY merchants (lo udah punya kupon di DB):
+  // shopee: "FILL_ME",          // Shopee Indonesia (21 kupon)
+  // tokopedia: "FILL_ME",       // Tokopedia (14 kupon)
+  // tiket-com: "FILL_ME",       // Tiket.com (10 kupon)
+  // grab: "FILL_ME",            // Grab (10 kupon)
+  // traveloka: "FILL_ME",       // Traveloka (10 kupon)
+  // lazada: "FILL_ME",          // Lazada (9 kupon)
+  // blibli: "FILL_ME",          // Blibli (9 kupon)
+  // klook: "FILL_ME",           // Klook (2 kupon)
+
+  // FEATURED OFFERS (instant-approve di Involve dashboard):
+  // tiktok-shop: "FILL_ME",     // TikTok Shop ID (47% commission)
+  // wegic: "FILL_ME",           // Wegic AI (31.5% commission)
+  // ninja-wifi: "FILL_ME",      // Ninja Wifi (7% commission)
+  //
+  // Pas dapet offer_id real dari Involve dashboard:
+  // 1. Uncomment baris di atas
+  // 2. Ganti "FILL_ME" dengan offer_id (digit-digit doang, e.g. "12345")
+  // 3. Commit + push -> Vercel auto-deploy
 };
 
 /**

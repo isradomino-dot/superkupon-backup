@@ -139,6 +139,9 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
       <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 animate-slide-up">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-dashed border-gray-200 bg-gradient-to-br from-brand-500/5 to-brand-700/5 p-6 dark:border-gray-700 dark:from-brand-900/20 dark:to-brand-700/10">
           <div className="min-w-0 flex-1">
+            <h1 className="mb-3 text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+              Kode Promo {coupon.merchant.name}: {coupon.title}
+            </h1>
             <div className="flex flex-wrap items-center gap-2">
               <MerchantLogo merchant={coupon.merchant} size={20} rounded="sm" />
               <Link

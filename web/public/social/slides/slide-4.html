@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
+  .slide {
+    width: 1080px; height: 1080px;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 30%, rgba(236, 72, 153, 0.5), transparent 60%),
+      linear-gradient(135deg, #7c3aed 0%, #4c1d95 50%, #831843 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 100px 80px; text-align: center; position: relative;
+  }
+  .slide::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .emoji { position: relative; font-size: 100px; margin-bottom: 30px; }
+  .title {
+    position: relative; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 105px; font-weight: 900; line-height: 1.05; margin-bottom: 30px;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    position: relative; font-size: 38px; color: #fce7f3;
+    font-weight: 500; margin-bottom: 70px;
+  }
+  .url-box {
+    position: relative; background: white;
+    padding: 28px 50px; border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); margin-bottom: 40px;
+  }
+  .url-box p { color: #6b21a8; font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+  .url-box h2 {
+    color: #4c1d95; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 48px; font-weight: 800;
+  }
+  .cta { position: relative; font-size: 32px; color: white; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="emoji">🚀</div>
+  <h1 class="title">Cobain<br>SEKARANG!</h1>
+  <p class="subtitle">GRATIS · gak perlu install app</p>
+  <div class="url-box">
+    <p>🔗 Akses di browser:</p>
+    <h2>superkupon.vercel.app</h2>
+  </div>
+  <p class="cta">📌 Link di bio 👆</p>
+</div>
+</body>
+</html>

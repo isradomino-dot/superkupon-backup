@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      // DB stores merchant.logo_url as /logos/<slug>.png, but assets on disk are .svg.
+      // Rewrite at the edge so legacy .png paths resolve to the actual .svg files.
+      {
+        source: "/logos/:name.png",
+        destination: "/logos/:name.svg",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

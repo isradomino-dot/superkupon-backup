@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
+  .slide {
+    width: 1080px; height: 1080px;
+    background:
+      radial-gradient(ellipse 80% 60% at 80% 20%, rgba(236, 72, 153, 0.45), transparent 60%),
+      radial-gradient(ellipse 70% 70% at 20% 80%, rgba(56, 189, 248, 0.3), transparent 60%),
+      linear-gradient(135deg, #0f0e1a 0%, #1e1b3a 40%, #2a1a4a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 100px 80px; text-align: center; position: relative;
+  }
+  .slide::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(167, 139, 250, 0.15) 1.5px, transparent 1.5px);
+    background-size: 50px 50px; opacity: 0.6;
+  }
+  .badge {
+    position: relative; background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    padding: 12px 28px; border-radius: 999px;
+    font-size: 22px; font-weight: 600; color: #c4b5fd; margin-bottom: 60px;
+  }
+  .question {
+    position: relative; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 110px; font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.02em; margin-bottom: 50px;
+  }
+  .highlight {
+    background: linear-gradient(135deg, #fbbf24, #ec4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    position: relative; font-size: 38px; color: #cbd5e1; font-weight: 400;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="badge">✨ SuperKupon</div>
+  <h1 class="question">Sering belanja<br>online<br>tapi <span class="highlight">LUPA</span><br>pake kupon?</h1>
+  <p class="subtitle">Tenang, ada solusinya 👇</p>
+</div>
+</body>
+</html>

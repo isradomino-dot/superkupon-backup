@@ -86,17 +86,16 @@ class Settings(BaseSettings):
     TELEGRAM_API_HASH: str = ""
     TELEGRAM_SESSION_STRING: str = ""
 
+    # Exact allowlist — NO wildcard *.vercel.app (security: cegah attacker bikin
+    # subdomain vercel.app sembarangan buat steal credentials via CORS).
     CORS_ORIGINS: list[str] = [
+        "https://superkupon.vercel.app",
+        "https://superkupon-backup.vercel.app",
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
         "http://localhost:3010",
-        "http://127.0.0.1:3010",
     ]
-    # Default regex: allow localhost (dev) + all *.vercel.app subdomains (prod + preview)
-    CORS_ORIGIN_REGEX: str = (
-        r"https?://(localhost|127\.0\.0\.1):\d+"
-        r"|https://([a-z0-9-]+\.)?vercel\.app"
-    )
+    # Regex dimatiin — fixed allowlist aja
+    CORS_ORIGIN_REGEX: str = ""
 
 
 settings = Settings()

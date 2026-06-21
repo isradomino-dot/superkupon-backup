@@ -56,10 +56,12 @@ def rate_limit(key: str, max_calls: int, window_seconds: float) -> None:
 
 def get_client_ip(request: Request) -> str:
     """Get client IP, respect X-Forwarded-For dari Railway/Vercel/Cloudflare proxy."""
-    # X-Forwarded-For format: "client, proxy1, proxy2" — ambil paling kiri
+    # X-Forwarded-For format: "client, proxy1, proxy2" — ambil paling KANAN
+    # (rightmost = closest trusted proxy dari infrastructure kita).
+    # Leftmost bisa di-spoof attacker dgn set header arbitrary.
     forwarded = request.headers.get("x-forwarded-for", "")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        return forwarded.split(",")[-1].strip()
     # Fallback ke real_ip header
     real_ip = request.headers.get("x-real-ip", "")
     if real_ip:

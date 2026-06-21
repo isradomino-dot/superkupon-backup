@@ -9,14 +9,14 @@
  *   - POST/PUT/DELETE: always network, never cached
  */
 
-const SW_VERSION = "sk-v1";
+const SW_VERSION = "sk-v2";
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const API_CACHE = `${SW_VERSION}-api`;
 
 const PRECACHE_URLS = ["/offline.html", "/manifest.json"];
 
-const API_BASE_REGEX = /^https?:\/\/(localhost|127\.0\.0\.1):\d+\/(coupons|merchants|merchants-with-counts|categories|search\/.+|notifications)/;
+const API_BASE_REGEX = /^https?:\/\/(?:localhost:8001|127\.0\.0\.1:8001|superkupon-backend-production\.up\.railway\.app)\/(?:coupons|merchants|merchants-with-counts|categories|search\/.+|notifications)/i;
 const API_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 self.addEventListener("install", (event) => {

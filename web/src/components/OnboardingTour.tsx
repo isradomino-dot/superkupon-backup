@@ -144,7 +144,7 @@ export function OnboardingTour() {
             <button
               type="button"
               onClick={() => close()}
-              className="rounded-md bg-brand-500 px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-brand-600"
+              className="rounded-md bg-brand-600 px-5 py-2 text-sm font-semibold text-white shadow-glow hover:bg-brand-700"
             >
               🎉 Mulai!
             </button>
@@ -152,7 +152,7 @@ export function OnboardingTour() {
             <button
               type="button"
               onClick={() => setStepIdx((i) => Math.min(STEPS.length - 1, i + 1))}
-              className="rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
             >
               {isFirst ? "Ya, tunjukin 👉" : "Next →"}
             </button>

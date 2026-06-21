@@ -16,6 +16,7 @@ import { useExpiryCountdown } from "@/lib/use-expiry-countdown";
 import { useCouponVotes } from "@/lib/use-coupon-votes";
 import { CouponActionGroup } from "@/components/CouponActionGroup";
 import { fireConfetti } from "@/lib/confetti";
+import { trackCouponClick, trackCopyCode } from "@/lib/analytics";
 
 interface Props {
   coupon: Coupon;
@@ -117,6 +118,7 @@ export function CouponCard({ coupon, highlight = "", isStackable = false }: Prop
           <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
             <Link
               href={`/coupon/${couponSlug(coupon)}`}
+              onClick={() => trackCouponClick(coupon.id, coupon.merchant.slug)}
               className="hover:text-brand-600 hover:underline dark:hover:text-brand-400"
             >
               <Highlight text={coupon.title} query={highlight} />
@@ -186,7 +188,7 @@ function CopyButton({ coupon }: { coupon: Coupon }) {
   return (
     <button
       type="button"
-      className="rounded-md bg-brand-500 px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand-600 active:scale-95"
+      className="rounded-md bg-brand-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand-700 active:scale-95"
       onClick={async (e) => {
         e.preventDefault();
         if (!coupon.code) return;
@@ -196,6 +198,7 @@ function CopyButton({ coupon }: { coupon: Coupon }) {
           await navigator.clipboard.writeText(coupon.code);
           setCopied(true);
           void trackRedeem(coupon.id);
+          trackCopyCode(coupon.id, coupon.code, coupon.merchant.slug);
           addClaim(coupon);
           recordClaim();
           if (rect) {

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Coupon } from "@/lib/types";
 import { couponSlug } from "@/lib/coupon-slug";
 import { QrCodeModal } from "@/components/QrCodeModal";
+import { trackShare } from "@/lib/analytics";
 
 interface Props {
   coupon: Coupon;
@@ -46,6 +47,7 @@ export function ShareButton({ coupon }: Props) {
           text: message,
           url,
         });
+        trackShare(coupon.id, "native");
         return;
       } catch {
         // User cancelled or unsupported — fall through to dropdown
@@ -57,6 +59,7 @@ export function ShareButton({ coupon }: Props) {
   const shareWA = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    trackShare(coupon.id, "whatsapp");
     window.open(
       `https://wa.me/?text=${encodeURIComponent(message)}`,
       "_blank",
@@ -68,6 +71,7 @@ export function ShareButton({ coupon }: Props) {
   const shareTG = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    trackShare(coupon.id, "telegram");
     const link = `https://t.me/share/url?url=${encodeURIComponent(
       url
     )}&text=${encodeURIComponent(tgText)}`;
@@ -80,6 +84,7 @@ export function ShareButton({ coupon }: Props) {
     e.stopPropagation();
     try {
       await navigator.clipboard.writeText(url);
+      trackShare(coupon.id, "copy_link");
       setCopied(true);
       setTimeout(() => {
         setCopied(false);

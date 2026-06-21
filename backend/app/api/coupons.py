@@ -1,7 +1,7 @@
 import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import or_, func, not_, and_
 from sqlalchemy.orm import Session, joinedload
 
@@ -60,6 +60,7 @@ INDONESIAN_STOPWORDS = {
 
 @router.get("", response_model=List[CouponOut])
 def list_coupons(
+    response: Response,
     db: Session = Depends(get_db),
     merchant: Optional[str] = Query(None, description="Filter by merchant slug"),
     category: Optional[str] = Query(None, description="Filter by category slug"),
@@ -170,6 +171,7 @@ def list_coupons(
     else:
         query = query.order_by(Coupon.scraped_at.desc())
 
+    response.headers["Cache-Control"] = "public, s-maxage=60, stale-while-revalidate=300"
     return query.offset(offset).limit(limit).all()
 
 
@@ -355,7 +357,7 @@ def get_coupon_votes(coupon_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{coupon_id}", response_model=CouponOut)
-def get_coupon(coupon_id: int, db: Session = Depends(get_db)):
+def get_coupon(coupon_id: int, response: Response, db: Session = Depends(get_db)):
     coupon = (
         db.query(Coupon)
         .options(joinedload(Coupon.merchant), joinedload(Coupon.category))
@@ -364,6 +366,7 @@ def get_coupon(coupon_id: int, db: Session = Depends(get_db)):
     )
     if not coupon:
         raise HTTPException(404, "Coupon not found")
+    response.headers["Cache-Control"] = "public, s-maxage=300, stale-while-revalidate=3600"
     return coupon
 
 

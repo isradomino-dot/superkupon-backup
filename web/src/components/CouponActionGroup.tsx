@@ -102,7 +102,7 @@ export function CouponActionGroup({ coupon }: Props) {
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-1 bg-brand-500 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-brand-600"
+          className="inline-flex items-center gap-1 bg-brand-600 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-brand-700"
           title="Salin kode promo"
         >
           {copied ? "✓ " + (t("coupon.copied") || "Tersalin") : "⚡ " + (t("coupon.copy") || "Salin")}

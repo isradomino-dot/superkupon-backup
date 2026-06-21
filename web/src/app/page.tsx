@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import { isAbortError, listCoupons, listMerchants } from "@/lib/api";
+import { fetchPublicStats, type PublicStats } from "@/lib/admin-api";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
 import { CouponCard } from "@/components/CouponCard";
 import { CouponSkeletonGrid } from "@/components/CouponSkeleton";
@@ -84,6 +85,7 @@ function Home() {
     minDiscount: searchParams.get("md") ? Number(searchParams.get("md")) : undefined,
   }));
   const [newCountToast, setNewCountToast] = useState<number | null>(null);
+  const [stats, setStats] = useState<PublicStats | null>(null);
   const currentIdsRef = useRef<Set<number>>(new Set());
   const loadMoreCtrlRef = useRef<AbortController | null>(null);
   const autoRefreshCtrlRef = useRef<AbortController | null>(null);
@@ -132,6 +134,21 @@ function Home() {
     return () => {
       loadMoreCtrlRef.current?.abort();
       autoRefreshCtrlRef.current?.abort();
+    };
+  }, []);
+
+  // Fetch public stats for trust signals in hero — silent fail
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicStats()
+      .then((s) => {
+        if (!cancelled) setStats(s);
+      })
+      .catch(() => {
+        /* silent — trust strip just hides if stats unavailable */
+      });
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -322,6 +339,15 @@ function Home() {
           <span>Bingung pilih? Pakai Smart Pick</span>
           <span className="text-brand-500">→</span>
         </Link>
+
+        {stats && (
+          <div className="relative mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/70 sm:text-sm">
+            <span>🎟️ <strong className="text-white">{stats.total_active}</strong> kupon aktif</span>
+            <span>🏪 <strong className="text-white">{stats.merchant_count}</strong> merchant</span>
+            <span>⏰ Update tiap jam</span>
+            <span>✓ Diverifikasi</span>
+          </div>
+        )}
       </section>
 
       {/* Coupon of the Day — hero pick yg refresh tiap hari */}
@@ -625,7 +651,7 @@ function Home() {
                   type="button"
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-brand-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loadingMore ? "Memuat..." : `Tampilkan lebih banyak (+${PAGE_SIZE})`}
                 </button>

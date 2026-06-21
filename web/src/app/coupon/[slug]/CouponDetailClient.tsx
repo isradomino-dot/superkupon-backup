@@ -204,7 +204,7 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="flex-none rounded-lg bg-brand-500 px-6 py-3 text-base font-bold text-white shadow transition hover:bg-brand-600 active:scale-95"
+                className="flex-none rounded-lg bg-brand-600 px-6 py-3 text-base font-bold text-white shadow transition hover:bg-brand-700 active:scale-95"
               >
                 {copied ? `✓ ${t("coupon.copied") || "Tersalin!"}` : t("coupon.copy") || "Salin Kode"}
               </button>

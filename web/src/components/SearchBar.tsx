@@ -8,6 +8,7 @@ import { getAutocomplete, isAbortError, type AutocompleteResponse } from "@/lib/
 import { couponSlug } from "@/lib/coupon-slug";
 import { useSearchHistory } from "@/lib/use-search-history";
 import { SkeletonBar, SkeletonCircle } from "@/components/Skeleton";
+import { trackSearch } from "@/lib/analytics";
 
 /**
  * Search input + "Cari" button + autocomplete dropdown.
@@ -104,6 +105,7 @@ export function SearchBar() {
         }
         if (override.type === "query") {
           search.set("q", override.payload);
+          trackSearch(override.payload);
           router.push(`/?${search.toString()}`);
           setOpen(false);
           return;
@@ -112,6 +114,7 @@ export function SearchBar() {
       if (q.trim()) {
         search.set("q", q.trim());
         addEntry(q.trim());
+        trackSearch(q.trim());
       }
       router.push(`/?${search.toString()}`);
       setOpen(false);

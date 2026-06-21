@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useFavorites } from "@/lib/use-favorites";
 import { fireConfetti } from "@/lib/confetti";
+import { trackFavorite } from "@/lib/analytics";
 
 const HEART_COLORS = ["#fb7185", "#f43f5e", "#ec4899", "#a78bfa", "#facc15"];
 
@@ -22,6 +23,7 @@ export function FavoriteButton({ couponId, size = "sm" }: Props) {
     e.stopPropagation();
     const wasFav = fav;
     toggle(couponId);
+    trackFavorite(couponId, wasFav ? "remove" : "add");
     setBouncing(true);
     setTimeout(() => setBouncing(false), 350);
     if (!wasFav) {

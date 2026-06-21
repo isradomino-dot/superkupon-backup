@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { listCoupons, getMerchant } from "@/lib/api";
@@ -12,6 +13,26 @@ interface PageProps {
 }
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const [merchant] = await Promise.all([
+      getMerchant(slug),
+      listCoupons({ merchant: slug, limit: 1 }),
+    ]);
+    const title = `Kode Promo ${merchant.name} Terbaru — Kupon Aktif | SuperKupon`;
+    const description = `Kode promo ${merchant.name} terbaru. Diskon, voucher & cashback yang sudah diverifikasi. Update otomatis tiap jam.`;
+    return {
+      title,
+      description,
+      alternates: { canonical: `/merchant/${slug}` },
+      openGraph: { title, description, type: "website" },
+    };
+  } catch {
+    return { title: "Merchant tidak ditemukan", robots: { index: false } };
+  }
+}
 
 export default async function MerchantPage({ params }: PageProps) {
   const { slug } = await params;

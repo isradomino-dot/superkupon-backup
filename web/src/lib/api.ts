@@ -215,6 +215,14 @@ export function formatDiscount(c: Coupon, t?: Translate): string {
       return fallback[key] ?? key;
     });
 
+  if (
+    (!c.discount_value || c.discount_value <= 0) &&
+    c.discount_type !== "free_shipping" &&
+    c.discount_type !== "bogo"
+  ) {
+    return tr("coupon.discount_generic");
+  }
+
   const num = c.discount_value.toLocaleString("id-ID");
   switch (c.discount_type) {
     case "percent":

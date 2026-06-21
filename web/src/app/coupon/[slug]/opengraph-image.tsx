@@ -12,16 +12,17 @@ const API_BASE_ABSOLUTE =
   "https://superkupon-backend-production.up.railway.app";
 
 function formatDiscount(c: Coupon): string {
-  if (c.discount_type === "percent") return `${Math.round(c.discount_value)}%`;
+  if (c.discount_type === "free_shipping") return "GRATIS ONGKIR";
+  if (c.discount_type === "bogo") return "BELI 1 GRATIS 1";
+  const v = c.discount_value;
+  if (!v || v <= 0) return "PROMO";
+  if (c.discount_type === "percent") return `${Math.round(v)}%`;
   if (c.discount_type === "fixed") {
-    const v = c.discount_value;
     if (v >= 1000) return `Rp ${Math.round(v / 1000)}K`;
     return `Rp ${v}`;
   }
-  if (c.discount_type === "cashback") return `${Math.round(c.discount_value)}% CB`;
-  if (c.discount_type === "free_shipping") return "GRATIS ONGKIR";
-  if (c.discount_type === "bogo") return "BELI 1 GRATIS 1";
-  return `${Math.round(c.discount_value)}%`;
+  if (c.discount_type === "cashback") return `${Math.round(v)}% CB`;
+  return `${Math.round(v)}%`;
 }
 
 function formatMaxDiscount(c: Coupon): string | null {

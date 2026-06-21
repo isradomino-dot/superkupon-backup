@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, not_, and_
 from sqlalchemy.orm import Session, joinedload
 
 from app.api._ratelimit import get_client_ip, rate_limit
@@ -115,6 +115,14 @@ def list_coupons(
         query = query.filter(Coupon.status == status)
     else:
         query = query.filter(Coupon.status.in_(["active", "expiring_soon"]))
+
+    # Hide Google News articles tanpa code — those are news without claimable promo
+    query = query.filter(
+        not_(and_(
+            Coupon.source_target == "google_news_promo",
+            or_(Coupon.code.is_(None), Coupon.code == "")
+        ))
+    )
 
     query = query.filter(
         or_(Coupon.expires_at.is_(None), Coupon.expires_at >= datetime.utcnow())

@@ -16,7 +16,12 @@ type CouponSlugInput = Pick<Coupon, "id" | "title"> & {
 
 export function couponSlug(c: CouponSlugInput): string {
   const merchantPart = slugify(c.merchant?.name || "");
-  const titlePart = slugify(c.title || "").slice(0, 60);
+  let titlePart = slugify(c.title || "").slice(0, 60);
+  // Truncate at word boundary (drop last partial word)
+  const lastDash = titlePart.lastIndexOf("-");
+  if (lastDash > 20 && lastDash < titlePart.length - 1) {
+    titlePart = titlePart.slice(0, lastDash);
+  }
   const parts = [String(c.id)];
   if (merchantPart) parts.push(merchantPart);
   if (titlePart) parts.push(titlePart);

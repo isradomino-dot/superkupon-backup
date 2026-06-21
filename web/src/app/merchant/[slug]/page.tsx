@@ -21,13 +21,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       getMerchant(slug),
       listCoupons({ merchant: slug, limit: 1 }),
     ]);
-    const title = `Kode Promo ${merchant.name} Terbaru — Kupon Aktif | SuperKupon`;
+    const title = `Kode Promo ${merchant.name} Terbaru — Kupon Aktif`;
     const description = `Kode promo ${merchant.name} terbaru. Diskon, voucher & cashback yang sudah diverifikasi. Update otomatis tiap jam.`;
     return {
       title,
       description,
       alternates: { canonical: `/merchant/${slug}` },
-      openGraph: { title, description, type: "website" },
+      openGraph: { title: `${title} | SuperKupon`, description, type: "website" },
     };
   } catch {
     return { title: "Merchant tidak ditemukan", robots: { index: false } };

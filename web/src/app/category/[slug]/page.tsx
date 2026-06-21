@@ -14,13 +14,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const cats = await listCategories().catch(() => []);
   const cat = cats.find((c) => c.slug === slug);
   if (!cat) return { title: "Kategori tidak ditemukan", robots: { index: false } };
-  const title = `Kupon ${cat.name} Terbaru — Diskon & Promo | SuperKupon`;
+  const title = `Kupon ${cat.name} Terbaru — Diskon & Promo`;
   const description = `Kupon dan promo ${cat.name} terbaru yang sudah diverifikasi. Update otomatis tiap jam dari merchant Indonesia.`;
   return {
     title,
     description,
     alternates: { canonical: `/category/${slug}` },
-    openGraph: { title, description, type: "website" },
+    openGraph: { title: `${title} | SuperKupon`, description, type: "website" },
   };
 }
 

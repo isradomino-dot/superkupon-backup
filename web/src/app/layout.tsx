@@ -136,7 +136,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Noscript fallback — search bots & users tanpa JS dapet konten basic */}
         <noscript>
           <div style={{ padding: "16px", textAlign: "center", background: "#1e1b2e", color: "#e5e7eb", fontFamily: "sans-serif" }}>
-            <h1 style={{ fontSize: "20px", marginBottom: "8px" }}>SuperKupon — Aggregator Kupon Digital Indonesia</h1>
+            <p style={{ fontSize: "20px", marginBottom: "8px", fontWeight: 700 }}>SuperKupon — Aggregator Kupon Digital Indonesia</p>
             <p style={{ marginBottom: "8px" }}>
               Kupon digital terbaru dari Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dan merchant Indonesia lainnya.
             </p>

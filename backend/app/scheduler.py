@@ -2,13 +2,16 @@ import logging
 from datetime import datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from app.config import settings
 from app.db import SessionLocal
 from app.models import ScrapeLog
 from app.pipelines.dedup import upsert_coupons
 from app.pipelines.lifecycle import run_lifecycle
 from app.scrapers.registry import all_scrapers, get_scraper
+from app.services.email_digest import send_weekly_digest
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +87,28 @@ def register_all_jobs() -> None:
         replace_existing=True,
     )
     logger.info("Registered lifecycle job: auto-expire (every 30 min)")
+
+    # Weekly email digest — Senin 01:00 UTC = 08:00 WIB
+    # Safety: send_weekly_digest() internally check settings.DIGEST_ENABLED
+    # supaya cron tetap registered tapi gak ngirim kalau flag mati.
+    def _digest_job_wrapper():
+        recipients = [
+            r.strip()
+            for r in (settings.DIGEST_RECIPIENTS or "").split(",")
+            if r and r.strip()
+        ]
+        return send_weekly_digest(recipients or None)
+
+    scheduler.add_job(
+        _digest_job_wrapper,
+        trigger=CronTrigger(day_of_week="mon", hour=1, minute=0, timezone="UTC"),
+        id="email_weekly_digest",
+        replace_existing=True,
+    )
+    logger.info(
+        "Registered email digest job: weekly (Mon 01:00 UTC / 08:00 WIB) — "
+        f"enabled={settings.DIGEST_ENABLED}"
+    )
 
 
 def start_scheduler() -> None:

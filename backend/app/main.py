@@ -6,7 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.db import init_db
-from app.api import coupons, merchants, admin, recon, proxy_admin, stats, i18n as i18n_api, notifications, search as search_api
+from app.api import coupons, merchants, admin, recon, proxy_admin, stats, i18n as i18n_api, notifications, search as search_api, push as push_api
 from app.i18n.middleware import LanguageMiddleware
 from app.scheduler import start_scheduler, stop_scheduler
 
@@ -138,6 +138,7 @@ app.include_router(stats.router)
 app.include_router(i18n_api.router)
 app.include_router(notifications.router)
 app.include_router(search_api.router)
+app.include_router(push_api.router)
 
 
 @app.get("/")

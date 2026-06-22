@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from app.api._auth import require_admin
@@ -16,6 +17,7 @@ from app.schemas import (
 )
 from app.scrapers.registry import REGISTRY
 from app.scheduler import run_scraper
+from app.services.email_digest import send_weekly_digest
 
 router = APIRouter(
     prefix="/admin",
@@ -220,6 +222,42 @@ def cleanup_by_source(
         "archived_count": len(archived_ids),
         "archived_ids": archived_ids,
     }
+
+
+class DigestTestRequest(BaseModel):
+    """Body untuk POST /admin/digest/send-test.
+
+    recipients: optional override. Kalau None / [], pakai DIGEST_RECIPIENTS env.
+                Pakai list[str] (bukan EmailStr) supaya error format gak block —
+                send_weekly_digest yang validate akhirnya via Resend.
+    """
+    recipients: Optional[List[str]] = None
+
+
+@router.post("/digest/send-test")
+def send_digest_test(body: DigestTestRequest | None = None):
+    """Trigger weekly email digest secara manual (bypass DIGEST_ENABLED gate).
+
+    Use case: test template + Resend config sebelum nunggu cron Senin pagi.
+
+    Behavior:
+    - Kalau body.recipients di-supply → kirim ke list itu (bypass env).
+    - Kalau body kosong → fallback ke settings.DIGEST_RECIPIENTS (csv).
+    - Selalu bypass DIGEST_ENABLED (karena ini eksplisit dari admin).
+
+    Returns 200 + result dict (ok + sent_to + message_id) on success,
+    500 + error detail kalau Resend gagal / config invalid.
+    """
+    recipients = body.recipients if body else None
+    # Sanitize: strip whitespace, drop empty
+    if recipients:
+        recipients = [r.strip() for r in recipients if r and r.strip()]
+    result = send_weekly_digest(recipients=recipients or None)
+    if not result.get("ok"):
+        # Bedakan error vs skipped (skipped reason = gate)
+        detail = result.get("error") or result.get("skipped_reason") or "Unknown failure"
+        raise HTTPException(status_code=500, detail={"error": detail, "result": result})
+    return result
 
 
 @router.delete("/coupons/{coupon_id}/force")

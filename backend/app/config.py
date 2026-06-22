@@ -86,6 +86,16 @@ class Settings(BaseSettings):
     TELEGRAM_API_HASH: str = ""
     TELEGRAM_SESSION_STRING: str = ""
 
+    # Email digest (Resend.com)
+    # RESEND_API_KEY  — get from https://resend.com/api-keys (format: re_xxxxx)
+    # DIGEST_RECIPIENTS — comma-separated email list (e.g. "boss@x.com,me@y.com")
+    # DIGEST_ENABLED  — safety gate; cron job runs only kalau true
+    RESEND_API_KEY: str = ""
+    DIGEST_RECIPIENTS: str = ""
+    DIGEST_ENABLED: bool = False
+    DIGEST_FROM_EMAIL: str = "SuperKupon <onboarding@resend.dev>"
+    DIGEST_PUBLIC_BASE_URL: str = "https://superkupon.vercel.app"
+
     # Exact allowlist — NO wildcard *.vercel.app (security: cegah attacker bikin
     # subdomain vercel.app sembarangan buat steal credentials via CORS).
     CORS_ORIGINS: list[str] = [
@@ -96,6 +106,16 @@ class Settings(BaseSettings):
     ]
     # Regex dimatiin — fixed allowlist aja
     CORS_ORIGIN_REGEX: str = ""
+
+    # PWA Push Notifications (VAPID Web Push, no Firebase)
+    # Generate keys sekali: `python -m app.services.push_notification`
+    # Public key dishare ke frontend, private key dirahasiakan di server env.
+    # PUSH_ENABLED = safety gate buat scraper-triggered push (kalo false,
+    # cuma manual admin /admin/push/send-test yg jalan).
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_SUBJECT: str = "mailto:lim279614@gmail.com"
+    PUSH_ENABLED: bool = False
 
 
 settings = Settings()

@@ -6,6 +6,7 @@ import { I18nProvider } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { PushSubscribeButton } from "@/components/PushSubscribeButton";
 import { NotificationProvider } from "@/lib/use-notifications";
 import { FavoritesProvider } from "@/lib/use-favorites";
 import { FavoritesLink } from "@/components/FavoritesLink";
@@ -168,6 +169,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="flex items-center gap-2">
                   <StreakIndicator />
                   <FavoritesLink />
+                  <PushSubscribeButton />
                   <NotificationCenter />
                   <LanguageSwitcher />
                   <ThemeToggle />

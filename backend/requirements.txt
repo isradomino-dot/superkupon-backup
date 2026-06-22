@@ -22,6 +22,13 @@ alembic>=1.13,<2
 # V3 — ML / LLM extraction
 anthropic>=0.40,<1
 
+# Email digest (Resend.com transactional API)
+resend>=2.0,<3
+
+# Push notifications (VAPID Web Push, no Firebase)
+pywebpush>=2.0,<3
+cryptography>=43,<46
+
 # Phase 5 — Mobile API Recon (optional, install on-demand)
 # mitmproxy>=11
 # frida-tools>=13

@@ -9,7 +9,7 @@
  *   - POST/PUT/DELETE: always network, never cached
  */
 
-const SW_VERSION = "sk-v2";
+const SW_VERSION = "sk-v3";
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const API_CACHE = `${SW_VERSION}-api`;
@@ -193,4 +193,58 @@ self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+/**
+ * Web Push: incoming notification from server.
+ * Payload shape: { title, body, icon?, url? }
+ */
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: "SuperKupon", body: event.data.text() };
+  }
+  const options = {
+    body: data.body,
+    icon: data.icon || "/icon-192.png",
+    badge: "/icon-192.png",
+    data: { url: data.url || "/" },
+    vibrate: [200, 100, 200],
+    tag: "sk-new-coupon",
+    renotify: true,
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title || "SuperKupon", options),
+  );
+});
+
+/**
+ * Click on push notification → open / focus the target URL.
+ */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ("focus" in client) {
+            try {
+              const url = new URL(client.url);
+              if (url.pathname === targetUrl || client.url.endsWith(targetUrl)) {
+                return client.focus();
+              }
+            } catch {}
+          }
+        }
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(targetUrl);
+        }
+        return undefined;
+      }),
+  );
 });

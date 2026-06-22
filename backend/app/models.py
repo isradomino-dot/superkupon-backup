@@ -108,3 +108,26 @@ class CouponVote(Base):
         Index("idx_votes_coupon_value_time", "coupon_id", "value", "created_at"),
         Index("idx_votes_ip_coupon", "reporter_ip_hash", "coupon_id"),
     )
+
+
+class PushSubscription(Base):
+    """Web Push (VAPID) subscription dari browser PWA.
+
+    Disimpan saat user opt-in notifikasi di frontend. Setiap subscription
+    unik per endpoint URL yang di-issue browser push service (FCM/Mozilla).
+
+    Lifecycle:
+      - INSERT: saat user accept prompt di browser (POST /push/subscribe).
+      - DELETE: saat user opt-out, atau saat send_push_to_all() dapat
+        410 Gone dari push service (subscription expired/uninstalled).
+    """
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    endpoint: Mapped[str] = mapped_column(String(500), unique=True, index=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(50))
+    user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

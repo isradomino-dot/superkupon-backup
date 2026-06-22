@@ -162,15 +162,23 @@ def upsert_coupons(db: Session, items: Iterable[CouponRaw]) -> Tuple[int, int]:
         db.flush()  # populate coupon.id buat slug URL
         new_count += 1
 
-        # Build push notif payload — kirim setelah commit sukses
-        try:
-            discount_str = _format_discount(raw)
-            push_title = f"\U0001F39F️ {merchant.name}: {discount_str}"
-            push_body = (raw.title or "")[:140]
-            push_url = f"/coupon/{_coupon_slug(coupon)}"
-            new_push_payloads.append((push_title, push_body, push_url))
-        except Exception as exc:  # noqa: BLE001 — push payload prep harus gak ganggu upsert
-            logger.warning("Skip push payload build for coupon id=%s: %s", coupon.id, exc)
+        # Build push notif payload — kirim setelah commit sukses.
+        # Quality filter: hanya kupon dengan quality_score >= threshold yang
+        # trigger push, biar user gak spam (27 new/hari → ~6 setelah filter).
+        if q_score < settings.PUSH_MIN_QUALITY_SCORE:
+            logger.debug(
+                "Skip push for coupon id=%s (quality=%d < threshold=%d)",
+                coupon.id, q_score, settings.PUSH_MIN_QUALITY_SCORE,
+            )
+        else:
+            try:
+                discount_str = _format_discount(raw)
+                push_title = f"\U0001F39F️ {merchant.name}: {discount_str}"
+                push_body = (raw.title or "")[:140]
+                push_url = f"/coupon/{_coupon_slug(coupon)}"
+                new_push_payloads.append((push_title, push_body, push_url))
+            except Exception as exc:  # noqa: BLE001 — push payload prep harus gak ganggu upsert
+                logger.warning("Skip push payload build for coupon id=%s: %s", coupon.id, exc)
 
     db.commit()
 

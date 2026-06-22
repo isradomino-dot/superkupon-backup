@@ -117,5 +117,11 @@ class Settings(BaseSettings):
     VAPID_SUBJECT: str = "mailto:lim279614@gmail.com"
     PUSH_ENABLED: bool = False
 
+    # Quality threshold buat scraper-triggered push notif — hanya kupon dengan
+    # quality_score >= threshold yg trigger push. Default 80 = ~24% pass rate
+    # (dari audit: 34/142 kupon excellent), berarti ~6-7 push/hari (bukan 27).
+    # Set 0 untuk allow all (spammy), 90 strict, 70 lenient.
+    PUSH_MIN_QUALITY_SCORE: int = 80
+
 
 settings = Settings()

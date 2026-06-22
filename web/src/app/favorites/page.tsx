@@ -238,16 +238,6 @@ function FavoritesActionBar({ count }: { count: number }) {
             <p className="text-[10px] text-gray-400">Stack 2-3 kupon hemat max</p>
           </div>
         </Link>
-        <Link
-          href="/belanja-hemat"
-          className="group flex items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 transition hover:border-amber-400/60 hover:bg-amber-500/15"
-        >
-          <span className="text-2xl transition-transform group-hover:scale-110">🎉</span>
-          <div>
-            <p className="text-xs font-bold text-amber-200">Bagi ke Teman</p>
-            <p className="text-[10px] text-gray-400">Share kupon via WhatsApp</p>
-          </div>
-        </Link>
       </div>
     </section>
   );

@@ -221,20 +221,6 @@ function Footer() {
           >
             💡 Pilihan Hari Ini
           </Link>
-          <span className="opacity-40">·</span>
-          <Link
-            href="/belanja-hemat"
-            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
-          >
-            🎉 Belanja Hemat
-          </Link>
-          <span className="opacity-40">·</span>
-          <Link
-            href="/mood"
-            className="opacity-70 hover:text-brand-500 hover:underline dark:hover:text-brand-400"
-          >
-            🎨 Mood Picker
-          </Link>
         </div>
 
         {/* Legal / info links */}

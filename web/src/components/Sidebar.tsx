@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { SurpriseMeButton } from "@/components/SurpriseMeButton";
-
 type Item = { href: string; icon: string; label: string; badge?: string };
 type Section = { label: string; items: Item[] };
 
@@ -18,7 +16,6 @@ const SECTIONS: Section[] = [
       { href: "/keranjang", icon: "🛒", label: "Cart Calculator", badge: "BARU" },
       { href: "/kombo", icon: "🎁", label: "Kombo Kupon" },
       { href: "/event", icon: "📅", label: "Event Calendar" },
-      { href: "/hall-of-fame", icon: "🏆", label: "Hall of Fame", badge: "BARU" },
       { href: "/stats", icon: "📊", label: "Statistik" },
     ],
   },
@@ -26,9 +23,6 @@ const SECTIONS: Section[] = [
     label: "Tools",
     items: [
       { href: "/pilihan", icon: "💡", label: "Pilihan Hari Ini" },
-      { href: "/mood", icon: "🎨", label: "Mood Picker" },
-      { href: "/poster", icon: "🖼️", label: "Wallpaper Generator", badge: "BARU" },
-      { href: "/belanja-hemat", icon: "🎉", label: "Belanja Hemat" },
       { href: "/favorites", icon: "⭐", label: "Favorit" },
     ],
   },
@@ -136,7 +130,6 @@ export function Sidebar() {
           </nav>
 
           <div className="mt-5 space-y-3 border-t border-brand-500/15 pt-4">
-            <SurpriseMeButton />
             <p className="px-1 text-[11px] leading-relaxed text-gray-400">
               Press <kbd className="rounded border border-brand-500/30 bg-brand-500/10 px-1 py-0.5 text-[10px] text-brand-300">/</kbd> untuk fokus ke search.
             </p>

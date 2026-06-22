@@ -62,7 +62,8 @@ function daysLeft(expires: string | null | undefined): number | null {
   if (!expires) return null;
   const d = new Date(expires);
   if (Number.isNaN(d.getTime())) return null;
-  return Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  // Floor untuk akurasi: 2.83 hari → 2 hari lagi (bukan 3)
+  return Math.floor((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
 export default function PilihanPage() {

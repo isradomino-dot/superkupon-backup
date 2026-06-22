@@ -258,7 +258,9 @@ export function formatExpiry(iso?: string | null, t?: Translate): string {
   if (!iso) return tr("coupon.no_expiry");
   const d = new Date(iso);
   const now = new Date();
-  const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Use floor for accurate countdown: 2.83 days remaining → "2 hari lagi" (not "3").
+  // Ceil bikin user bingung kenapa "3 hari lagi" gak pernah turun ke "2".
+  const diffDays = Math.floor((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return tr("coupon.expired");
   if (diffDays === 0) return tr("coupon.expires_today");
   if (diffDays <= 7) return tr("coupon.expires_in_days", { n: diffDays });

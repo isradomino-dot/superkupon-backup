@@ -117,7 +117,11 @@ def upsert_coupons(db: Session, items: Iterable[CouponRaw]) -> Tuple[int, int]:
 
         if existing:
             existing.verified_at = datetime.utcnow()
-            existing.expires_at = raw.expires_at or existing.expires_at
+            # Don't override existing expires_at — set ONLY kalau belum ada.
+            # Sebelumnya: raw.expires_at sering = "now + 3 days" dummy,
+            # jadi setiap scrape ulang stuck di "3 hari lagi" forever.
+            if not existing.expires_at and raw.expires_at:
+                existing.expires_at = raw.expires_at
             existing.status = "active"
             existing.quality_score = max(existing.quality_score, q_score)
             # Refresh source_url + source_target di tiap upsert biar mock data updates

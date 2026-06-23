@@ -234,6 +234,36 @@ class DigestTestRequest(BaseModel):
     recipients: Optional[List[str]] = None
 
 
+@router.get("/digest/env-check")
+def digest_env_check():
+    """Diagnostic: dump panjang + first 4 char dari env email digest.
+
+    Aman: gak expose full secret value, cuma length + prefix buat verify:
+    - len == 0 → env BELUM SET (atau nama whitespace di Railway)
+    - len > 0 tapi prefix gak match expected → value salah (e.g. ada quotes)
+    - len suspicious (e.g. 37 instead of 36) → trailing whitespace di value
+    """
+    from app.config import settings
+
+    def _probe(v: str) -> dict:
+        return {
+            "len": len(v),
+            "first4": v[:4] if v else "",
+            "last2": v[-2:] if len(v) > 2 else "",
+            "has_lead_space": v != v.lstrip() if v else False,
+            "has_trail_space": v != v.rstrip() if v else False,
+            "is_empty": not bool(v),
+        }
+
+    return {
+        "RESEND_API_KEY": {**_probe(settings.RESEND_API_KEY), "expected_prefix": "re_x"},
+        "DIGEST_RECIPIENTS": _probe(settings.DIGEST_RECIPIENTS),
+        "DIGEST_ENABLED": {"value": settings.DIGEST_ENABLED, "type": type(settings.DIGEST_ENABLED).__name__},
+        "DIGEST_FROM_EMAIL": _probe(settings.DIGEST_FROM_EMAIL),
+        "DIGEST_PUBLIC_BASE_URL": _probe(settings.DIGEST_PUBLIC_BASE_URL),
+    }
+
+
 @router.post("/digest/send-test")
 def send_digest_test(body: DigestTestRequest | None = None):
     """Trigger weekly email digest secara manual (bypass DIGEST_ENABLED gate).

@@ -137,6 +137,69 @@ export async function verifyAdminKey(key: string): Promise<boolean> {
   }
 }
 
+export interface LoginResponse {
+  api_key: string;
+  username: string;
+}
+
+const USERNAME_STORAGE_KEY = "sk_admin_username";
+
+export function getAdminUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(USERNAME_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setAdminUsername(username: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(USERNAME_STORAGE_KEY, username);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearAdminUsername(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(USERNAME_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Login dengan username + password — return api_key kalau sukses.
+ * Throws Error dengan readable message kalau gagal.
+ */
+export async function loginAdmin(
+  username: string,
+  password: string,
+): Promise<LoginResponse> {
+  const res = await fetch(`${API_BASE}/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (res.status === 401) {
+    throw new Error("Username atau password salah.");
+  }
+  if (res.status === 503) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || "Admin login disabled di server.");
+  }
+  if (!res.ok) {
+    throw new Error(`Login gagal: HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export async function fetchScrapeLogs(limit = 50): Promise<ScrapeLog[]> {
   return adminFetch<ScrapeLog[]>(`/admin/scrape-logs?limit=${limit}`);
 }

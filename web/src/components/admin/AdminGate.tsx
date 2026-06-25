@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAdminKey, setAdminKey, verifyAdminKey, clearAdminKey } from "@/lib/admin-api";
+import {
+  getAdminKey,
+  setAdminKey,
+  verifyAdminKey,
+  clearAdminKey,
+  getAdminUsername,
+  setAdminUsername,
+  clearAdminUsername,
+  loginAdmin,
+} from "@/lib/admin-api";
 
 /**
  * Auth gate untuk admin pages.
@@ -10,14 +19,16 @@ import { getAdminKey, setAdminKey, verifyAdminKey, clearAdminKey } from "@/lib/a
  * Flow:
  * 1. Cek localStorage untuk existing key
  * 2. Kalau ada → verify ke /admin/scrapers, kalau valid render children
- * 3. Kalau gak ada / invalid → tampilin login form
- * 4. User input key → verify → simpan ke localStorage → render children
+ * 3. Kalau gak ada / invalid → tampilin login form (username + password)
+ * 4. User input username+password → POST /admin/login → simpan api_key di localStorage → render children
  */
 export function AdminGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"loading" | "needs-login" | "authenticated">("loading");
-  const [inputKey, setInputKey] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const existingKey = getAdminKey();
@@ -29,35 +40,43 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     // Verify existing key
     verifyAdminKey(existingKey).then((valid) => {
       if (valid) {
+        setCurrentUsername(getAdminUsername());
         setStatus("authenticated");
       } else {
         clearAdminKey();
+        clearAdminUsername();
         setStatus("needs-login");
-        setError("Saved key invalid. Login lagi.");
+        setError("Session expired. Login lagi.");
       }
     });
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputKey.trim()) return;
+    if (!username.trim() || !password.trim()) return;
     setSubmitting(true);
     setError(null);
 
-    const valid = await verifyAdminKey(inputKey.trim());
-    if (valid) {
-      setAdminKey(inputKey.trim());
+    try {
+      const result = await loginAdmin(username.trim(), password);
+      setAdminKey(result.api_key);
+      setAdminUsername(result.username);
+      setCurrentUsername(result.username);
       setStatus("authenticated");
-    } else {
-      setError("API key salah. Cek ulang ADMIN_API_KEY di Railway env.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login gagal. Coba lagi.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const handleLogout = () => {
     clearAdminKey();
+    clearAdminUsername();
     setStatus("needs-login");
-    setInputKey("");
+    setUsername("");
+    setPassword("");
+    setCurrentUsername(null);
   };
 
   if (status === "loading") {
@@ -78,32 +97,48 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
             </div>
             <h1 className="text-2xl font-bold text-white">Admin Login</h1>
             <p className="mt-2 text-sm text-gray-400">
-              Masukkan ADMIN_API_KEY buat akses dashboard
+              Masukkan username + password buat akses dashboard
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label
-                htmlFor="api-key"
+                htmlFor="username"
                 className="block text-sm font-medium text-gray-200"
               >
-                API Key
+                Username
               </label>
               <input
-                id="api-key"
-                type="password"
-                value={inputKey}
-                onChange={(e) => setInputKey(e.target.value)}
-                placeholder="TOH_-mM858tjDmorSi..."
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="kangdedi"
                 autoFocus
+                autoComplete="username"
                 disabled={submitting}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/20 disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Stored di localStorage lokal browser ini. Logout kapan aja
-                clearable.
-              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-200"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={submitting}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/20 disabled:opacity-50"
+              />
             </div>
 
             {error && (
@@ -114,10 +149,10 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
 
             <button
               type="submit"
-              disabled={!inputKey.trim() || submitting}
+              disabled={!username.trim() || !password.trim() || submitting}
               className="w-full rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
             >
-              {submitting ? "Memverifikasi..." : "Login"}
+              {submitting ? "Login..." : "Masuk"}
             </button>
           </form>
 
@@ -134,19 +169,25 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Authenticated — render children with logout button injected
+  // Authenticated — render children with logout button + username badge
   return (
     <>
       {children}
-      {/* Floating logout button — top right corner */}
-      <button
-        type="button"
-        onClick={handleLogout}
-        className="fixed right-4 top-4 z-50 rounded-lg border border-white/10 bg-gray-900/80 px-3 py-1.5 text-xs text-gray-400 backdrop-blur transition hover:border-red-400/30 hover:text-red-300"
-        title="Logout dari admin dashboard"
-      >
-        🚪 Logout
-      </button>
+      <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+        {currentUsername && (
+          <span className="rounded-lg border border-white/10 bg-gray-900/80 px-3 py-1.5 text-xs text-gray-300 backdrop-blur">
+            👤 {currentUsername}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-lg border border-white/10 bg-gray-900/80 px-3 py-1.5 text-xs text-gray-400 backdrop-blur transition hover:border-red-400/30 hover:text-red-300"
+          title="Logout dari admin dashboard"
+        >
+          🚪 Logout
+        </button>
+      </div>
     </>
   );
 }

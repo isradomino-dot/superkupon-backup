@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # Empty default = fail-closed (admin endpoints block semua request).
     ADMIN_API_KEY: str = ""
 
+    # Multi-user login untuk admin dashboard. JSON list of {username, password}.
+    # Contoh: '[{"username":"kangdedi","password":"kangDed$1122"}]'
+    # User login dengan username+password → backend return ADMIN_API_KEY (single shared key).
+    # Sengaja gak hash password — demo only, bukan production-grade auth.
+    ADMIN_USERS_JSON: str = ""
+
     # Rate limiting per IP (in-memory, single-instance only)
     RATE_LIMIT_VIEW_PER_MIN: int = 30
     RATE_LIMIT_REDEEM_PER_MIN: int = 10

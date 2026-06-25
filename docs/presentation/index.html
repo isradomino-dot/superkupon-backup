@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SuperKupon — Built with AI in 19 Days</title>
+<style>
+  :root {
+    --bg: #0a0e27;
+    --bg-2: #111538;
+    --surface: rgba(255, 255, 255, 0.04);
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #fbbf24;
+    --accent-2: #f472b6;
+    --gradient: linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #818cf8 100%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    line-height: 1.6;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(251, 191, 36, 0.08), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(244, 114, 182, 0.08), transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.05), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(40px);
+    transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s;
+  }
+  .slide-inner {
+    max-width: 1100px;
+    width: 100%;
+    padding: 40px;
+    border-radius: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  }
+  .slide-inner h1 {
+    font-size: clamp(48px, 6vw, 88px);
+    font-weight: 900;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 16px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+  .slide-inner h2 {
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 18px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .slide-inner h3 {
+    font-size: clamp(20px, 2vw, 26px);
+    font-weight: 700;
+    color: var(--accent);
+    margin: 22px 0 12px;
+  }
+  .slide-inner p {
+    font-size: clamp(16px, 1.4vw, 20px);
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .slide-inner p strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .slide-inner ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+  }
+  .slide-inner ul li {
+    position: relative;
+    padding: 10px 0 10px 32px;
+    font-size: clamp(15px, 1.3vw, 18px);
+    color: var(--text);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .slide-inner ul li:last-child { border-bottom: none; }
+  .slide-inner ul li::before {
+    content: '◆';
+    position: absolute;
+    left: 6px;
+    top: 12px;
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .slide-inner ul li strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .slide-inner em {
+    color: var(--muted);
+    font-style: italic;
+  }
+  /* Title slide tweaks */
+  .slide[data-type="title"] .slide-inner {
+    text-align: center;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  /* Closing & CTA tweaks */
+  .slide[data-type="cta"] .slide-inner,
+  .slide[data-type="closing"] .slide-inner {
+    text-align: center;
+  }
+  /* Slide counter + navigation */
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 18px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .nav button {
+    background: var(--gradient);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: #0a0e27;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .nav button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+  }
+  .nav button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .counter {
+    font-weight: 700;
+    color: var(--text);
+    min-width: 60px;
+    text-align: center;
+  }
+  .hint {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 10;
+    padding: 8px 14px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: monospace;
+    margin: 0 2px;
+    color: var(--text);
+  }
+  /* Responsive */
+  @media (max-width: 768px) {
+    .slide { padding: 40px 24px; }
+    .slide-inner { padding: 24px; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+
+<div class="hint">
+  <kbd>←</kbd> <kbd>→</kbd> navigasi · <kbd>F</kbd> fullscreen
+</div>
+
+<div class="nav">
+  <button id="prev" type="button" title="Sebelumnya">‹</button>
+  <span class="counter" id="counter">1 / 14</span>
+  <button id="next" type="button" title="Berikutnya">›</button>
+</div>
+
+<script>
+const SLIDES = [
+  {
+    "slide_number": 1,
+    "title": "SuperKupon",
+    "slide_type": "title",
+    "content_html": "<h1>SuperKupon</h1><h2>Aggregator Kupon #1 Indonesia</h2><p><strong>Dibangun 100% dengan AI dalam 19 hari</strong></p><p><em>Dari nol sampai LIVE production · 86 commits · 40,000+ baris kode · 1 orang</em></p><p>https://superkupon.vercel.app</p>"
+  },
+  {
+    "slide_number": 2,
+    "title": "Masalah: Belanja Online Indonesia Itu Ribet",
+    "slide_type": "content",
+    "content_html": "<h2>Belanja Online di Indonesia = Capek Cari Kupon</h2><ul><li><strong>Kupon Shopee, Tokopedia, GoFood, Traveloka</strong> tersebar di mana-mana</li><li>User scroll IG, grup WhatsApp, blog promo — buang waktu 15-30 menit</li><li>Sering ketipu kupon expired atau fake</li><li>Gak tau cara stack diskon (Shopee + DANA cashback bisa double save)</li><li>Aggregator yang ada: outdated, gak relevan dengan brand ID</li></ul><p><em>Total pasar: ratusan juta pengguna belanja online ID per tahun. Yang nyari kupon? Hampir 70%.</em></p>"
+  },
+  {
+    "slide_number": 3,
+    "title": "Solusi: SuperKupon",
+    "slide_type": "content",
+    "content_html": "<h2>Satu Tempat. Semua Kupon. Real-time.</h2><h3>3 Pilar Utama:</h3><ul><li><strong>Auto-aggregator 60 promo/jam</strong> dari sumber resmi (Google News, publisher tier-1)</li><li><strong>Smart Pick Wizard</strong> — tap 3x, AI rekomendasikan kupon terbaik untuk kamu</li><li><strong>Stacking Calculator</strong> — kombinasi kupon optimal, hemat maksimal</li></ul><p>Plus: PWA installable, push notification, search dengan typo tolerance, dark mode, dan analytics untuk setiap klik.</p><p><strong>Status: LIVE production di Vercel + Railway</strong></p>"
+  },
+  {
+    "slide_number": 4,
+    "title": "Live Product: 17 Halaman Production-Ready",
+    "slide_type": "feature",
+    "content_html": "<h2>Bukan MVP Setengah Jadi — Ini Enterprise-Grade</h2><h3>17 Halaman Publik Lengkap:</h3><ul><li>Homepage · Detail Kupon · Merchant · Kategori</li><li><strong>Smart Pick Wizard</strong> (/decide) — quiz 3 langkah, confetti animation</li><li><strong>Stacking Combo</strong> (/kombo, /keranjang) — calculator multi-kupon</li><li><strong>Wishlist Favorit · Event Countdown · Stats Publik</strong></li><li>PWA Install · FAQ · Tentang · Privasi · Syarat · 404 custom</li></ul><h3>50+ Komponen UI Custom</h3><p>Hand-crafted React components — bukan dari template. Estimasi 200+ jam kerja designer + frontend dev, di-deliver AI dalam hari.</p>"
+  },
+  {
+    "slide_number": 5,
+    "title": "Engine di Belakang Layar",
+    "slide_type": "tech",
+    "content_html": "<h2>25 Scrapers Paralel · Running 24/7 Otomatis</h2><h3>Sumber Data:</h3><ul><li><strong>Google News RSS</strong> — 12 merchant query, 60 real promo/jam (legal, tanpa anti-bot)</li><li><strong>Marketplace</strong> — Shopee, Tokopedia, Lazada, Blibli</li><li><strong>Dompet Digital</strong> — DANA, OVO, GoPay, LinkAja</li><li><strong>Bank</strong> — BCA, Mandiri, BRI</li><li><strong>Food & Travel</strong> — GoFood, GrabFood, Traveloka, Tiket.com, Klook</li><li><strong>Telco</strong> — Telkomsel, Indosat, XL</li></ul><h3>+ LLM-First Extractor</h3><p>Claude AI ekstrak kupon dari teks unstructured, regex fallback kalau gagal. Auto-dedup. Quality score per kupon.</p>"
+  },
+  {
+    "slide_number": 6,
+    "title": "Tech Stack: Bleeding-Edge 2026",
+    "slide_type": "tech",
+    "content_html": "<h2>Stack yang Sama dengan Vercel, Notion, Linear</h2><h3>Frontend</h3><ul><li><strong>Next.js 16.2.7 + React 19</strong> — versi terbaru di industri (rilis 2026)</li><li>TypeScript 5.7 strict · Tailwind CSS · PWA installable</li></ul><h3>Backend</h3><ul><li><strong>FastAPI + Python 3</strong> — framework yang dipakai Microsoft, Netflix</li><li>SQLAlchemy 2 async · Alembic migrations · APScheduler cron</li></ul><h3>AI Layer</h3><ul><li><strong>Claude Sonnet 4 (Anthropic)</strong> dengan prompt caching</li><li>75% cost reduction via caching</li></ul><h3>Database</h3><ul><li>SQLite (dev) → <strong>PostgreSQL</strong> (production) — zero downtime migration</li></ul>"
+  },
+  {
+    "slide_number": 7,
+    "title": "5 Channel Delivery dari 1 Codebase",
+    "slide_type": "tech",
+    "content_html": "<h2>Web · Mobile · Extension · Bot · Email — All Ready</h2><h3>1 Backend, 5 Channel:</h3><ul><li><strong>Web PWA</strong> — Next.js 16, installable di Android home screen</li><li><strong>Mobile Native</strong> — React Native Expo SDK 52, EAS-ready untuk Play Store</li><li><strong>Browser Extension</strong> — Manifest V3, auto-detect checkout Shopee/Tokopedia/Blibli/Lazada (mirip Honey)</li><li><strong>Telegram Bot</strong> — aiogram 3.13, ready broadcast kupon baru</li><li><strong>Email Digest</strong> — Resend.com, cron Senin 08:00 WIB</li></ul><h3>Plus Web Push Notification (VAPID)</h3><p>Stack lengkap dengan cryptography library — TANPA Firebase, no vendor lock-in</p>"
+  },
+  {
+    "slide_number": 8,
+    "title": "Metrics: Velocity yang Mustahil",
+    "slide_type": "metric",
+    "content_html": "<h2>19 Hari · 86 Commits · 40,000+ Lines of Code</h2><h3>Production Metrics:</h3><ul><li><strong>17 halaman publik</strong> + 2 halaman admin</li><li><strong>50+ komponen UI</strong> custom React</li><li><strong>25 scrapers</strong> paralel, 60 promo/jam auto-aggregated</li><li><strong>70+ API endpoints</strong> dengan auto-generated docs</li><li><strong>70+ pytest tests</strong> + GitHub Actions CI green</li><li><strong>150 kupon active</strong>, 23 merchants, 8 kategori</li><li><strong>View growth: 21 → 83 (+295%)</strong> overnight pasca-launch IG</li></ul><h3>Engineering Quality Signal:</h3><p>Triple analytics stack (GA4 + Clarity + Vercel) · Security locked (X-API-Key + rate limit) · i18n 3 bahasa ready (ID/EN/MS)</p>"
+  },
+  {
+    "slide_number": 9,
+    "title": "Audit Score: 4/10 → 8/10 Dalam 3 Hari",
+    "slide_type": "metric",
+    "content_html": "<h2>Feedback Loop Kompresi 5-10x</h2><h3>Timeline:</h3><ul><li><strong>13 Juni</strong> — Atasan review, kasih 6 critical recommendations (security, SEO, transparency, fake data)</li><li><strong>14 Juni</strong> — Affiliate wrapper + critical audit findings dimulai</li><li><strong>15 Juni</strong> — Security lock /admin, Google News auto-aggregator LIVE, V1 Beta banner</li><li><strong>Score: 4/10 → 7/10 (noon) → 8/10 (evening)</strong></li></ul><h3>5 dari 6 critical issues FIXED dalam 24 jam</h3><p>Iterasi feedback yang biasanya 2 minggu (review → ticket → sprint → deploy), AI bikin jadi 3 hari.</p><h3>Bonus: Bug 'Mustahil' Diagnosed in 7 Minutes</h3><p>React SyntheticEvent pooling bug (event nulled after await) — AI nemu root cause + fix dalam 7 menit. Biasanya senior dev 1-2 hari.</p>"
+  },
+  {
+    "slide_number": 10,
+    "title": "Peran AI: 10x Engineer di Saku",
+    "slide_type": "feature",
+    "content_html": "<h2>Apa yang AI Lakukan?</h2><h3>Yang Mustahil Tanpa AI:</h3><ul><li><strong>MVP full-stack lahir dalam 1 hari</strong> — 304 files, 38,992 lines, langsung deploy</li><li><strong>Push notif + email digest dalam 1 commit</strong> — 1,960 lines, 19 files, full VAPID + Resend stack</li><li><strong>70 unit tests + CI/CD setup dalam 1 working session</strong></li><li><strong>Admin dashboard 921 lines, 6 files, 1 commit</strong> — full auth + KPI + scraper health</li></ul><h3>Pattern yang Bikin Beda:</h3><ul><li>Bilingual code: English variables + Indonesia casual comments</li><li>Architectural thinking: pilih Google News RSS (legal) vs scrape direct (banned)</li><li>Production discipline: rate limit, fail-closed auth, version pinning</li><li>Berani prune: hapus 5 fitur unused untuk fokus core</li></ul>"
+  },
+  {
+    "slide_number": 11,
+    "title": "Business Model: Revenue Sudah LIVE",
+    "slide_type": "metric",
+    "content_html": "<h2>Monetization Stream Aktif Sejak Hari Pertama</h2><h3>Affiliate Network — Involve Asia (Property Approved)</h3><ul><li><strong>2 brand LIVE deeplinks:</strong> Traveloka (3.47% komisi) + TrainPal (1.4%)</li><li><strong>8 brand pending</strong> — termasuk <strong>Airalo eSIM (komisi up to 14%)</strong></li></ul><h3>Revenue Projection</h3><ul><li><strong>Conservative (3 bulan):</strong> Rp 8.6K/bulan — early stage</li><li><strong>Realistic (6 bulan, 5 brand, 1K IG follower):</strong> Rp 4.5 juta/bulan</li><li><strong>Best Case (12 bulan, 10 brand + Airalo viral):</strong> Rp 52.5 juta/bulan</li></ul><h3>Asymmetric Bet</h3><p><strong>Max loss:</strong> $60/tahun (infra cost) <strong>vs Upside:</strong> Rp 10 miliar+/tahun (Shopback-tier)</p><p><em>Risk/reward ratio: 167,000x</em></p>"
+  },
+  {
+    "slide_number": 12,
+    "title": "Roadmap: 6 Channel Untapped, Ready to Scale",
+    "slide_type": "content",
+    "content_html": "<h2>Infrastructure Done. Now Just Scale.</h2><h3>Q3 2026:</h3><ul><li>Activate <strong>Shopee Affiliate API</strong> resmi (komisi 1-5% per transaksi)</li><li>Approve sisa 8 brand di Involve Asia — terutama <strong>Airalo (14%)</strong></li><li>Push <strong>Browser Extension</strong> ke Chrome Web Store (Honey-style auto-apply)</li><li>Publish <strong>Mobile App</strong> ke Play Store via EAS build</li></ul><h3>Q4 2026:</h3><ul><li>Activate <strong>Telegram channel + bot</strong> broadcast</li><li>Launch <strong>TikTok + Twitter/X</strong> channel (virgin territory)</li><li>Tambah <strong>ACCESSTRADE Indonesia</strong> (diversifikasi affiliate)</li><li>Scale ke <strong>10K monthly active users</strong></li></ul><h3>2027:</h3><ul><li><strong>Ekspansi regional</strong> Malaysia + Thailand (i18n sudah ready)</li><li>White-label B2B API (70+ endpoints sudah production-ready)</li></ul>"
+  },
+  {
+    "slide_number": 13,
+    "title": "Mau Bikin Product Seperti Ini?",
+    "slide_type": "cta",
+    "content_html": "<h2>Ini Bukan Cuma Produk — Ini Blueprint</h2><h3>Yang Sudah Terbukti:</h3><ul><li><strong>1 orang + AI = setara tim 10 engineer</strong></li><li><strong>19 hari = setara 3-6 bulan kerja tradisional</strong></li><li><strong>$5/bulan biaya infra = potensi Rp miliaran/tahun</strong></li><li><strong>Blueprint ini bisa di-fork</strong> untuk 5-10 vertikal lain: food coupon, education discount, B2B SaaS deals, dst.</li></ul><h3>Mau Bikin Product Seperti Ini dengan AI?</h3><p><strong>Hubungi kami.</strong></p><p>Kami bantu dari nol sampai LIVE production, dengan kecepatan yang dulu mustahil — sekarang jadi keunggulan kompetitif.</p><p><em>SuperKupon adalah bukti hidup: AI bisa replace tim engineering untuk launch product yang generate revenue.</em></p>"
+  },
+  {
+    "slide_number": 14,
+    "title": "Credits & Resources",
+    "slide_type": "closing",
+    "content_html": "<h2>Built by Kang Dedi · Powered by AI</h2><h3>Production URLs:</h3><ul><li><strong>Live Product:</strong> https://superkupon.vercel.app</li><li><strong>Admin Dashboard:</strong> https://superkupon.vercel.app/admin</li><li><strong>Instagram:</strong> @superkupon.id</li><li><strong>GitHub:</strong> Private repo (access on request)</li></ul><h3>Tech Partners:</h3><ul><li><strong>Frontend Hosting:</strong> Vercel (region sin1)</li><li><strong>Backend + DB:</strong> Railway (Postgres)</li><li><strong>AI:</strong> Anthropic Claude Sonnet 4</li><li><strong>Affiliate Network:</strong> Involve Asia (ID 1090943)</li><li><strong>Email:</strong> Resend.com · <strong>Analytics:</strong> GA4 + Microsoft Clarity</li></ul><h3>Tagline:</h3><p><em>\"From idea to revenue-generating product — in 19 days, by 1 person, with AI.\"</em></p>"
+  }
+];
+
+const deck = document.getElementById('deck');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+
+let currentIndex = 0;
+
+function render() {
+  deck.innerHTML = '';
+  SLIDES.forEach((slide, idx) => {
+    const el = document.createElement('section');
+    el.className = 'slide' + (idx === 0 ? ' active' : '');
+    el.dataset.type = slide.slide_type;
+    el.dataset.index = idx;
+    el.innerHTML = '<div class="slide-inner">' + slide.content_html + '</div>';
+    deck.appendChild(el);
+  });
+  updateCounter();
+}
+
+function updateCounter() {
+  counter.textContent = (currentIndex + 1) + ' / ' + SLIDES.length;
+  prevBtn.disabled = currentIndex === 0;
+  nextBtn.disabled = currentIndex === SLIDES.length - 1;
+}
+
+function goTo(index) {
+  if (index < 0 || index >= SLIDES.length) return;
+  const slides = deck.querySelectorAll('.slide');
+  slides[currentIndex].classList.remove('active');
+  currentIndex = index;
+  slides[currentIndex].classList.add('active');
+  updateCounter();
+}
+
+prevBtn.addEventListener('click', () => goTo(currentIndex - 1));
+nextBtn.addEventListener('click', () => goTo(currentIndex + 1));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(currentIndex - 1);
+  else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') goTo(currentIndex + 1);
+  else if (e.key === 'Home') goTo(0);
+  else if (e.key === 'End') goTo(SLIDES.length - 1);
+  else if (e.key === 'f' || e.key === 'F') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

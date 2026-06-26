@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { PushSubscribeButton } from "@/components/PushSubscribeButton";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { NotificationProvider } from "@/lib/use-notifications";
 import { FavoritesProvider } from "@/lib/use-favorites";
 import { FavoritesLink } from "@/components/FavoritesLink";
@@ -156,6 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <I18nProvider>
           <HistoryProvider>
           <StreakProvider>
+          <AuthProvider>
           <FavoritesProvider>
           <NotificationProvider>
             <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
@@ -198,6 +200,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <GoogleAnalytics />
           </NotificationProvider>
           </FavoritesProvider>
+          </AuthProvider>
           </StreakProvider>
           </HistoryProvider>
         </I18nProvider>

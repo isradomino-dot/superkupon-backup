@@ -25,6 +25,7 @@ import { CouponSkeletonGrid } from "@/components/CouponSkeleton";
 import { VerifyButtons } from "@/components/VerifyButtons";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 function isNewCoupon(scrapedAt: string): boolean {
   const dt = new Date(scrapedAt).getTime();
@@ -51,6 +52,7 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
   const { t } = useI18n();
   const { addClaim } = useHistory();
   const { recordClaim } = useStreak();
+  const { isLoggedIn, requireLogin, openRegister } = useAuth();
 
   const [related, setRelated] = useState<Coupon[]>([]);
   const [relatedCategory, setRelatedCategory] = useState<Coupon[]>([]);
@@ -107,6 +109,8 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
 
   const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!coupon.code) return;
+    // Gate: butuh login dulu untuk akses kode kupon
+    if (!requireLogin()) return;
     const rect = (e.currentTarget as HTMLElement)?.getBoundingClientRect();
     try {
       await navigator.clipboard.writeText(coupon.code);
@@ -192,12 +196,17 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
 
         <div className="space-y-4 p-6">
           {coupon.code ? (
-            <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-brand-400 bg-brand-50/40 p-4 dark:border-brand-500 dark:bg-brand-900/20 sm:flex-row sm:items-center">
+            <div className="relative flex flex-col gap-3 rounded-xl border-2 border-dashed border-brand-400 bg-brand-50/40 p-4 dark:border-brand-500 dark:bg-brand-900/20 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
                   Kode Promo
                 </div>
-                <div className="mt-1 select-all break-all font-mono text-xl font-black tracking-wider text-brand-700 dark:text-brand-300 sm:text-2xl">
+                <div
+                  className={`mt-1 select-all break-all font-mono text-xl font-black tracking-wider text-brand-700 dark:text-brand-300 sm:text-2xl ${
+                    isLoggedIn ? "" : "select-none blur-md pointer-events-none"
+                  }`}
+                  aria-hidden={!isLoggedIn}
+                >
                   {coupon.code}
                 </div>
               </div>
@@ -206,12 +215,41 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
                 onClick={handleCopy}
                 className="flex-none rounded-lg bg-brand-600 px-6 py-3 text-base font-bold text-white shadow transition hover:bg-brand-700 active:scale-95"
               >
-                {copied ? `✓ ${t("coupon.copied") || "Tersalin!"}` : t("coupon.copy") || "Salin Kode"}
+                {!isLoggedIn
+                  ? "🔒 Login untuk Salin"
+                  : copied
+                    ? `✓ ${t("coupon.copied") || "Tersalin!"}`
+                    : t("coupon.copy") || "Salin Kode"}
               </button>
+              {!isLoggedIn && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center sm:hidden">
+                  <span className="rounded-full bg-purple-600/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                    🔒 Login dulu
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
               Promo otomatis — tidak perlu kode, langsung diskon di checkout.
+            </div>
+          )}
+
+          {/* Guest-only CTA banner kalau ada kode */}
+          {!isLoggedIn && coupon.code && (
+            <div className="flex flex-col items-start gap-2 rounded-xl border border-purple-400/30 bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-gray-700 dark:text-gray-200">
+                <strong className="text-purple-700 dark:text-purple-300">
+                  Daftar gratis
+                </strong>{" "}
+                untuk salin kode promo + akses 180+ kupon premium Indonesia.
+              </div>
+              <button
+                onClick={openRegister}
+                className="flex-none rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-bold text-white shadow-md shadow-purple-500/30 transition hover:shadow-lg hover:shadow-purple-500/50"
+              >
+                ✨ Daftar Gratis
+              </button>
             </div>
           )}
 
@@ -221,10 +259,18 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
                 href={wrapAffiliateLink(coupon.merchant.slug, coupon.merchant.website, coupon.id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackOutboundClick(coupon.merchant.slug, coupon.id)}
+                onClick={(e) => {
+                  if (!requireLogin()) {
+                    e.preventDefault();
+                    return;
+                  }
+                  trackOutboundClick(coupon.merchant.slug, coupon.id);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-600"
               >
-                🌐 Pakai di {coupon.merchant.name}
+                {isLoggedIn
+                  ? `🌐 Pakai di ${coupon.merchant.name}`
+                  : `🔒 Login untuk Pakai`}
               </a>
             )}
             <ShareButton coupon={coupon} />

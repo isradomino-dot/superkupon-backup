@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/provider";
 import { useHistory } from "@/lib/use-history";
 import { useStreak } from "@/lib/use-streak";
 import { fireConfetti } from "@/lib/confetti";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface Props {
   coupon: Coupon;
@@ -50,6 +51,7 @@ export function CouponActionGroup({ coupon }: Props) {
   const { t } = useI18n();
   const { addClaim } = useHistory();
   const { recordClaim } = useStreak();
+  const { requireLogin } = useAuth();
   const [copied, setCopied] = useState(false);
   const [reminded, setReminded] = useState(false);
   const [showReminderMenu, setShowReminderMenu] = useState(false);
@@ -58,6 +60,8 @@ export function CouponActionGroup({ coupon }: Props) {
     e.preventDefault();
     e.stopPropagation();
     if (!coupon.code) return;
+    // Gate: butuh login dulu untuk akses kode kupon
+    if (!requireLogin()) return;
     // Capture rect BEFORE await (synthetic event nulled after async)
     const rect = (e.currentTarget as HTMLElement)?.getBoundingClientRect();
     try {
@@ -109,7 +113,7 @@ export function CouponActionGroup({ coupon }: Props) {
         </button>
       )}
 
-      {/* Open merchant site */}
+      {/* Open merchant site — gated for affiliate revenue protection */}
       {coupon.merchant.website && (
         <a
           href={wrapAffiliateLink(coupon.merchant.slug, coupon.merchant.website, coupon.id)}
@@ -117,6 +121,11 @@ export function CouponActionGroup({ coupon }: Props) {
           rel="noopener noreferrer"
           onClick={(e) => {
             e.stopPropagation();
+            // Gate: butuh login dulu sebelum redirect ke merchant
+            if (!requireLogin()) {
+              e.preventDefault();
+              return;
+            }
             trackOutboundClick(coupon.merchant.slug, coupon.id);
           }}
           className="inline-flex items-center gap-0.5 border-l border-white/20 bg-emerald-500 px-2 py-1 text-xs font-bold text-white transition hover:bg-emerald-600"

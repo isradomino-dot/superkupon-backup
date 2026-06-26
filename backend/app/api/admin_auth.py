@@ -33,6 +33,7 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     api_key: str
     username: str
+    role: str = "admin"  # "admin" = full, "staff" = read-only viewer
 
 
 def _get_admin_users() -> list[dict]:
@@ -72,10 +73,16 @@ def admin_login(req: LoginRequest):
             user.get("username") == req.username
             and user.get("password") == req.password
         ):
-            logger.info("Admin login success: username=%s", req.username)
+            # Default role "admin" untuk backward compat (kalau gak di-set di JSON)
+            role = user.get("role", "admin")
+            if role not in ("admin", "staff"):
+                logger.warning("Invalid role '%s' for user '%s', defaulting to staff", role, req.username)
+                role = "staff"
+            logger.info("Admin login success: username=%s, role=%s", req.username, role)
             return LoginResponse(
                 api_key=settings.ADMIN_API_KEY,
                 username=req.username,
+                role=role,
             )
 
     logger.warning("Admin login failed: username=%s", req.username)

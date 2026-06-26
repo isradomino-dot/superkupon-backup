@@ -5,6 +5,7 @@ import {
   fetchScrapeLogs,
   fetchScrapers,
   triggerScraper,
+  getAdminRole,
   type ScrapeLog,
   type ScraperInfo,
 } from "@/lib/admin-api";
@@ -19,6 +20,11 @@ export function ScraperHealthTable() {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFullAccess, setIsFullAccess] = useState(false);
+
+  useEffect(() => {
+    setIsFullAccess(getAdminRole() === "admin");
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -181,13 +187,22 @@ export function ScraperHealthTable() {
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <button
-                      onClick={() => handleTrigger(scraper.target_id)}
-                      disabled={triggering === scraper.target_id}
-                      className="rounded border border-white/10 px-2 py-1 text-xs text-gray-300 transition hover:border-brand-400 hover:text-brand-300 disabled:opacity-40"
-                    >
-                      {triggering === scraper.target_id ? "..." : "▶ Run"}
-                    </button>
+                    {isFullAccess ? (
+                      <button
+                        onClick={() => handleTrigger(scraper.target_id)}
+                        disabled={triggering === scraper.target_id}
+                        className="rounded border border-white/10 px-2 py-1 text-xs text-gray-300 transition hover:border-brand-400 hover:text-brand-300 disabled:opacity-40"
+                      >
+                        {triggering === scraper.target_id ? "..." : "▶ Run"}
+                      </button>
+                    ) : (
+                      <span
+                        title="Role staff — read-only mode"
+                        className="cursor-not-allowed rounded border border-white/5 px-2 py-1 text-xs text-gray-600"
+                      >
+                        🔒
+                      </span>
+                    )}
                   </td>
                 </tr>
               );
@@ -197,9 +212,18 @@ export function ScraperHealthTable() {
       </div>
 
       <div className="border-t border-white/10 bg-white/5 px-4 py-2 text-xs text-gray-500">
-        💡 Tip: Klik <strong className="text-gray-300">▶ Run</strong> buat
-        trigger manual scrape per scraper. Atau lihat full log di tab
-        Scrape Logs nanti.
+        {isFullAccess ? (
+          <>
+            💡 Tip: Klik <strong className="text-gray-300">▶ Run</strong> buat
+            trigger manual scrape per scraper. Atau lihat full log di tab
+            Scrape Logs nanti.
+          </>
+        ) : (
+          <>
+            👁️ Mode read-only (role <strong className="text-blue-300">staff</strong>) —
+            tombol trigger scrape disabled. Hubungi admin untuk request akses.
+          </>
+        )}
       </div>
     </div>
   );

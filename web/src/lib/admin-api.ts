@@ -137,12 +137,16 @@ export async function verifyAdminKey(key: string): Promise<boolean> {
   }
 }
 
+export type AdminRole = "admin" | "staff";
+
 export interface LoginResponse {
   api_key: string;
   username: string;
+  role: AdminRole;
 }
 
 const USERNAME_STORAGE_KEY = "sk_admin_username";
+const ROLE_STORAGE_KEY = "sk_admin_role";
 
 export function getAdminUsername(): string | null {
   if (typeof window === "undefined") return null;
@@ -169,6 +173,39 @@ export function clearAdminUsername(): void {
   } catch {
     // ignore
   }
+}
+
+export function getAdminRole(): AdminRole {
+  if (typeof window === "undefined") return "staff";
+  try {
+    const stored = localStorage.getItem(ROLE_STORAGE_KEY);
+    if (stored === "admin" || stored === "staff") return stored;
+    return "admin"; // backward compat: kalau pernah login via API key direct
+  } catch {
+    return "staff";
+  }
+}
+
+export function setAdminRole(role: AdminRole): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(ROLE_STORAGE_KEY, role);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearAdminRole(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(ROLE_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function isAdminFullAccess(): boolean {
+  return getAdminRole() === "admin";
 }
 
 /**

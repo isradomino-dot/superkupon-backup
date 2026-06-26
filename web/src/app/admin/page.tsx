@@ -6,6 +6,7 @@ import { ScraperHealthTable } from "@/components/admin/ScraperHealthTable";
 import {
   fetchPublicStats,
   triggerScrapeAll,
+  getAdminRole,
   type PublicStats,
 } from "@/lib/admin-api";
 
@@ -23,6 +24,11 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [scrapingAll, setScrapingAll] = useState(false);
   const [scrapeResult, setScrapeResult] = useState<string | null>(null);
+  const [isFullAccess, setIsFullAccess] = useState(false);
+
+  useEffect(() => {
+    setIsFullAccess(getAdminRole() === "admin");
+  }, []);
 
   const loadStats = async () => {
     setLoading(true);
@@ -78,13 +84,23 @@ export default function AdminDashboardPage() {
       {/* Quick Actions */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
         <div className="text-sm font-medium text-gray-300">⚡ Quick Actions:</div>
-        <button
-          onClick={handleScrapeAll}
-          disabled={scrapingAll}
-          className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
-        >
-          {scrapingAll ? "⏳ Scraping all..." : "▶ Trigger Scrape All"}
-        </button>
+        {isFullAccess ? (
+          <button
+            onClick={handleScrapeAll}
+            disabled={scrapingAll}
+            className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-600 disabled:opacity-50"
+          >
+            {scrapingAll ? "⏳ Scraping all..." : "▶ Trigger Scrape All"}
+          </button>
+        ) : (
+          <button
+            disabled
+            title="Role 'staff' bersifat read-only. Hubungi admin untuk akses penuh."
+            className="cursor-not-allowed rounded-lg border border-white/10 bg-gray-800/40 px-3 py-1.5 text-xs text-gray-500 opacity-60"
+          >
+            🔒 Trigger Scrape (admin only)
+          </button>
+        )}
         <button
           onClick={loadStats}
           disabled={loading}
@@ -92,6 +108,11 @@ export default function AdminDashboardPage() {
         >
           🔄 Refresh Stats
         </button>
+        {!isFullAccess && (
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-blue-400/30 bg-blue-500/10 px-2 py-1 text-xs text-blue-300">
+            👁️ View-only mode
+          </span>
+        )}
         {scrapeResult && (
           <div className="ml-auto text-xs text-emerald-300">{scrapeResult}</div>
         )}

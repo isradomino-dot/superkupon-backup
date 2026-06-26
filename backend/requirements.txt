@@ -29,6 +29,10 @@ resend>=2.0,<3
 pywebpush>=2.0,<3
 cryptography>=43,<46
 
+# Member auth — bcrypt password hashing + EmailStr validation
+bcrypt>=4.2,<5
+email-validator>=2.2,<3
+
 # Phase 5 — Mobile API Recon (optional, install on-demand)
 # mitmproxy>=11
 # frida-tools>=13

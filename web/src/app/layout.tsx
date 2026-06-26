@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { PushSubscribeButton } from "@/components/PushSubscribeButton";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { NotificationProvider } from "@/lib/use-notifications";
 import { FavoritesProvider } from "@/lib/use-favorites";
 import { FavoritesLink } from "@/components/FavoritesLink";
@@ -173,6 +174,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <NotificationCenter />
                   <LanguageSwitcher />
                   <ThemeToggle />
+                  <UserMenu />
                 </div>
               </div>
             </header>

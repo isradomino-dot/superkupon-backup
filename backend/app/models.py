@@ -131,3 +131,46 @@ class PushSubscription(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     last_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class User(Base):
+    """Member user account (public site signup, beda dari ADMIN_USERS_JSON env-based admin auth).
+
+    Status workflow:
+    - "active": bisa langsung login (self-register member auto-active untuk MVP)
+    - "pending": butuh admin approval (untuk staff invite flow Phase 2 nanti)
+    - "banned": disabled, gak bisa login
+
+    Role:
+    - "member": default self-register, akses fitur favorit/wishlist/claim
+    - "staff": dibuat admin via invite link (Phase 2)
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(32), default="member")
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class UserSession(Base):
+    """Session token untuk member auth. Pakai opaque token (bukan JWT) — bisa
+    di-revoke langsung dari DB tanpa nunggu token expiry.
+
+    Token format: random 32-byte hex string (64 char).
+    Stored di httpOnly cookie OR Authorization header (Bearer).
+    """
+
+    __tablename__ = "user_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

@@ -6,7 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.db import init_db
-from app.api import coupons, merchants, admin, admin_auth, recon, proxy_admin, stats, i18n as i18n_api, notifications, search as search_api, push as push_api
+from app.api import coupons, merchants, admin, admin_auth, auth as member_auth, recon, proxy_admin, stats, i18n as i18n_api, notifications, search as search_api, push as push_api
 from app.i18n.middleware import LanguageMiddleware
 from app.scheduler import start_scheduler, stop_scheduler
 
@@ -131,6 +131,7 @@ app.add_middleware(
 
 app.include_router(coupons.router)
 app.include_router(merchants.router)
+app.include_router(member_auth.router)  # /auth/* (public member auth)
 app.include_router(admin_auth.router)  # /admin/login (public, no auth)
 app.include_router(admin.router)
 app.include_router(recon.router)

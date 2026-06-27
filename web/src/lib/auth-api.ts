@@ -210,3 +210,38 @@ export async function refreshMemberSession(): Promise<MemberUser | null> {
     return null;
   }
 }
+
+// ============================================================
+// Forgot / Reset Password (Admin Mediated)
+// ============================================================
+
+export interface ForgotPasswordResponse {
+  ok: boolean;
+  message: string;
+}
+
+export interface ResetPasswordResponse {
+  ok: boolean;
+  message: string;
+}
+
+/** Request password reset — admin akan terima notif untuk share token via WA. */
+export async function requestPasswordReset(
+  email: string,
+): Promise<ForgotPasswordResponse> {
+  return authFetch<ForgotPasswordResponse>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+/** Reset password pakai token dari admin + password baru. */
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<ResetPasswordResponse> {
+  return authFetch<ResetPasswordResponse>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}

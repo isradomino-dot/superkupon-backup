@@ -257,6 +257,39 @@ export async function triggerScraper(targetId: string): Promise<ScrapeLog> {
   });
 }
 
+// ============================================================
+// Password Reset Requests
+// ============================================================
+
+export interface PasswordResetRequest {
+  id: number;
+  user_id: number;
+  username: string;
+  email_at_request: string;
+  token: string;
+  created_at: string;
+  expires_at: string;
+  used_at: string | null;
+  requester_user_agent: string | null;
+  minutes_remaining: number;
+}
+
+export async function fetchPasswordResets(
+  includeUsed = false,
+): Promise<PasswordResetRequest[]> {
+  return adminFetch<PasswordResetRequest[]>(
+    `/admin/password-resets?include_used=${includeUsed}`,
+  );
+}
+
+export async function cancelPasswordReset(
+  resetId: number,
+): Promise<{ ok: boolean; deleted_id: number }> {
+  return adminFetch(`/admin/password-resets/${resetId}`, {
+    method: "DELETE",
+  });
+}
+
 // Public stats — gak butuh API key
 export async function fetchPublicStats(): Promise<PublicStats> {
   const res = await fetch(`${API_BASE}/stats/public`, { cache: "no-store" });

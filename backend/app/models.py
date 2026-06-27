@@ -174,3 +174,31 @@ class UserSession(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+
+class PasswordResetRequest(Base):
+    """Permintaan reset password dari member. Pattern ADMIN-MEDIATED:
+
+    Flow:
+    1. User input email di /forgot-password.
+    2. Backend bikin token random 32-char hex + save di sini (expires 1 jam).
+    3. Admin liat list pending di dashboard /admin → share token via WA ke user.
+    4. User input token + password baru di /reset/{token} → backend verify
+       token + update user.password_hash + mark used_at.
+
+    Token sekali pakai (used_at di-set setelah successful reset).
+    Email pas request disimpen biar admin tau request dari siapa walau user
+    udah ganti email setelah request.
+    """
+
+    __tablename__ = "password_reset_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    email_at_request: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    used_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    requester_user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

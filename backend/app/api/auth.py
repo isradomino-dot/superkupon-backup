@@ -11,7 +11,7 @@ Flow:
 """
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -19,13 +19,15 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import User, UserSession
+from app.models import PasswordResetRequest, User, UserSession
 from app.utils.auth import (
     compute_session_expiry,
     generate_session_token,
     hash_password,
     verify_password,
 )
+
+PASSWORD_RESET_DURATION_HOURS = 1
 
 logger = logging.getLogger(__name__)
 
@@ -294,3 +296,115 @@ def me(user: User = Depends(get_current_user)):
         created_at=user.created_at,
         last_login_at=user.last_login_at,
     )
+
+
+# ============================================================
+# Forgot Password — Admin Mediated Pattern
+# ============================================================
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    ok: bool = True
+    message: str = (
+        "Kalau email lo terdaftar, request reset password udah dikirim ke admin. "
+        "Hubungi admin via WhatsApp untuk dapet token reset."
+    )
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=10, max_length=64)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
+class ResetPasswordResponse(BaseModel):
+    ok: bool = True
+    message: str = "Password berhasil di-reset. Silakan login dengan password baru."
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+def forgot_password(
+    req: ForgotPasswordRequest,
+    user_agent: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Request reset password — generate token, save ke DB untuk admin share.
+
+    SECURITY: Response selalu sama (ok=True) terlepas email exists/tidak —
+    anti enumeration attack. Token cuma di-create kalau email valid, tapi
+    user gak tau (anti reconnaissance).
+    """
+    email_lower = req.email.lower().strip()
+    user = db.query(User).filter_by(email=email_lower).first()
+
+    if user and user.status != "banned":
+        # Generate token + save request
+        token = generate_session_token()
+        expires_at = datetime.utcnow() + timedelta(hours=PASSWORD_RESET_DURATION_HOURS)
+        reset = PasswordResetRequest(
+            token=token,
+            user_id=user.id,
+            email_at_request=email_lower,
+            expires_at=expires_at,
+            requester_user_agent=user_agent[:500] if user_agent else None,
+        )
+        db.add(reset)
+        db.commit()
+        logger.info("Password reset request created: user_id=%s email=%s", user.id, email_lower)
+    else:
+        # Log tapi gak bikin entry — biar admin gak spam-able
+        logger.info("Password reset for unknown/banned email: %s (no token created)", email_lower)
+
+    # Selalu response sama
+    return ForgotPasswordResponse()
+
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Verify token + update password. Token sekali pakai (used_at di-set)."""
+    reset = db.query(PasswordResetRequest).filter_by(token=req.token).first()
+    if not reset:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token reset gak valid atau udah expired.",
+        )
+
+    if reset.used_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token reset udah pernah dipake. Request baru kalau perlu.",
+        )
+
+    if reset.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token reset udah expired. Request baru.",
+        )
+
+    user = db.query(User).filter_by(id=reset.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User gak ditemukan. Hubungi admin.",
+        )
+
+    if user.status == "banned":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akun lo dinonaktifkan. Hubungi admin.",
+        )
+
+    # Update password + mark token used
+    user.password_hash = hash_password(req.new_password)
+    reset.used_at = datetime.utcnow()
+
+    # Optional: invalidate semua session aktif user supaya force re-login
+    db.query(UserSession).filter_by(user_id=user.id).delete()
+
+    db.commit()
+    logger.info("Password reset success: user_id=%s username=%s", user.id, user.username)
+
+    return ResetPasswordResponse()

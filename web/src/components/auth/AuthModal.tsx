@@ -5,10 +5,11 @@ import {
   AuthError,
   loginMember,
   registerMember,
+  requestPasswordReset,
   type MemberUser,
 } from "@/lib/auth-api";
 
-type AuthModalMode = "login" | "register";
+type AuthModalMode = "login" | "register" | "forgot";
 
 interface AuthModalProps {
   open: boolean;
@@ -64,7 +65,7 @@ export function AuthModal({
           onSuccess(result.user);
           handleClose();
         }, 700);
-      } else {
+      } else if (mode === "register") {
         if (!email.trim() || !username.trim() || !password.trim()) return;
         await registerMember(email.trim(), username.trim(), password);
         // Auto-login setelah register
@@ -74,6 +75,11 @@ export function AuthModal({
           onSuccess(result.user);
           handleClose();
         }, 900);
+      } else if (mode === "forgot") {
+        if (!email.trim()) return;
+        const result = await requestPasswordReset(email.trim());
+        setSuccessMsg(`✉️ ${result.message}`);
+        // Stay in modal — user perlu baca pesan
       }
     } catch (err) {
       const message =
@@ -145,49 +151,61 @@ export function AuthModal({
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto mb-3 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/40">
-            <span className="text-2xl">{mode === "login" ? "👋" : "✨"}</span>
+            <span className="text-2xl">
+              {mode === "login" ? "👋" : mode === "register" ? "✨" : "🔑"}
+            </span>
           </div>
           <h2 className="bg-gradient-to-r from-purple-200 via-pink-200 to-amber-200 bg-clip-text text-2xl font-bold text-transparent">
-            {mode === "login" ? "Login SuperKupon" : "Daftar Akun Baru"}
+            {mode === "login"
+              ? "Login SuperKupon"
+              : mode === "register"
+                ? "Daftar Akun Baru"
+                : "Lupa Password"}
           </h2>
           <p className="mt-1.5 text-xs text-gray-400">
             {mode === "login"
               ? "Masuk untuk save favorit, klaim kupon, dan track promo"
-              : "Gratis, gak perlu kartu kredit"}
+              : mode === "register"
+                ? "Gratis, gak perlu kartu kredit"
+                : "Masukin email lo, admin bakal share token reset via WA"}
           </p>
         </div>
 
-        {/* Tab toggle */}
-        <div className="mt-5 flex gap-1 rounded-xl border border-white/10 bg-gray-800/50 p-1">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("login");
-              setError(null);
-            }}
-            className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-              mode === "login"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("register");
-              setError(null);
-            }}
-            className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-              mode === "register"
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Daftar
-          </button>
-        </div>
+        {/* Tab toggle — hidden saat mode forgot */}
+        {mode !== "forgot" && (
+          <div className="mt-5 flex gap-1 rounded-xl border border-white/10 bg-gray-800/50 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("login");
+                setError(null);
+                setSuccessMsg(null);
+              }}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                mode === "login"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("register");
+                setError(null);
+                setSuccessMsg(null);
+              }}
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                mode === "register"
+                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Daftar
+            </button>
+          </div>
+        )}
 
         {/* Form */}
         <form
@@ -196,7 +214,7 @@ export function AuthModal({
           autoComplete="on"
           name={mode === "login" ? "superkupon-login" : "superkupon-register"}
         >
-          {mode === "login" ? (
+          {mode === "login" && (
             <Field
               label="Email atau Username"
               icon="📧"
@@ -208,7 +226,9 @@ export function AuthModal({
               autoFocus
               disabled={submitting}
             />
-          ) : (
+          )}
+
+          {mode === "register" && (
             <>
               <Field
                 label="Email"
@@ -235,19 +255,36 @@ export function AuthModal({
             </>
           )}
 
-          <Field
-            label="Password"
-            icon="🔑"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            placeholder="••••••••"
-            autoComplete={
-              mode === "login" ? "current-password" : "new-password"
-            }
-            disabled={submitting}
-            hint={mode === "register" ? "Minimal 6 karakter" : undefined}
-          />
+          {mode === "forgot" && (
+            <Field
+              label="Email akun lo"
+              icon="📧"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="kamu@email.com"
+              autoComplete="email"
+              autoFocus
+              disabled={submitting}
+              hint="Token reset akan dibikin di server. Hubungi admin via WhatsApp untuk dapet token."
+            />
+          )}
+
+          {mode !== "forgot" && (
+            <Field
+              label="Password"
+              icon="🔑"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder="••••••••"
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
+              disabled={submitting}
+              hint={mode === "register" ? "Minimal 6 karakter" : undefined}
+            />
+          )}
 
           {error && (
             <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-xs text-red-300">
@@ -271,15 +308,38 @@ export function AuthModal({
               {submitting ? (
                 <>
                   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  {mode === "login" ? "Login..." : "Daftar..."}
+                  {mode === "login"
+                    ? "Login..."
+                    : mode === "register"
+                      ? "Daftar..."
+                      : "Mengirim..."}
                 </>
               ) : mode === "login" ? (
                 <>🚀 Masuk</>
-              ) : (
+              ) : mode === "register" ? (
                 <>✨ Bikin Akun</>
+              ) : (
+                <>📨 Kirim Permintaan Reset</>
               )}
             </span>
           </button>
+
+          {/* Lupa password link — cuma muncul di mode login */}
+          {mode === "login" && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("forgot");
+                  setError(null);
+                  setSuccessMsg(null);
+                }}
+                className="text-xs text-purple-300 hover:text-purple-200 hover:underline"
+              >
+                Lupa password?
+              </button>
+            </div>
+          )}
         </form>
 
         {/* Footer hint */}
@@ -292,13 +352,14 @@ export function AuthModal({
                 onClick={() => {
                   setMode("register");
                   setError(null);
+                  setSuccessMsg(null);
                 }}
                 className="font-medium text-purple-300 hover:text-purple-200 hover:underline"
               >
                 Daftar gratis
               </button>
             </>
-          ) : (
+          ) : mode === "register" ? (
             <>
               Udah punya akun?{" "}
               <button
@@ -306,10 +367,26 @@ export function AuthModal({
                 onClick={() => {
                   setMode("login");
                   setError(null);
+                  setSuccessMsg(null);
                 }}
                 className="font-medium text-purple-300 hover:text-purple-200 hover:underline"
               >
                 Login di sini
+              </button>
+            </>
+          ) : (
+            <>
+              Inget password?{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setError(null);
+                  setSuccessMsg(null);
+                }}
+                className="font-medium text-purple-300 hover:text-purple-200 hover:underline"
+              >
+                ← Balik ke Login
               </button>
             </>
           )}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { KPICard } from "@/components/admin/KPICard";
+import { PasswordResetTable } from "@/components/admin/PasswordResetTable";
 import { ScraperHealthTable } from "@/components/admin/ScraperHealthTable";
 import {
   fetchPublicStats,
@@ -212,6 +213,14 @@ export default function AdminDashboardPage() {
           🤖 Scraper Health
         </h3>
         <ScraperHealthTable />
+      </section>
+
+      {/* Password Reset Requests */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
+          🔑 Password Reset Requests
+        </h3>
+        <PasswordResetTable />
       </section>
 
       {/* Tips Section */}

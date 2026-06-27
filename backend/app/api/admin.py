@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api._auth import require_admin
 from app.db import get_db
-from app.models import ScrapeLog
+from app.models import PasswordResetRequest, ScrapeLog, User
 from app.pipelines.dedup import upsert_coupons
 from app.schemas import (
     CouponRaw,
@@ -311,3 +311,68 @@ def force_delete_coupon(coupon_id: int, db: Session = Depends(get_db)):
         "title": title,
         "source_target": source,
     }
+
+
+
+# ============================================================
+# Password Reset Requests — Admin Mediated Pattern
+# ============================================================
+
+
+class PasswordResetOut(BaseModel):
+    id: int
+    user_id: int
+    username: str
+    email_at_request: str
+    token: str
+    created_at: datetime
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+    requester_user_agent: Optional[str] = None
+    minutes_remaining: int
+
+
+@router.get("/password-resets", response_model=List[PasswordResetOut])
+def list_password_resets(
+    include_used: bool = False,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List pending password reset requests untuk admin share token via WA."""
+    q = db.query(PasswordResetRequest, User).join(User, PasswordResetRequest.user_id == User.id)
+    if not include_used:
+        q = q.filter(PasswordResetRequest.used_at.is_(None))
+    q = q.order_by(PasswordResetRequest.created_at.desc()).limit(limit)
+
+    now = datetime.utcnow()
+    results = []
+    for reset, user in q.all():
+        delta = reset.expires_at - now
+        minutes_remaining = max(0, int(delta.total_seconds() / 60))
+        results.append(
+            PasswordResetOut(
+                id=reset.id,
+                user_id=reset.user_id,
+                username=user.username,
+                email_at_request=reset.email_at_request,
+                token=reset.token,
+                created_at=reset.created_at,
+                expires_at=reset.expires_at,
+                used_at=reset.used_at,
+                requester_user_agent=reset.requester_user_agent,
+                minutes_remaining=minutes_remaining,
+            )
+        )
+    return results
+
+
+@router.delete("/password-resets/{reset_id}")
+def cancel_password_reset(reset_id: int, db: Session = Depends(get_db)):
+    """Cancel/delete password reset request — kalau admin curiga ada abuse atau
+    udah selesai handle via WA tapi user gak pake."""
+    reset = db.query(PasswordResetRequest).filter_by(id=reset_id).first()
+    if not reset:
+        raise HTTPException(404, "Reset request not found")
+    db.delete(reset)
+    db.commit()
+    return {"ok": True, "deleted_id": reset_id}

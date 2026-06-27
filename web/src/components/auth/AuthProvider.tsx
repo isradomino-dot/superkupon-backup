@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"login" | "register">("login");
+  const pathname = usePathname();
 
   // Hydrate from localStorage + verify token in background
   useEffect(() => {
@@ -70,22 +72,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // BUGFIX: Auto-close modal on route change supaya gak nyangkut antar page.
+  // Sebelumnya: lo klik kupon di / → modal buka → navigate ke /admin → modal
+  // STAYS OPEN dan nutupin AdminGate. Plus user input admin credentials ke
+  // MemberModal (yang validate ke /auth/login bukan /admin/login) → gagal.
+  // Sekarang: modal selalu close pas pathname berubah.
+  useEffect(() => {
+    setModalOpen(false);
+  }, [pathname]);
+
+  // BUGFIX: gak boleh open MemberModal di /admin (AdminGate handles own auth)
+  const isAdminPath = pathname?.startsWith("/admin") ?? false;
+
   const openLogin = useCallback(() => {
+    if (isAdminPath) return;
     setModalMode("login");
     setModalOpen(true);
-  }, []);
+  }, [isAdminPath]);
 
   const openRegister = useCallback(() => {
+    if (isAdminPath) return;
     setModalMode("register");
     setModalOpen(true);
-  }, []);
+  }, [isAdminPath]);
 
   const requireLogin = useCallback((): boolean => {
     if (user) return true;
+    if (isAdminPath) return false; // di /admin, AdminGate yang handle
     setModalMode("login");
     setModalOpen(true);
     return false;
-  }, [user]);
+  }, [user, isAdminPath]);
 
   const logout = useCallback(async () => {
     try {

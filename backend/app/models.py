@@ -176,6 +176,39 @@ class UserSession(Base):
     user_agent: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
 
+class UserClaim(Base):
+    """Track per-user kupon claim — pas member klik 'Salin Kode' atau 'Pakai
+    di Merchant'. Beda dari Coupon.redeems (yang aggregate counter), ini per
+    user untuk Profile Page "Lo udah hemat Rp X dari Y kupon".
+
+    Snapshot data kupon disimpan supaya history tetap akurat walau kupon
+    di-archive / di-update / di-delete kemudian.
+
+    Action types:
+    - "copy" → user salin kode (most common — proxy for "akan dipake")
+    - "visit" → user klik tombol Pakai di Merchant (redirect ke affiliate)
+    """
+
+    __tablename__ = "user_claims"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    coupon_id: Mapped[int] = mapped_column(ForeignKey("coupons.id"), index=True)
+    action: Mapped[str] = mapped_column(String(16), default="copy")
+    claimed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    # Snapshot data — biar history tetap punya context walau kupon hilang
+    coupon_code: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    coupon_title: Mapped[str] = mapped_column(String(256))
+    merchant_slug: Mapped[str] = mapped_column(String(64), index=True)
+    merchant_name: Mapped[str] = mapped_column(String(128))
+    category_slug: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    discount_type: Mapped[str] = mapped_column(String(32))
+    discount_value: Mapped[float] = mapped_column(Float, default=0)
+    # Estimated saving — based on max_discount kalau ada, else discount_value
+    estimated_saving_idr: Mapped[float] = mapped_column(Float, default=0)
+
+
 class PasswordResetRequest(Base):
     """Permintaan reset password dari member. Pattern ADMIN-MEDIATED:
 

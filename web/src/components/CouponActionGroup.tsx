@@ -11,6 +11,7 @@ import { useHistory } from "@/lib/use-history";
 import { useStreak } from "@/lib/use-streak";
 import { fireConfetti } from "@/lib/confetti";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { recordClaim } from "@/lib/auth-api";
 
 interface Props {
   coupon: Coupon;
@@ -50,7 +51,7 @@ function saveReminder(coupon: Coupon, hoursFromNow: number) {
 export function CouponActionGroup({ coupon }: Props) {
   const { t } = useI18n();
   const { addClaim } = useHistory();
-  const { recordClaim } = useStreak();
+  const { recordClaim: recordStreakClaim } = useStreak();
   const { requireLogin } = useAuth();
   const [copied, setCopied] = useState(false);
   const [reminded, setReminded] = useState(false);
@@ -70,7 +71,8 @@ export function CouponActionGroup({ coupon }: Props) {
       void trackRedeem(coupon.id);
       trackCopyCode(coupon.id, coupon.code, coupon.merchant.slug);
       addClaim(coupon);
-      recordClaim();
+      recordStreakClaim();  // local streak counter
+      void recordClaim(coupon.id, "copy");  // member auth — per-user stats
       if (rect) {
         try {
           fireConfetti({
@@ -127,6 +129,7 @@ export function CouponActionGroup({ coupon }: Props) {
               return;
             }
             trackOutboundClick(coupon.merchant.slug, coupon.id);
+            void recordClaim(coupon.id, "visit");
           }}
           className="inline-flex items-center gap-0.5 border-l border-white/20 bg-emerald-500 px-2 py-1 text-xs font-bold text-white transition hover:bg-emerald-600"
           title={`Buka ${coupon.merchant.name}`}

@@ -102,6 +102,14 @@ export function UserMenu() {
           {/* Menu items */}
           <div className="mt-2 space-y-0.5">
             <MenuItem
+              icon="👤"
+              label="Profil & Stats"
+              onClick={() => {
+                window.location.href = "/profile";
+                setDropdownOpen(false);
+              }}
+            />
+            <MenuItem
               icon="❤️"
               label="Kupon Favorit"
               onClick={() => {
@@ -111,19 +119,9 @@ export function UserMenu() {
             />
             <MenuItem
               icon="📊"
-              label="Statistik Lo"
+              label="Statistik Publik"
               onClick={() => {
                 window.location.href = "/statistik";
-                setDropdownOpen(false);
-              }}
-            />
-            <MenuItem
-              icon="⚙️"
-              label="Pengaturan"
-              onClick={() => {
-                alert(
-                  "Fitur Pengaturan coming soon — Phase 2 (profile edit, ganti password, dll)",
-                );
                 setDropdownOpen(false);
               }}
             />

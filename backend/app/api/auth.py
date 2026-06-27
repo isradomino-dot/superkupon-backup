@@ -18,8 +18,10 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
+from sqlalchemy import desc, func
+
 from app.db import get_db
-from app.models import PasswordResetRequest, User, UserSession
+from app.models import Coupon, PasswordResetRequest, User, UserClaim, UserSession
 from app.utils.auth import (
     compute_session_expiry,
     generate_session_token,
@@ -408,3 +410,279 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     logger.info("Password reset success: user_id=%s username=%s", user.id, user.username)
 
     return ResetPasswordResponse()
+
+
+# ============================================================
+# Profile & Stats (Member Dashboard)
+# ============================================================
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
+class UpdateProfileRequest(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=32)
+    email: Optional[EmailStr] = None
+
+
+class RecordClaimRequest(BaseModel):
+    coupon_id: int
+    action: str = Field("copy", pattern="^(copy|visit)$")
+
+
+class ClaimOut(BaseModel):
+    id: int
+    coupon_id: int
+    action: str
+    claimed_at: datetime
+    coupon_code: Optional[str]
+    coupon_title: str
+    merchant_slug: str
+    merchant_name: str
+    category_slug: Optional[str]
+    discount_type: str
+    discount_value: float
+    estimated_saving_idr: float
+
+
+class CategoryCount(BaseModel):
+    slug: str
+    count: int
+
+
+class MerchantCount(BaseModel):
+    slug: str
+    name: str
+    count: int
+
+
+class StatsOut(BaseModel):
+    total_claims: int
+    total_savings_idr: float
+    favorite_category: Optional[str]
+    favorite_merchant: Optional[str]
+    claims_this_week: int
+    claims_this_month: int
+    top_categories: list[CategoryCount]
+    top_merchants: list[MerchantCount]
+    member_since: datetime
+    days_active: int
+
+
+def _estimate_saving(coupon: Coupon) -> float:
+    """Estimasi penghematan Rupiah dari kupon (best-effort heuristic)."""
+    if coupon.max_discount and coupon.max_discount > 0:
+        return float(coupon.max_discount)
+    if coupon.discount_type in ("fixed", "cashback"):
+        return float(coupon.discount_value) if coupon.discount_value > 1000 else 0
+    if coupon.discount_type == "percent":
+        if coupon.discount_value > 0:
+            return min(50000 * (coupon.discount_value / 100), 100000)
+        return 0
+    if coupon.discount_type == "free_shipping":
+        return 25000
+    if coupon.discount_type == "bogo":
+        return 50000
+    return 0
+
+
+@router.post("/me/claims", response_model=ClaimOut, status_code=status.HTTP_201_CREATED)
+def record_claim(
+    req: RecordClaimRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Record kupon claim — called pas user copy code atau visit merchant."""
+    coupon = db.query(Coupon).filter_by(id=req.coupon_id).first()
+    if not coupon:
+        raise HTTPException(404, "Coupon not found")
+
+    claim = UserClaim(
+        user_id=user.id,
+        coupon_id=coupon.id,
+        action=req.action,
+        coupon_code=coupon.code,
+        coupon_title=coupon.title,
+        merchant_slug=coupon.merchant.slug if coupon.merchant else "unknown",
+        merchant_name=coupon.merchant.name if coupon.merchant else "Unknown",
+        category_slug=coupon.category.slug if coupon.category else None,
+        discount_type=coupon.discount_type,
+        discount_value=float(coupon.discount_value or 0),
+        estimated_saving_idr=_estimate_saving(coupon),
+    )
+    db.add(claim)
+    db.commit()
+    db.refresh(claim)
+
+    return ClaimOut(
+        id=claim.id,
+        coupon_id=claim.coupon_id,
+        action=claim.action,
+        claimed_at=claim.claimed_at,
+        coupon_code=claim.coupon_code,
+        coupon_title=claim.coupon_title,
+        merchant_slug=claim.merchant_slug,
+        merchant_name=claim.merchant_name,
+        category_slug=claim.category_slug,
+        discount_type=claim.discount_type,
+        discount_value=claim.discount_value,
+        estimated_saving_idr=claim.estimated_saving_idr,
+    )
+
+
+@router.get("/me/claims", response_model=list[ClaimOut])
+def list_my_claims(
+    limit: int = 50,
+    offset: int = 0,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """List my claims (paginated, latest first)."""
+    rows = (
+        db.query(UserClaim)
+        .filter_by(user_id=user.id)
+        .order_by(desc(UserClaim.claimed_at))
+        .limit(min(limit, 100))
+        .offset(offset)
+        .all()
+    )
+    return [
+        ClaimOut(
+            id=c.id,
+            coupon_id=c.coupon_id,
+            action=c.action,
+            claimed_at=c.claimed_at,
+            coupon_code=c.coupon_code,
+            coupon_title=c.coupon_title,
+            merchant_slug=c.merchant_slug,
+            merchant_name=c.merchant_name,
+            category_slug=c.category_slug,
+            discount_type=c.discount_type,
+            discount_value=c.discount_value,
+            estimated_saving_idr=c.estimated_saving_idr,
+        )
+        for c in rows
+    ]
+
+
+@router.get("/me/stats", response_model=StatsOut)
+def get_my_stats(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Aggregate stats untuk profile page."""
+    base_q = db.query(UserClaim).filter_by(user_id=user.id)
+
+    total_claims = base_q.count()
+    total_savings = base_q.with_entities(
+        func.coalesce(func.sum(UserClaim.estimated_saving_idr), 0)
+    ).scalar() or 0
+
+    now = datetime.utcnow()
+    week_ago = now - timedelta(days=7)
+    month_ago = now - timedelta(days=30)
+
+    claims_this_week = base_q.filter(UserClaim.claimed_at >= week_ago).count()
+    claims_this_month = base_q.filter(UserClaim.claimed_at >= month_ago).count()
+
+    cat_rows = (
+        db.query(UserClaim.category_slug, func.count(UserClaim.id).label("cnt"))
+        .filter(UserClaim.user_id == user.id, UserClaim.category_slug.isnot(None))
+        .group_by(UserClaim.category_slug)
+        .order_by(desc("cnt"))
+        .limit(5)
+        .all()
+    )
+    top_categories = [CategoryCount(slug=r[0], count=r[1]) for r in cat_rows]
+
+    mer_rows = (
+        db.query(
+            UserClaim.merchant_slug,
+            UserClaim.merchant_name,
+            func.count(UserClaim.id).label("cnt"),
+        )
+        .filter_by(user_id=user.id)
+        .group_by(UserClaim.merchant_slug, UserClaim.merchant_name)
+        .order_by(desc("cnt"))
+        .limit(5)
+        .all()
+    )
+    top_merchants = [MerchantCount(slug=r[0], name=r[1], count=r[2]) for r in mer_rows]
+
+    favorite_category = top_categories[0].slug if top_categories else None
+    favorite_merchant = top_merchants[0].name if top_merchants else None
+
+    days_active = max(1, (now - user.created_at).days + 1)
+
+    return StatsOut(
+        total_claims=total_claims,
+        total_savings_idr=float(total_savings),
+        favorite_category=favorite_category,
+        favorite_merchant=favorite_merchant,
+        claims_this_week=claims_this_week,
+        claims_this_month=claims_this_month,
+        top_categories=top_categories,
+        top_merchants=top_merchants,
+        member_since=user.created_at,
+        days_active=days_active,
+    )
+
+
+@router.patch("/me", response_model=UserOut)
+def update_profile(
+    req: UpdateProfileRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update username atau email."""
+    if req.username is not None:
+        new_username = req.username.lower().strip()
+        if not USERNAME_PATTERN.match(new_username):
+            raise HTTPException(400, "Username harus 3-32 karakter, hanya huruf/angka/underscore")
+        if new_username != user.username:
+            existing = db.query(User).filter_by(username=new_username).first()
+            if existing and existing.id != user.id:
+                raise HTTPException(409, "Username sudah dipakai")
+            user.username = new_username
+
+    if req.email is not None:
+        new_email = req.email.lower().strip()
+        if new_email != user.email:
+            existing = db.query(User).filter_by(email=new_email).first()
+            if existing and existing.id != user.id:
+                raise HTTPException(409, "Email sudah terdaftar")
+            user.email = new_email
+
+    db.commit()
+    db.refresh(user)
+
+    return UserOut(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        role=user.role,
+        status=user.status,
+        created_at=user.created_at,
+        last_login_at=user.last_login_at,
+    )
+
+
+@router.post("/me/change-password", response_model=LogoutResponse)
+def change_password(
+    req: ChangePasswordRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Change password (butuh current password)."""
+    if not verify_password(req.current_password, user.password_hash):
+        raise HTTPException(401, "Current password salah")
+
+    user.password_hash = hash_password(req.new_password)
+    # Invalidate semua session lain — force logout di device lain
+    db.query(UserSession).filter(UserSession.user_id == user.id).delete()
+    db.commit()
+
+    logger.info("Member password changed: username=%s", user.username)
+    return LogoutResponse(ok=True, message="Password berhasil diubah. Login lagi di device lain.")

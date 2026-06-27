@@ -245,3 +245,100 @@ export async function resetPassword(
     body: JSON.stringify({ token, new_password: newPassword }),
   });
 }
+
+// ============================================================
+// Profile & Stats (Member Dashboard)
+// ============================================================
+
+export interface MemberClaim {
+  id: number;
+  coupon_id: number;
+  action: "copy" | "visit";
+  claimed_at: string;
+  coupon_code: string | null;
+  coupon_title: string;
+  merchant_slug: string;
+  merchant_name: string;
+  category_slug: string | null;
+  discount_type: string;
+  discount_value: number;
+  estimated_saving_idr: number;
+}
+
+export interface CategoryCount {
+  slug: string;
+  count: number;
+}
+
+export interface MerchantCount {
+  slug: string;
+  name: string;
+  count: number;
+}
+
+export interface MemberStats {
+  total_claims: number;
+  total_savings_idr: number;
+  favorite_category: string | null;
+  favorite_merchant: string | null;
+  claims_this_week: number;
+  claims_this_month: number;
+  top_categories: CategoryCount[];
+  top_merchants: MerchantCount[];
+  member_since: string;
+  days_active: number;
+}
+
+/** Record claim (call pas user copy code atau visit merchant). Silent fail. */
+export async function recordClaim(
+  couponId: number,
+  action: "copy" | "visit" = "copy",
+): Promise<void> {
+  if (!getMemberToken()) return; // skip kalau guest (gating udah handle)
+  try {
+    await authFetch<MemberClaim>("/auth/me/claims", {
+      method: "POST",
+      body: JSON.stringify({ coupon_id: couponId, action }),
+    });
+  } catch {
+    // Silent fail — tracking shouldn't block UX
+  }
+}
+
+export async function fetchMyStats(): Promise<MemberStats> {
+  return authFetch<MemberStats>("/auth/me/stats");
+}
+
+export async function fetchMyClaims(
+  limit = 50,
+  offset = 0,
+): Promise<MemberClaim[]> {
+  return authFetch<MemberClaim[]>(
+    `/auth/me/claims?limit=${limit}&offset=${offset}`,
+  );
+}
+
+export async function updateProfile(updates: {
+  username?: string;
+  email?: string;
+}): Promise<MemberUser> {
+  const result = await authFetch<MemberUser>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(updates),
+  });
+  setMemberUser(result);
+  return result;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ ok: boolean; message: string }> {
+  return authFetch("/auth/me/change-password", {
+    method: "POST",
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+}

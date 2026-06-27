@@ -26,6 +26,7 @@ import { VerifyButtons } from "@/components/VerifyButtons";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { fireConfetti } from "@/lib/confetti";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { recordClaim } from "@/lib/auth-api";
 
 function isNewCoupon(scrapedAt: string): boolean {
   const dt = new Date(scrapedAt).getTime();
@@ -51,7 +52,7 @@ function formatRupiah(amount: number): string {
 export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
   const { t } = useI18n();
   const { addClaim } = useHistory();
-  const { recordClaim } = useStreak();
+  const { recordClaim: recordStreakClaim } = useStreak();
   const { isLoggedIn, requireLogin, openRegister } = useAuth();
 
   const [related, setRelated] = useState<Coupon[]>([]);
@@ -117,7 +118,8 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
       setCopied(true);
       void trackRedeem(coupon.id);
       addClaim(coupon);
-      recordClaim();
+      recordStreakClaim();
+      void recordClaim(coupon.id, "copy");
       if (rect) {
         try {
           fireConfetti({
@@ -265,6 +267,7 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
                     return;
                   }
                   trackOutboundClick(coupon.merchant.slug, coupon.id);
+                  void recordClaim(coupon.id, "visit");
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-600"
               >

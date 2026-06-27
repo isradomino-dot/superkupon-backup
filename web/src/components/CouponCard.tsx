@@ -17,6 +17,7 @@ import { useCouponVotes } from "@/lib/use-coupon-votes";
 import { CouponActionGroup } from "@/components/CouponActionGroup";
 import { fireConfetti } from "@/lib/confetti";
 import { trackCouponClick, trackCopyCode } from "@/lib/analytics";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface Props {
   coupon: Coupon;
@@ -42,6 +43,7 @@ function isFlashHot(c: Coupon): boolean {
 
 export function CouponCard({ coupon, highlight = "", isStackable = false }: Props) {
   const { t } = useI18n();
+  const { isLoggedIn, requireLogin } = useAuth();
   const expiry = useExpiryCountdown(coupon.expires_at);
   const { getVote } = useCouponVotes();
   const userVote = getVote(coupon.id);
@@ -168,9 +170,31 @@ export function CouponCard({ coupon, highlight = "", isStackable = false }: Prop
         </div>
 
         {coupon.code && (
-          <div className="mt-2 flex items-center gap-2 rounded-md border border-dashed border-brand-400 bg-brand-50/50 px-3 py-2 dark:border-brand-500 dark:bg-brand-900/20">
-            <span className="flex-1 font-mono text-sm font-bold tracking-wider text-brand-700 dark:text-brand-300">
-              <Highlight text={coupon.code} query={highlight} />
+          <div
+            className="mt-2 flex items-center gap-2 rounded-md border border-dashed border-brand-400 bg-brand-50/50 px-3 py-2 dark:border-brand-500 dark:bg-brand-900/20"
+            onClick={(e) => {
+              // Kalau guest, intercept klik card supaya trigger login dulu
+              // sebelum redirect ke detail page (anti peek code via DOM)
+              if (!isLoggedIn) {
+                e.preventDefault();
+                e.stopPropagation();
+                requireLogin();
+              }
+            }}
+          >
+            <span
+              className={`flex-1 font-mono text-sm font-bold tracking-wider text-brand-700 dark:text-brand-300 ${
+                isLoggedIn ? "" : "select-none blur-sm pointer-events-none"
+              }`}
+              aria-hidden={!isLoggedIn}
+              title={isLoggedIn ? coupon.code : "Login dulu untuk lihat kode"}
+            >
+              {isLoggedIn ? (
+                <Highlight text={coupon.code} query={highlight} />
+              ) : (
+                // Render fake placeholder dengan panjang sama biar layout konsisten
+                "•".repeat(Math.min(coupon.code.length, 12))
+              )}
             </span>
             <CouponActionGroup coupon={coupon} />
           </div>

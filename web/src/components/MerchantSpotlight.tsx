@@ -7,6 +7,7 @@ import { listCoupons, listMerchants, isAbortError } from "@/lib/api";
 import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon, MerchantWithCount } from "@/lib/types";
 import { MerchantLogo } from "@/components/MerchantLogo";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 /**
  * Merchant Spotlight — featured 1 merchant per session.
@@ -17,6 +18,20 @@ function pickFeatured(merchants: MerchantWithCount[]): MerchantWithCount | null 
   const eligible = merchants.filter((m) => m.coupon_count >= 2);
   if (eligible.length === 0) return null;
   return eligible[Math.floor(Math.random() * Math.min(eligible.length, 8))];
+}
+
+function CouponCodePill({ code }: { code: string }) {
+  const { isLoggedIn } = useAuth();
+  return (
+    <code
+      className={`rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-200 ${
+        isLoggedIn ? "" : "select-none blur-sm"
+      }`}
+      title={isLoggedIn ? code : "🔒 Login dulu"}
+    >
+      {isLoggedIn ? code : "••••••"}
+    </code>
+  );
 }
 
 export function MerchantSpotlight() {
@@ -127,11 +142,7 @@ export function MerchantSpotlight() {
               <p className="line-clamp-1 flex-1 text-xs text-gray-200 group-hover:text-white">
                 {c.title}
               </p>
-              {c.code && (
-                <code className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-200">
-                  {c.code}
-                </code>
-              )}
+              {c.code && <CouponCodePill code={c.code} />}
             </Link>
           ))}
         </div>

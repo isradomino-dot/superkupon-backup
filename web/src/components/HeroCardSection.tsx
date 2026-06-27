@@ -9,6 +9,7 @@ import { MerchantLogo } from "@/components/MerchantLogo";
 import { SmartLink } from "@/components/SmartLink";
 import { useExpiryCountdown } from "@/lib/use-expiry-countdown";
 import { couponSlug } from "@/lib/coupon-slug";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 /**
  * Top-of-page big featured hero card. Pulls top-quality coupon with highest discount.
@@ -64,6 +65,7 @@ function HeroCard({
   t: ReturnType<typeof useI18n>["t"];
 }) {
   const expiry = useExpiryCountdown(coupon.expires_at);
+  const { isLoggedIn } = useAuth();
   return (
     <SmartLink
       href={`/coupon/${couponSlug(coupon)}`}
@@ -101,11 +103,16 @@ function HeroCard({
 
           {coupon.code && (
             <div className="flex items-center gap-2 rounded-lg border-2 border-dashed border-violet-300/60 bg-violet-500/15 p-3">
-              <span className="flex-1 font-mono text-lg font-black tracking-wider text-violet-100">
-                {coupon.code}
+              <span
+                className={`flex-1 font-mono text-lg font-black tracking-wider text-violet-100 ${
+                  isLoggedIn ? "" : "select-none blur-sm"
+                }`}
+                aria-hidden={!isLoggedIn}
+              >
+                {isLoggedIn ? coupon.code : "•".repeat(Math.min(coupon.code.length, 10))}
               </span>
               <span className="rounded-md bg-white px-4 py-2 text-sm font-bold text-violet-700 shadow group-hover:bg-violet-50">
-                Detail →
+                {isLoggedIn ? "Detail →" : "🔒 Login →"}
               </span>
             </div>
           )}

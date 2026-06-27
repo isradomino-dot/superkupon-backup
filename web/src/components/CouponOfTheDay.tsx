@@ -8,6 +8,7 @@ import type { Coupon } from "@/lib/types";
 import { useI18n } from "@/i18n/provider";
 import { MerchantLogo } from "@/components/MerchantLogo";
 import { couponSlug } from "@/lib/coupon-slug";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 /**
  * Coupon of the Day — deterministic pick berdasarkan tanggal.
@@ -46,6 +47,7 @@ function formatCountdown(ms: number): string {
 
 export function CouponOfTheDay() {
   const { t } = useI18n();
+  const { isLoggedIn } = useAuth();
   const [coupon, setCoupon] = useState<Coupon | null>(null);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState(msUntilMidnight());
@@ -126,9 +128,20 @@ export function CouponOfTheDay() {
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {coupon.code && (
-              <code className="rounded-lg border-2 border-dashed border-amber-300/60 bg-amber-500/20 px-3 py-1.5 font-mono text-sm font-black tracking-wider text-amber-100">
-                {coupon.code}
+              <code
+                className={`rounded-lg border-2 border-dashed border-amber-300/60 bg-amber-500/20 px-3 py-1.5 font-mono text-sm font-black tracking-wider text-amber-100 ${
+                  isLoggedIn ? "" : "select-none blur-sm"
+                }`}
+                aria-hidden={!isLoggedIn}
+                title={isLoggedIn ? coupon.code : "🔒 Login untuk lihat kode"}
+              >
+                {isLoggedIn ? coupon.code : "•".repeat(Math.min(coupon.code.length, 10))}
               </code>
+            )}
+            {!isLoggedIn && coupon.code && (
+              <span className="rounded-full bg-purple-500/30 px-2.5 py-1 text-[10px] font-bold text-purple-100">
+                🔒 Login dulu
+              </span>
             )}
             <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white">
               ⭐ Quality {coupon.quality_score}

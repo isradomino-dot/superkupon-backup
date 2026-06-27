@@ -7,6 +7,7 @@ import { isAbortError, listCoupons, formatDiscount } from "@/lib/api";
 import { couponSlug } from "@/lib/coupon-slug";
 import type { Coupon } from "@/lib/types";
 import { SkeletonBar, SkeletonBox } from "@/components/Skeleton";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface Stack {
   merchantSlug: string;
@@ -82,6 +83,20 @@ function detectStacks(coupons: Coupon[]): Stack[] {
   }
 
   return stacks.sort((a, b) => b.estimatedSaving - a.estimatedSaving).slice(0, 4);
+}
+
+function StackCodePill({ code }: { code: string }) {
+  const { isLoggedIn } = useAuth();
+  return (
+    <code
+      className={`mt-0.5 inline-block rounded bg-brand-500/15 px-1.5 text-[10px] font-mono text-brand-300 ${
+        isLoggedIn ? "" : "select-none blur-sm"
+      }`}
+      title={isLoggedIn ? code : "🔒 Login dulu"}
+    >
+      {isLoggedIn ? code : "••••••"}
+    </code>
+  );
 }
 
 export function StackingSection() {
@@ -194,11 +209,7 @@ export function StackingSection() {
                         <div className="line-clamp-1 text-xs font-medium text-gray-200">
                           {c.title}
                         </div>
-                        {c.code && (
-                          <code className="mt-0.5 inline-block rounded bg-brand-500/15 px-1.5 text-[10px] font-mono text-brand-300">
-                            {c.code}
-                          </code>
-                        )}
+                        {c.code && <StackCodePill code={c.code} />}
                       </div>
                       <span className="ml-2 flex-none rounded bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-300">
                         {formatDiscount(c)}

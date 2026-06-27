@@ -316,9 +316,26 @@ export function CouponDetailClient({ coupon }: { coupon: Coupon }) {
             </span>
             <span>
               {coupon.code ? (
-                <>
-                  Salin kode <span className="font-mono font-semibold">{coupon.code}</span> di atas.
-                </>
+                isLoggedIn ? (
+                  <>
+                    Salin kode <span className="font-mono font-semibold">{coupon.code}</span> di atas.
+                  </>
+                ) : (
+                  <>
+                    Salin kode{" "}
+                    <span className="inline-block select-none rounded bg-gray-300 px-2 py-0.5 font-mono text-xs text-transparent blur-sm dark:bg-gray-700">
+                      {coupon.code}
+                    </span>{" "}
+                    <button
+                      type="button"
+                      onClick={() => requireLogin()}
+                      className="font-semibold text-purple-600 hover:underline dark:text-purple-300"
+                    >
+                      🔒 login dulu
+                    </button>
+                    .
+                  </>
+                )
               ) : (
                 <>Klik tombol &ldquo;Pakai di {coupon.merchant.name}&rdquo; — promo otomatis berlaku.</>
               )}

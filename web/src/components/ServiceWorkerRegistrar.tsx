@@ -34,6 +34,15 @@ export function ServiceWorkerRegistrar() {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
         .then((reg) => {
+          // BUGFIX: Force check SW update SEKARANG dan tiap 30 menit.
+          // Default browser cuma cek tiap 24 jam — terlalu lama buat fix bug
+          // urgent. Pas user buka tab lama setelah deploy fix, langsung detect
+          // SW baru → trigger update prompt.
+          reg.update().catch(() => {});
+          setInterval(() => {
+            reg.update().catch(() => {});
+          }, 30 * 60 * 1000);
+
           // Detect when an updated SW is waiting to activate
           if (reg.waiting) setUpdateWaiting(reg.waiting);
           reg.addEventListener("updatefound", () => {

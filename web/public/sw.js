@@ -9,7 +9,13 @@
  *   - POST/PUT/DELETE: always network, never cached
  */
 
-const SW_VERSION = "sk-v3";
+// BUMP version: pas content sw.js berubah (versi naik), browser auto-detect
+// SW baru → install → activate → DELETE cache lama (lihat activate handler) →
+// claim controllers → tab existing user dapat code baru post-reload.
+// User report: tab biasa stuck di code lama padahal Incognito work.
+// Root cause: SW_VERSION="sk-v3" cached menahan old code (pre fix-bug commit
+// b489112/92c442b/3eee5d8). Bump ke v4 untuk paksa invalidasi.
+const SW_VERSION = "sk-v4";
 const STATIC_CACHE = `${SW_VERSION}-static`;
 const RUNTIME_CACHE = `${SW_VERSION}-runtime`;
 const API_CACHE = `${SW_VERSION}-api`;
@@ -39,7 +45,14 @@ self.addEventListener("activate", (event) => {
             .map((k) => caches.delete(k)),
         ),
       )
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
+      // Notify all clients ada SW baru aktif → tab existing prompt reload
+      .then(async () => {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        clients.forEach((client) => {
+          client.postMessage({ type: "SW_UPDATED", version: SW_VERSION });
+        });
+      }),
   );
 });
 

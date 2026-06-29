@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 
@@ -134,3 +134,21 @@ class CouponVoteResponse(BaseModel):
     works_24h: int
     expired_24h: int
     archived: bool = False
+
+
+class AdminUserOut(BaseModel):
+    """Admin-only view of a member user, includes claim_count aggregate."""
+    id: int
+    email: str
+    username: str
+    role: str
+    status: str
+    created_at: datetime
+    last_login_at: Optional[datetime] = None
+    claim_count: int = 0  # COUNT(*) from user_claims
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminResetPasswordRequest(BaseModel):
+    """Body untuk POST /admin/users/{user_id}/reset-password."""
+    new_password: str = Field(min_length=6, max_length=128)

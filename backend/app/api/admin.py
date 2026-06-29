@@ -3,13 +3,16 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api._auth import require_admin
 from app.db import get_db
-from app.models import PasswordResetRequest, ScrapeLog, User
+from app.models import PasswordResetRequest, ScrapeLog, User, UserClaim, UserSession
 from app.pipelines.dedup import upsert_coupons
 from app.schemas import (
+    AdminResetPasswordRequest,
+    AdminUserOut,
     CouponRaw,
     ManualCouponBatch,
     ManualCouponResult,
@@ -18,6 +21,7 @@ from app.schemas import (
 from app.scrapers.registry import REGISTRY
 from app.scheduler import run_scraper
 from app.services.email_digest import send_weekly_digest
+from app.utils.auth import hash_password
 
 router = APIRouter(
     prefix="/admin",
@@ -376,3 +380,85 @@ def cancel_password_reset(reset_id: int, db: Session = Depends(get_db)):
     db.delete(reset)
     db.commit()
     return {"ok": True, "deleted_id": reset_id}
+
+
+# ============================================================
+# Member User Management — Admin Endpoints
+# ============================================================
+
+
+@router.get("/users", response_model=List[AdminUserOut])
+def list_users(db: Session = Depends(get_db)):
+    """List semua member users + jumlah claim per user.
+
+    Sorted by created_at DESC (newest first). Dipakai admin dashboard
+    untuk monitor members, lihat aktivitas (claim_count proxy untuk
+    engagement), dan trigger reset password kalau user lupa.
+    """
+    # Subquery: COUNT(*) per user_id dari user_claims
+    claim_subq = (
+        db.query(
+            UserClaim.user_id.label("uid"),
+            func.count(UserClaim.id).label("cnt"),
+        )
+        .group_by(UserClaim.user_id)
+        .subquery()
+    )
+
+    rows = (
+        db.query(User, func.coalesce(claim_subq.c.cnt, 0).label("claim_count"))
+        .outerjoin(claim_subq, claim_subq.c.uid == User.id)
+        .order_by(User.created_at.desc())
+        .all()
+    )
+
+    results = []
+    for user, claim_count in rows:
+        results.append(
+            AdminUserOut(
+                id=user.id,
+                email=user.email,
+                username=user.username,
+                role=user.role,
+                status=user.status,
+                created_at=user.created_at,
+                last_login_at=user.last_login_at,
+                claim_count=int(claim_count or 0),
+            )
+        )
+    return results
+
+
+@router.post("/users/{user_id}/reset-password")
+def admin_reset_password(
+    user_id: int,
+    req: AdminResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Manual reset password user — bypass email service.
+
+    Use case: user lupa password, admin set password baru langsung dari
+    dashboard, share via WA. Sekaligus invalidate semua session aktif
+    user tersebut (force logout di semua device) untuk security.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    user.password_hash = hash_password(req.new_password)
+
+    # Invalidate semua sesi aktif — force logout di semua device
+    deleted_sessions = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user_id)
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+
+    return {
+        "ok": True,
+        "message": "Password reset successfully",
+        "user_id": user_id,
+        "username": user.username,
+        "sessions_invalidated": int(deleted_sessions or 0),
+    }

@@ -296,3 +296,51 @@ export async function fetchPublicStats(): Promise<PublicStats> {
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 }
+
+// ============================================================
+// Member Management (admin)
+// ============================================================
+
+export interface AdminMember {
+  id: number;
+  email: string;
+  username: string;
+  role: string;
+  status: string;
+  created_at: string;
+  last_login_at: string | null;
+  claim_count: number;
+}
+
+/**
+ * List semua member terdaftar (untuk admin dashboard).
+ * Backend: GET /admin/users (require X-API-Key).
+ */
+export async function fetchMembers(): Promise<AdminMember[]> {
+  return adminFetch<AdminMember[]>("/admin/users");
+}
+
+/**
+ * Reset password member secara manual (admin-mediated).
+ * Backend: POST /admin/users/{id}/reset-password.
+ *
+ * Flow: admin generate password baru → backend hash + simpan →
+ * password baru dikirim balik ke admin → admin share via WA ke member.
+ *
+ * Error codes:
+ * - 403: bukan admin role / unauthorized
+ * - 404: user gak ditemukan
+ * - 500: server error
+ */
+export async function adminResetMemberPassword(
+  userId: number,
+  newPassword: string,
+): Promise<{ ok: boolean; message: string }> {
+  return adminFetch<{ ok: boolean; message: string }>(
+    `/admin/users/${userId}/reset-password`,
+    {
+      method: "POST",
+      body: JSON.stringify({ new_password: newPassword }),
+    },
+  );
+}

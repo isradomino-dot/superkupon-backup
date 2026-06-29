@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { KPICard } from "@/components/admin/KPICard";
+import { MembersTable } from "@/components/admin/MembersTable";
 import { PasswordResetTable } from "@/components/admin/PasswordResetTable";
 import { ScraperHealthTable } from "@/components/admin/ScraperHealthTable";
 import {
@@ -213,6 +214,14 @@ export default function AdminDashboardPage() {
           🤖 Scraper Health
         </h3>
         <ScraperHealthTable />
+      </section>
+
+      {/* Member Management */}
+      <section>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
+          👥 Member Management
+        </h3>
+        <MembersTable />
       </section>
 
       {/* Password Reset Requests */}

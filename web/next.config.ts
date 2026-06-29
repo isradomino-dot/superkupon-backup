@@ -28,6 +28,21 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=0" },
         ],
       },
+      // BUGFIX KRITIS: /sw.js HARUS selalu fresh. Browser default cache SW
+      // sampai 24 jam — bikin user tab biasa stuck di SW lama post-deploy.
+      // no-store + must-revalidate + no-cache → browser SELALU fetch /sw.js
+      // dari server, byte compare, kalau beda → trigger update SW immediately.
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate, max-age=0",
+          },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
       // Auth-sensitive: gak boleh ke-cache sama sekali
       { source: "/admin/:path*", headers: noStore },
       { source: "/profile/:path*", headers: noStore },

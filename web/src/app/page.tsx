@@ -4,7 +4,13 @@ import type { Metadata } from "next";
 import { fetchPublicStats, type PublicStats } from "@/lib/admin-api";
 import HomeClient from "./HomeClient";
 
-export const dynamic = "force-dynamic";
+// BUGFIX "This page couldn't load":
+// Sebelumnya `force-dynamic` paksa SSR ke Railway backend SETIAP request,
+// no cache. Kalau Railway cold-start (5-10 detik), Vercel function timeout
+// → browser tampil "couldn't load" pas navigate /admin → /.
+// Sekarang: default Next.js behavior (ISR via fetch revalidate 60s) — fast
+// page load, fresh data tiap 1 menit, no blocking SSR.
+export const revalidate = 60;
 
 const SITE_URL = "https://superkupon.vercel.app";
 

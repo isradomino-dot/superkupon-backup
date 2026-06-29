@@ -290,9 +290,17 @@ export async function cancelPasswordReset(
   });
 }
 
-// Public stats — gak butuh API key
+// Public stats — gak butuh API key.
+// BUGFIX "This page couldn't load": Railway backend bisa cold-start (5-10 detik
+// kalau gak ada traffic). Sebelumnya fetch `no-store` tanpa timeout = blocking
+// SSR forever → Vercel function timeout → browser tampil "couldn't load".
+// Sekarang: cache 60 detik di Vercel CDN + 4 detik timeout client-side.
+// Hasil: homepage SSR cepat, fallback null kalau backend slow.
 export async function fetchPublicStats(): Promise<PublicStats> {
-  const res = await fetch(`${API_BASE}/stats/public`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}/stats/public`, {
+    next: { revalidate: 60 }, // cache 60 detik di Vercel CDN
+    signal: AbortSignal.timeout(4000), // 4 detik timeout — fallback gracefully
+  });
   if (!res.ok) throw new Error("Failed to fetch stats");
   return res.json();
 }

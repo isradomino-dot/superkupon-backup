@@ -32,6 +32,14 @@ const nextConfig: NextConfig = {
       // sampai 24 jam — bikin user tab biasa stuck di SW lama post-deploy.
       // no-store + must-revalidate + no-cache → browser SELALU fetch /sw.js
       // dari server, byte compare, kalau beda → trigger update SW immediately.
+      //
+      // DEPRECATION (sk-v6-killswitch, 2026-06-29):
+      // /sw.js is now a KILL-SWITCH that self-unregisters on activate. We KEEP
+      // this no-store header so existing users (sk-v3/v4/v5) refetch sw.js,
+      // see the byte-diff, install the kill-switch, and get cleanly evicted
+      // from SW control. Do NOT remove this header or the /sw.js file until
+      // the existing-user cleanup window closes (~30 days post-deploy).
+      // After that, /sw.js can be replaced with an empty 204 or removed.
       {
         source: "/sw.js",
         headers: [

@@ -1,126 +1,80 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 /**
- * Registers /sw.js on mount. Shows a toast when a new SW is waiting,
- * with "Update sekarang" CTA to skip-waiting + reload.
+ * ServiceWorkerRegistrar — CLEANUP-ONLY MODE (post sk-v6-killswitch decision).
  *
- * Skipped on localhost dev unless NEXT_PUBLIC_SW_ENABLED=true is set,
- * to avoid interfering with HMR.
+ * Context:
+ *   Previous mode (sk-v3 → sk-v5) registered /sw.js for push notif + cache.
+ *   Race condition between `controllerchange` reload + Next.js App Router
+ *   navigation transitions caused "This page couldn't load" on /admin↔/
+ *   navigations. Push notif explicitly de-prioritized — admin dashboard
+ *   stability is non-negotiable.
+ *
+ * What this does now:
+ *   - NEVER registers a service worker.
+ *   - On mount: enumerate any existing registrations from sk-v3/v4/v5 era
+ *     and unregister them. Clear all Cache Storage entries. This is a
+ *     double-safety net — the kill-switch /sw.js itself also self-unregisters
+ *     during its activate event, but we belt-and-suspenders here in case the
+ *     kill-switch already ran on a previous load and left a stale flag.
+ *   - sessionStorage guard `sk-sw-cleaned` ensures cleanup runs once per tab
+ *     session (avoid redundant work on SPA navigation).
+ *
+ * What this does NOT do:
+ *   - No `register()` call. No `update()` polling. No `controllerchange`
+ *     listener. No `updatefound` listener. No reload triggers. No UI.
+ *
+ * Restoration path (future):
+ *   If push notif becomes a priority, build new SW with isolated scope
+ *   (e.g. `/push-sw.js` registered only on opt-in via PushSubscribeButton),
+ *   and keep `/sw.js` as kill-switch forever.
  */
 export function ServiceWorkerRegistrar() {
-  const [updateWaiting, setUpdateWaiting] = useState<ServiceWorker | null>(null);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
-    const isLocalhost =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1";
-    const swEnabled = process.env.NEXT_PUBLIC_SW_ENABLED === "true";
-
-    // In dev/localhost: only register if explicitly enabled
-    if (isLocalhost && !swEnabled) {
-      // Also unregister any existing SW to avoid stale dev cache
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((r) => r.unregister());
-      });
-      return;
+    // Guard: only run cleanup once per tab session
+    try {
+      if (window.sessionStorage.getItem("sk-sw-cleaned") === "1") return;
+    } catch {
+      // sessionStorage unavailable (private mode quirks) → proceed anyway
     }
 
-    const onLoad = () => {
-      navigator.serviceWorker
-        .register("/sw.js", { scope: "/" })
-        .then((reg) => {
-          // BUGFIX: Force check SW update SEKARANG dan tiap 30 menit.
-          // Default browser cuma cek tiap 24 jam — terlalu lama buat fix bug
-          // urgent. Pas user buka tab lama setelah deploy fix, langsung detect
-          // SW baru → trigger update prompt.
-          reg.update().catch(() => {});
-          setInterval(() => {
-            reg.update().catch(() => {});
-          }, 30 * 60 * 1000);
+    let cancelled = false;
 
-          // Detect when an updated SW is waiting to activate
-          if (reg.waiting) setUpdateWaiting(reg.waiting);
-          reg.addEventListener("updatefound", () => {
-            const installing = reg.installing;
-            if (!installing) return;
-            installing.addEventListener("statechange", () => {
-              if (installing.state === "installed" && navigator.serviceWorker.controller) {
-                setUpdateWaiting(installing);
-              }
-            });
-          });
-        })
-        .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.warn("[SW] registration failed:", err);
-        });
+    (async () => {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        if (cancelled) return;
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+      } catch {
+        // ignore — getRegistrations can throw in some private contexts
+      }
+
+      try {
+        if (typeof caches !== "undefined") {
+          const keys = await caches.keys();
+          if (cancelled) return;
+          await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+        }
+      } catch {
+        // ignore
+      }
+
+      try {
+        window.sessionStorage.setItem("sk-sw-cleaned", "1");
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-
-    if (document.readyState === "complete") {
-      onLoad();
-    } else {
-      window.addEventListener("load", onLoad);
-      return () => window.removeEventListener("load", onLoad);
-    }
   }, []);
 
-  // Reload page after new SW takes control
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
-    let reloaded = false;
-    const onControllerChange = () => {
-      if (reloaded) return;
-      reloaded = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
-    return () =>
-      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
-  }, []);
-
-  const applyUpdate = () => {
-    updateWaiting?.postMessage("SKIP_WAITING");
-    setUpdateWaiting(null);
-  };
-
-  if (!updateWaiting) return null;
-
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed bottom-6 right-6 z-[120] max-w-xs animate-slide-up rounded-xl border border-brand-400/40 bg-gradient-to-br from-slate-900 to-slate-800 p-4 shadow-2xl"
-    >
-      <div className="flex items-start gap-2">
-        <span aria-hidden className="text-xl">🔄</span>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-white">Versi baru tersedia</div>
-          <div className="mt-0.5 text-xs text-gray-300">
-            Update SuperKupon ke versi terbaru biar dapat fitur baru.
-          </div>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={applyUpdate}
-              className="rounded-md bg-brand-500 px-3 py-1 text-xs font-bold text-white hover:bg-brand-600"
-            >
-              Update sekarang
-            </button>
-            <button
-              type="button"
-              onClick={() => setUpdateWaiting(null)}
-              className="rounded-md border border-gray-600 px-3 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700"
-            >
-              Nanti
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

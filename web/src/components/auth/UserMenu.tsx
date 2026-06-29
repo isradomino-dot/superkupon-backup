@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthProvider";
 
@@ -13,6 +14,17 @@ export function UserMenu() {
   const { user, openLogin, openRegister, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
+
+  // BUGFIX UI confusion: HIDE member nav di /admin path.
+  // User report: lihat tombol Login + Daftar di header pas udah login admin
+  // → confused kira gak masuk. Padahal itu Member auth (terpisah dari Admin
+  // auth yang udah login). Sembunyiin di /admin biar UI clean.
+  // Plus di /reset (password reset page) juga hide — user lagi reset password,
+  // gak butuh distraction tombol auth lain.
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/reset")) {
+    return null;
+  }
 
   useEffect(() => {
     if (!dropdownOpen) return;

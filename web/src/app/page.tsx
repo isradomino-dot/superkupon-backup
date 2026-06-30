@@ -1,57 +1,58 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
-import { fetchPublicStats, type PublicStats } from "@/lib/admin-api";
 import HomeClient from "./HomeClient";
 
-// BUGFIX "This page couldn't load":
-// Sebelumnya `force-dynamic` paksa SSR ke Railway backend SETIAP request,
-// no cache. Kalau Railway cold-start (5-10 detik), Vercel function timeout
-// → browser tampil "couldn't load" pas navigate /admin → /.
-// Sekarang: default Next.js behavior (ISR via fetch revalidate 60s) — fast
-// page load, fresh data tiap 1 menit, no blocking SSR.
-export const revalidate = 60;
+/**
+ * Homepage strategy (FINAL, post-bug-fix 2026-06-30):
+ *
+ * Problem: User Edge browser + RDP network sering dapat "This page couldn't
+ * load" pas navigate ke /. Root cause: SSR fetch ke Railway backend yang
+ * bisa cold-start lambat, plus blocking await yang trigger Vercel function
+ * timeout.
+ *
+ * Solution:
+ *   - HAPUS semua SSR fetch dari HomePage component (instant render)
+ *   - Stats di-fetch CLIENT-SIDE via HomeClient useEffect (gak block initial
+ *     HTML render, gak block Vercel function)
+ *   - Metadata pakai static description (gak butuh fetch realtime untuk SEO)
+ *   - revalidate=300 (5 menit ISR) — page di-cache di Vercel CDN, INSTANT load
+ *     untuk user, fresh tiap 5 menit di background
+ *
+ * Result:
+ *   - Homepage render INSTANT dari CDN (no SSR wait)
+ *   - Stats muncul setelah hydration (1-2 detik post page load)
+ *   - Zero "couldn't load" error karena no blocking SSR fetch
+ *   - SEO tetap OK (description static, crawler dapet content langsung)
+ */
+export const revalidate = 300;
 
 const SITE_URL = "https://superkupon.vercel.app";
 
-// Server-side fetch with graceful fallback — never throws, never blocks render.
-// If backend down, returns null and downstream renders without dynamic stats.
-async function safeFetchStats(): Promise<PublicStats | null> {
-  try {
-    return await fetchPublicStats();
-  } catch {
-    return null;
-  }
-}
-
-export async function generateMetadata(): Promise<Metadata> {
-  const stats = await safeFetchStats();
-  const count = stats?.total_active ?? 100;
-  const description = `Aggregator kupon digital Indonesia. ${count}+ kupon aktif dari Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dll. Update otomatis tiap jam.`;
-  const title =
-    "SuperKupon — Kupon Digital Indonesia Terbaru | Diskon, Voucher & Cashback";
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: SITE_URL,
-    },
-    openGraph: {
-      type: "website",
-      locale: "id_ID",
-      url: SITE_URL,
-      title,
-      description,
-      siteName: "SuperKupon",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
-  };
-}
+export const metadata: Metadata = {
+  title:
+    "SuperKupon — Kupon Digital Indonesia Terbaru | Diskon, Voucher & Cashback",
+  description:
+    "Aggregator kupon digital Indonesia. Diskon, voucher & cashback dari Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dan merchant lainnya — update otomatis tiap jam.",
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: SITE_URL,
+    title: "SuperKupon — Kupon Digital Indonesia Terbaru",
+    description:
+      "Aggregator kupon digital Indonesia. Diskon, voucher & cashback dari Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dll.",
+    siteName: "SuperKupon",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SuperKupon — Kupon Digital Indonesia Terbaru",
+    description:
+      "Aggregator kupon digital Indonesia. Diskon, voucher & cashback dari banyak merchant.",
+  },
+};
 
 function HeroSkeleton() {
   return (
@@ -67,17 +68,12 @@ function HeroSkeleton() {
   );
 }
 
-export default async function HomePage() {
-  const stats = await safeFetchStats();
-  const totalActive = stats?.total_active ?? null;
-  const merchantCount = stats?.merchant_count ?? null;
-  const new24h = stats?.new_24h ?? null;
-
+export default function HomePage() {
   return (
     <>
-      {/* Server-rendered SEO hero — present in initial HTML for crawlers
-          and users on slow connections. Visually subtle; client UI renders
-          richer hero on top once hydrated. */}
+      {/* Server-rendered SEO hero — present in initial HTML for crawlers.
+          Stats badges di-fetch client-side via HomeClient untuk hindari SSR
+          blocking. */}
       <section className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
           SuperKupon — Kupon Digital Indonesia Terbaru
@@ -87,27 +83,6 @@ export default async function HomePage() {
           Shopee, Tokopedia, Lazada, Grab, Gojek, Traveloka, DANA, OVO, dan
           merchant lainnya — update otomatis tiap jam.
         </p>
-
-        {/* Trust signal strip — server-fetched real stats, no skeleton flicker */}
-        {(totalActive !== null || merchantCount !== null || new24h !== null) && (
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            {totalActive !== null && (
-              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-300">
-                {totalActive} kupon aktif
-              </span>
-            )}
-            {merchantCount !== null && (
-              <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 font-semibold text-sky-300">
-                {merchantCount} merchant
-              </span>
-            )}
-            {new24h !== null && new24h > 0 && (
-              <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 font-semibold text-amber-300">
-                {new24h} kupon baru hari ini
-              </span>
-            )}
-          </div>
-        )}
       </section>
 
       <Suspense fallback={<HeroSkeleton />}>

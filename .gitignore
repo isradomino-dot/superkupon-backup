@@ -44,3 +44,19 @@ backend/recon/mitmproxy/.mitmproxy/
 session_*.jsonl
 *.endpoints.json
 scripts/supabase_migration.sql
+
+
+# === pola lintasAI (ditambah otomatis pemasang) ===
+# Cegah kebocoran: rahasia kit, identitas per-staff, folder cadangan.
+.claude-kit/.audit-log
+.claude-kit/.manifest-secret
+.claude-kit/.install-manifest.json
+.git-identity-*
+.staff-profile.md
+.claude-kit.backup-*/
+*.backup-*
+*.bak
+*.bak.*
+
+# Pengaturan izin pribadi Claude Code (per-komputer, jangan ikut ke server)
+.claude/settings.local.json

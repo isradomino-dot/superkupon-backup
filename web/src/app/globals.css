@@ -15,6 +15,57 @@
   }
 }
 
+/* =========================================================
+   shadcn/ui DESIGN TOKENS — Phase 1 foundation
+   HSL channel triples consumed by tailwind.config.ts via hsl(var(--token)).
+   :root = light fallback (violet base). .dark = brand-tuned (active in-app:
+   the boot script in layout.tsx always adds `.dark`). Surfaces map to the
+   existing palette — #0f0e1a bg, #1e1b2e card, #2d2a3f border, #8b5cf6 primary —
+   so shadcn primitives look native. NOTE: deliberately no global
+   `body { bg-background }` / `* { border-border }` here — the app body stays
+   transparent for BackgroundEffect, and components carry explicit colors.
+   ========================================================= */
+@layer base {
+  /* This app is ALWAYS-DARK by design: globals.css forces dark surfaces with
+     !important regardless of the `.dark` class, and the boot script's intent is
+     dark. But ThemeToggle's `applyTheme('system')` can REMOVE `.dark` on an
+     OS-light machine — which would flip token-driven shadcn components to light
+     while the rest of the app stays dark (inconsistent). So the brand-dark
+     palette lives in :root directly — shadcn primitives render dark no matter
+     what `.dark` does. `.dark` mirrors the same values for convention. */
+  :root,
+  .dark {
+    --background: 245 30% 8%;        /* #0f0e1a — page surface */
+    --foreground: 210 40% 98%;       /* near-white text */
+    --card: 250 26% 14%;             /* #1e1b2e — card surface */
+    --card-foreground: 210 40% 98%;
+    --popover: 250 26% 16%;          /* slightly elevated for menus/popovers */
+    --popover-foreground: 210 40% 98%;
+    --primary: 258 90% 66%;          /* brand-500 #8b5cf6 violet */
+    --primary-foreground: 0 0% 100%; /* white on violet */
+    --secondary: 250 25% 20%;        /* #2a2640 — elevated chip */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 250 25% 20%;
+    --muted-foreground: 215 20% 65%; /* slate muted */
+    --accent: 250 25% 24%;           /* hover surface */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 249 20% 21%;           /* #2d2a3f — soft violet-tinted border */
+    --input: 249 20% 24%;
+    --ring: 258 90% 66%;             /* violet focus ring */
+    --radius: 0.5rem;
+  }
+
+  /* Default border color → token (dark, on-brand) instead of Tailwind's
+     light gray-200. Needed by primitives that use a bare `border` (Card).
+     Low specificity (0,1,0) so existing `!important .border-gray-*` overrides
+     still win — only bare-`border` elements pick this up. */
+  * {
+    @apply border-border;
+  }
+}
+
 @layer components {
   .container-app {
     @apply mx-auto max-w-5xl px-4;
